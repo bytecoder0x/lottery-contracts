@@ -246,4 +246,3 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     }
 }
 
-
