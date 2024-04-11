@@ -138,9 +138,7 @@ contract TicketMinter is
         address campaign
     ) private view returns (address) {
         address ticket = IKarrotCampaign(campaign).ticketsContract();
-        if (ticket == address(0)) {
-            revert IncorrectValue("No ticket found for campaign");
-        }
+        // There is no need to check if ticket == address(0) because this is an impossible scenario.
         return ticket;
     }
 
