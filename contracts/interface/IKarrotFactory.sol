@@ -6,6 +6,12 @@ import {IKarrotErrors} from "./IKarrotErrors.sol";
 
 interface IKarrotFactory is IERC165, IKarrotErrors {
 
+    event MinterContractUpdated(address indexed minterContract);
+    event LotteryContractDeployed(address indexed lotteryContract);
+    event OrganizationContractDeployed(address indexed organizationContract);
+    event CampaignContractDeployed(address indexed campaignContract, address indexed organization);
+    event TicketContractDeployed(address indexed ticketContract, address indexed campaign);
+    
     function isOrganization(address organization) external view returns (bool);
     function isLottery(address lottery) external view returns (bool);
     function campaignOrganization(address campaign) external view returns (address organization);

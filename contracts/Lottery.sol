@@ -43,16 +43,6 @@ contract Lottery is AccessControl, ILottery {
     uint public redemptionPrice;
     uint public redeemed;
     uint public redemptionCap;
-
-    event RegisterTicketContract(address indexed organization, address indexed ticketContract);
-    event LotteryInitialized(uint indexed organizationsCount);
-    event LotterySetup(address indexed rewardToken, Tier[] tiers, uint[] organizationSharesForFixedTiers);
-    event TicketRedeemed(address indexed redeemer, address ticketContract, uint[] campaignTickets, uint redemptionAmount);
-    event TierProcessed(uint indexed tierIndex, address indexed organization, uint256 totalRewardAmount);
-    event WinnerDefined(address indexed winner, uint256 lotteryTicketId, address campaignTicketContract, uint256 campaignTicketId, uint256 tierType, uint256 rewardAmount);
-    event LotteryFinished();
-    event SetRedemptionPrice(uint indexed redemptionPrice);
-    event SetRedemptionCap(uint indexed redemptionCap);
     
     constructor(
         address _defaultAdmin,

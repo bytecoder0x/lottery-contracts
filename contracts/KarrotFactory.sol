@@ -32,17 +32,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     mapping(address => bool) public isLottery;
     mapping(address => address) public campaignOrganization;
     mapping(address => address) public ticketsCampaign;
-
-    event MinterContractUpdated(address indexed minterContract);
-    event LotteryContractDeployed(address indexed lotteryContract);
-    event OrganizationContractDeployed(address indexed organizationContract);
-    event CampaignContractDeployed(address indexed campaignContract, address indexed organization);
-    event TicketContractDeployed(address indexed ticketContract, address indexed campaign);
-    event OrganizationAndCampaignsDeployed(
-        address indexed organization,
-        address[] campaigns,
-        address[] tickets
-    );
+   
     modifier withSetupMinterContract() {
         if (minterContract == address(0)) revert IncorrectCondition("Minter contract not set");
         _;
@@ -130,14 +120,11 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
                 deployedOrganization,
                 _campaignNames[i]
             );
-            emit CampaignContractDeployed(deployedCampaign, deployedOrganization);
-            emit TicketContractDeployed(deployedTicket, deployedCampaign);
+            emit OrganizationContractDeployed(deployedOrganization);
 
             deployedCampaigns[i] = deployedCampaign;
             deployedTickets[i] = deployedTicket;
         }
-
-        emit OrganizationAndCampaignsDeployed(deployedOrganization, deployedCampaigns, deployedTickets);
     }
 
     function getAllLotteries() external view returns (address[] memory) {

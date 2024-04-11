@@ -19,30 +19,7 @@ contract TicketMinter is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER");
 
     IKarrotFactory public factory;
-    event TicketsMintedBatch(
-        address indexed campaign,
-        address[] endOwners,
-        uint256[] ticketsCounts,
-        uint256[][] ticketsTokenIds
-    );
-    event TicketsMinted(
-        address indexed campaign,
-        address indexed endOwner,
-        uint256 ticketsCount,
-        uint256[] ticketsTokenIds
-    );
-    event OrganizationAndCampaignAdded(
-        address indexed organization,
-        address indexed campaign,
-        uint256 organizationTokenId,
-        uint256 campaignTokenId
-    );
-    event ChildAcceptedToCampaign(
-        address indexed campaign,
-        uint256 indexed campaignTokenId,
-        address ticket,
-        uint256 ticketTokenId
-    );
+    
     constructor(address _defaultAdmin, address _minter, address _factory) {
         if (
             !IKarrotFactory(_factory).supportsInterface(
@@ -72,8 +49,6 @@ contract TicketMinter is
             uint256[] memory userTicketsTokenIds = mintTickets(endOwners[i], campaign, ticketsCounts[i]);
             ticketsTokenIds[i] = userTicketsTokenIds;
         }
-        emit TicketsMintedBatch(campaign, endOwners, ticketsCounts, ticketsTokenIds);
-
     }
 
     function mintTickets(
@@ -120,8 +95,6 @@ contract TicketMinter is
             ticketsCount,
             campaignTokenId
         );
-        emit TicketsMinted(campaign, endOwner, ticketsCount, ticketsTokenIds);
-
     }
 
     function _getOrganizationFromFactory(
@@ -179,8 +152,6 @@ contract TicketMinter is
             campaign,
             campaignTokenId
         );
-        emit OrganizationAndCampaignAdded(organization, campaign, organizationTokenId, campaignTokenId);
-
     }
 
     function _mintTicketToCampaignAndAccept(
@@ -207,8 +178,6 @@ contract TicketMinter is
                 ticketTokenId
             );
             ticketsTokenIds[i] = ticketTokenId;
-            emit ChildAcceptedToCampaign(campaign, campaignTokenId, ticket, ticketTokenId);
-
         }
         return ticketsTokenIds;
     }

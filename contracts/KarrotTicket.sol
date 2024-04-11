@@ -14,10 +14,6 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     address public campaign;
 
-    event TicketMintedToCampaign(uint256 indexed tokenId, uint256 indexed parentId, address indexed campaignAddress);
-    event TicketBatchMintedToCampaign(uint256[] tokenIds, uint256 indexed parentId, address indexed campaignAddress);
-    event TicketBurned(uint256 indexed tokenId);
-
     modifier notTokenIdLowerLastTokenId(uint256 tokenId) {
         if (tokenId > _lastTokenId)
             revert IncorrectValue("Cannot burn token with id higher than last token id");
@@ -76,8 +72,6 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
             _approve(msg.sender, _lastTokenId);
             tokenIds[i] = _lastTokenId;
         }
-
-        emit TicketBatchMintedToCampaign(tokenIds, parentId, campaign);
 
         return tokenIds;
     }
