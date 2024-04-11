@@ -8,6 +8,7 @@ import {KarrotCampaign} from "./KarrotCampaign.sol";
 import {Lottery} from "./Lottery.sol";
 import {KarrotTicket} from "./KarrotTicket.sol";
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ILottery} from "./interface/ILottery.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
@@ -243,4 +244,18 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         ticketsCampaign[newTicket] = _campaign;
         return newTicket;
     }
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        override(AccessControl, IERC165)
+        returns (bool)
+    {
+        return 
+            type(IKarrotFactory).interfaceId == interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
 }
+
+

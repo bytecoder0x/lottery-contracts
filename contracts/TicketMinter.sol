@@ -45,7 +45,7 @@ contract TicketMinter is
     );
     constructor(address _defaultAdmin, address _minter, address _factory) {
         if (
-            IKarrotFactory(_factory).supportsInterface(
+            !IKarrotFactory(_factory).supportsInterface(
                 type(IKarrotFactory).interfaceId
             )
         ) {

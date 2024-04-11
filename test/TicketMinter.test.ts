@@ -14,7 +14,7 @@ describe("TicketMinter", async () => {
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
 
   before(async function () {
-    hardhatSnapshotId =  await network.provider.send('evm_snapshot')
+    hardhatSnapshotId = await network.provider.send('evm_snapshot')
   });
 
   beforeEach("Init test environment", async () => {
@@ -67,7 +67,6 @@ describe("TicketMinter", async () => {
       campaignsAddresses[0],
       [2, 3])).to.be.revertedWith("MintTimeEnded");
   });
-
   after(async function () {
     //revert to initial state to remove time manipulation results
     await network.provider.send("evm_revert", [hardhatSnapshotId]);
