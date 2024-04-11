@@ -120,6 +120,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
                 deployedOrganization,
                 _campaignNames[i]
             );
+            emit CampaignContractDeployed(deployedCampaign, deployedOrganization);
+            emit TicketContractDeployed(deployedTicket, deployedCampaign);
             emit OrganizationContractDeployed(deployedOrganization);
 
             deployedCampaigns[i] = deployedCampaign;
