@@ -122,11 +122,12 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
             );
             emit CampaignContractDeployed(deployedCampaign, deployedOrganization);
             emit TicketContractDeployed(deployedTicket, deployedCampaign);
-            emit OrganizationContractDeployed(deployedOrganization);
 
             deployedCampaigns[i] = deployedCampaign;
             deployedTickets[i] = deployedTicket;
         }
+        emit OrganizationContractDeployed(deployedOrganization);
+
     }
 
     function getAllLotteries() external view returns (address[] memory) {
