@@ -5,7 +5,6 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotErrors} from "./IKarrotErrors.sol";
 
 interface IKarrotFactory is IERC165, IKarrotErrors {
-    event MinterContractUpdated(address indexed newMinterContract);
 
     function isOrganization(address organization) external view returns (bool);
     function isLottery(address lottery) external view returns (bool);

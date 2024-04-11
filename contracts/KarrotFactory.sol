@@ -32,7 +32,16 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     mapping(address => address) public campaignOrganization;
     mapping(address => address) public ticketsCampaign;
 
-
+    event MinterContractUpdated(address indexed minterContract);
+    event LotteryContractDeployed(address indexed lotteryContract);
+    event OrganizationContractDeployed(address indexed organizationContract);
+    event CampaignContractDeployed(address indexed campaignContract, address indexed organization);
+    event TicketContractDeployed(address indexed ticketContract, address indexed campaign);
+    event OrganizationAndCampaignsDeployed(
+        address indexed organization,
+        address[] campaigns,
+        address[] tickets
+    );
     modifier withSetupMinterContract() {
         if (minterContract == address(0)) revert IncorrectCondition("Minter contract not set");
         _;
@@ -64,20 +73,25 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         uint32 _burnDeadline,
         uint32 _lotteryTime
     ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address) {
-        return 
-            _deployLotteryContract(
+         
+            address newLottery = _deployLotteryContract(
                 _defaultAdmin,
                 _mintDeadline,
                 _burnDeadline,
                 _lotteryTime
             );
+            emit LotteryContractDeployed(newLottery);
+
+            return newLottery;
     }
 
     function deployOrganizationContract(
         address defaultAdmin,
         string memory organizationName
     ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address) {
-        return _deployOrganizationContract(defaultAdmin, organizationName);
+        address newOrganization = _deployOrganizationContract(defaultAdmin, organizationName);
+        emit OrganizationContractDeployed(newOrganization);
+        return newOrganization;
     }
 
     function deployCampaignAndTicketContract(
@@ -86,7 +100,10 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address organization,
         string memory campaignName
     ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address, address) {
-        return _deployCampaignAndTicketContract(defaultAdmin, lottery, organization, campaignName);
+        (address newCampaign, address newTicket) =_deployCampaignAndTicketContract(defaultAdmin, lottery, organization, campaignName);
+        emit CampaignContractDeployed(newCampaign, organization);
+        emit TicketContractDeployed(newTicket, newCampaign);
+        return (newCampaign, newTicket);
     }
 
     function deployOrganizationAndCampaigns(
@@ -112,9 +129,14 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
                 deployedOrganization,
                 _campaignNames[i]
             );
+            emit CampaignContractDeployed(deployedCampaign, deployedOrganization);
+            emit TicketContractDeployed(deployedTicket, deployedCampaign);
+
             deployedCampaigns[i] = deployedCampaign;
             deployedTickets[i] = deployedTicket;
         }
+
+        emit OrganizationAndCampaignsDeployed(deployedOrganization, deployedCampaigns, deployedTickets);
     }
 
     function getAllLotteries() external view returns (address[] memory) {
@@ -177,7 +199,6 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
             deployedCampaign,
             campaignName
         );
-
         IKarrotCampaign(deployedCampaign).setTicketContract(deployedTicket);
         ILottery(lottery).registerTicketContract(deployedTicket);
     }

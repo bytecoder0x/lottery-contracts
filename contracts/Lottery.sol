@@ -44,6 +44,16 @@ contract Lottery is AccessControl, ILottery {
     uint public redeemed;
     uint public redemptionCap;
 
+    event RegisterTicketContract(address indexed organization, address indexed ticketContract);
+    event LotteryInitialized(uint indexed organizationsCount);
+    event LotterySetup(address indexed rewardToken, Tier[] tiers, uint[] organizationSharesForFixedTiers);
+    event TicketRedeemed(address indexed redeemer, address ticketContract, uint[] campaignTickets, uint redemptionAmount);
+    event TierProcessed(uint indexed tierIndex, address indexed organization, uint256 totalRewardAmount);
+    event WinnerDefined(address indexed winner, uint256 lotteryTicketId, address campaignTicketContract, uint256 campaignTicketId, uint256 tierType, uint256 rewardAmount);
+    event LotteryFinished();
+    event SetRedemptionPrice(uint indexed redemptionPrice);
+    event SetRedemptionCap(uint indexed redemptionCap);
+    
     constructor(
         address _defaultAdmin,
         address _registrar,
@@ -111,6 +121,7 @@ contract Lottery is AccessControl, ILottery {
                 tiers[i].winnersCount = lotteryTicketsTotalSupply * tiers[i].winnersShare / BIPS;
             }
         }
+        emit LotteryInitialized(organizations.length);
     }
 
     function setupLottery(
@@ -171,6 +182,7 @@ contract Lottery is AccessControl, ILottery {
             revert IncorrectValue("Total shares sum must be 100%");
         }
         organizationSharesForFixedTiers = _organizationSharesForFixedTiers;
+        emit LotterySetup(_rewardToken, tiers, organizationSharesForFixedTiers);
     }
 
     function runLottery() external {
@@ -234,6 +246,7 @@ contract Lottery is AccessControl, ILottery {
         IKarrotTicket(ticketContract).burnBatch(campaignTickets);
         IERC20(rewardToken).safeTransfer(msg.sender, redemptionAmount);
         redeemed += redemptionAmount;
+        emit TicketRedeemed(msg.sender, ticketContract, campaignTickets, redemptionAmount);
     }
 
     function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {

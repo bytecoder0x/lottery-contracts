@@ -27,21 +27,7 @@ interface ILottery is IERC165, IKarrotErrors {
         Random,
         Fixed
     }
-
-    event RegisterTicketContract(address indexed organization, address indexed ticketContract);
-    event WinnerDefined(
-        address indexed owner,
-        uint256 lotteryTicketId,
-        address indexed campaignTicketContract,
-        uint256 indexed campaignTicketId,
-        uint256 tier,
-        uint256 rewardAmount
-    );
-    event TierProcessed(uint256 indexed tier, address indexed organization, uint256 totalTierRewardAmount);
-    event LotteryFinished();
-    event SetRedemptionPrice(uint indexed redemptionPrice);
-    event SetRedemptionCap(uint indexed redemptionCap);
-
+    
     function registerTicketContract(address ticketContract) external;
     
     function mintDeadline() external view returns (uint32);

@@ -24,6 +24,9 @@ contract KarrotCampaign is
     address public organization;
     address public ticketsContract;
 
+    event OrganizationMinted(uint256 indexed tokenId, address indexed minter, uint256 parentId);
+    event TicketContractSet(address indexed ticketsContract, address indexed setter);
+
     constructor(
         address _defaultAdmin,
         address _lowerAdmin,
@@ -54,6 +57,7 @@ contract KarrotCampaign is
         _lastTokenId++;
         _nestMint(organization, _lastTokenId, parentId, data);
         _approve(msg.sender, _lastTokenId);
+        emit OrganizationMinted(_lastTokenId, msg.sender, parentId);
         return _lastTokenId;
     }
 
@@ -70,6 +74,8 @@ contract KarrotCampaign is
         ) {
             revert InterfaceNotSupported();
         }
+        emit TicketContractSet(_ticketsContract, msg.sender);
+
         ticketsContract = _ticketsContract;
     }
 
