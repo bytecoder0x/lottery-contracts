@@ -13,6 +13,8 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     
     mapping(address => uint256) public ownerToken;
 
+    event OrganizationTokenMinted(address indexed to, uint256 indexed tokenId);
+
     constructor(address _defaultAdmin, address _minter, string memory _name) 
         KarrotErc7401Base(_defaultAdmin, _minter, _name) { }
 
@@ -27,6 +29,9 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
         _safeMint(to, _lastTokenId, data);
         _approve(msg.sender, _lastTokenId);
         ownerToken[to] = _lastTokenId;
+        
+        emit OrganizationTokenMinted(to, _lastTokenId); 
+
         return _lastTokenId;
     }
 

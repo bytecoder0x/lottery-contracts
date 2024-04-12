@@ -19,10 +19,10 @@ contract TicketMinter is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER");
 
     IKarrotFactory public factory;
-
+    
     constructor(address _defaultAdmin, address _minter, address _factory) {
         if (
-            IKarrotFactory(_factory).supportsInterface(
+            !IKarrotFactory(_factory).supportsInterface(
                 type(IKarrotFactory).interfaceId
             )
         ) {
@@ -111,9 +111,7 @@ contract TicketMinter is
         address campaign
     ) private view returns (address) {
         address ticket = IKarrotCampaign(campaign).ticketsContract();
-        if (ticket == address(0)) {
-            revert IncorrectValue("No ticket found for campaign");
-        }
+        // There is no need to check if ticket == address(0) because this is an impossible scenario.
         return ticket;
     }
 
@@ -181,7 +179,6 @@ contract TicketMinter is
             );
             ticketsTokenIds[i] = ticketTokenId;
         }
-
         return ticketsTokenIds;
     }
 

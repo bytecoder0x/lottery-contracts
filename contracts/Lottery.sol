@@ -43,7 +43,7 @@ contract Lottery is AccessControl, ILottery {
     uint public redemptionPrice;
     uint public redeemed;
     uint public redemptionCap;
-
+    
     constructor(
         address _defaultAdmin,
         address _registrar,
@@ -111,6 +111,7 @@ contract Lottery is AccessControl, ILottery {
                 tiers[i].winnersCount = lotteryTicketsTotalSupply * tiers[i].winnersShare / BIPS;
             }
         }
+        emit LotteryInitialized(organizations.length);
     }
 
     function setupLottery(
@@ -171,6 +172,7 @@ contract Lottery is AccessControl, ILottery {
             revert IncorrectValue("Total shares sum must be 100%");
         }
         organizationSharesForFixedTiers = _organizationSharesForFixedTiers;
+        emit LotterySetup(_rewardToken, tiers, organizationSharesForFixedTiers);
     }
 
     function runLottery() external {
@@ -234,6 +236,7 @@ contract Lottery is AccessControl, ILottery {
         IKarrotTicket(ticketContract).burnBatch(campaignTickets);
         IERC20(rewardToken).safeTransfer(msg.sender, redemptionAmount);
         redeemed += redemptionAmount;
+        emit TicketRedeemed(msg.sender, ticketContract, campaignTickets, redemptionAmount);
     }
 
     function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {

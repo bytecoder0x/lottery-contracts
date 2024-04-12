@@ -45,10 +45,8 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         notBeforeMintClosed
         returns (uint256)
     {
-        _lastTokenId++;
-        _nestMint(campaign, _lastTokenId, parentId, data);
-        _approve(msg.sender, _lastTokenId);
-
+        _mintToCampaign(parentId, data);
+        
         return _lastTokenId;
     }
 
@@ -65,13 +63,13 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         uint256[] memory tokenIds = new uint256[](tokenCount);
 
         for (uint256 i; i < tokenCount; i++) {
-            _lastTokenId++;
-            _nestMint(campaign, _lastTokenId, parentId, data);
-            _approve(msg.sender, _lastTokenId);
+            _mintToCampaign(parentId, data);
             tokenIds[i] = _lastTokenId;
         }
-
         return tokenIds;
+    }
+    function burnTicket(uint tokenId) public{
+        _burnTicket(tokenId);
     }
 
     function burnBatch(uint256[] memory tokenIds) public {
@@ -102,6 +100,15 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
             super.supportsInterface(interfaceId);
     }
 
+    function _mintToCampaign(uint parentId, bytes memory data) internal {
+        _lastTokenId++;
+        _nestMint(campaign, _lastTokenId, parentId, data);
+        _approve(msg.sender, _lastTokenId);
+
+        emit TicketMintedToCampaign(_lastTokenId, parentId, campaign);
+
+    }
+    
     function _burnTicket(
         uint256 tokenId
     ) internal onlyApprovedOrDirectOwner(tokenId) {
@@ -129,6 +136,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
             );
         }
         _burn(_lastTokenId, 0);
+        emit TicketBurned(_lastTokenId);
         _lastTokenId--;
     }
 }

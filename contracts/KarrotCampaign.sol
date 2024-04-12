@@ -54,6 +54,7 @@ contract KarrotCampaign is
         _lastTokenId++;
         _nestMint(organization, _lastTokenId, parentId, data);
         _approve(msg.sender, _lastTokenId);
+        emit CampaignTokenMintedToOrganization(_lastTokenId, msg.sender, parentId);
         return _lastTokenId;
     }
 
@@ -70,6 +71,8 @@ contract KarrotCampaign is
         ) {
             revert InterfaceNotSupported();
         }
+        emit TicketContractSet(_ticketsContract, msg.sender);
+
         ticketsContract = _ticketsContract;
     }
 
