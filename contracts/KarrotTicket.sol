@@ -21,7 +21,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         string memory _name
     ) KarrotErc7401Base(_defaultAdmin, _minter, _name) {
         if (
-            IKarrotCampaign(_campaign).supportsInterface(
+            !IKarrotCampaign(_campaign).supportsInterface(
                 type(IKarrotCampaign).interfaceId
             )
         ) {
