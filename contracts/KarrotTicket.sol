@@ -14,12 +14,6 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     address public campaign;
 
-    modifier notTokenIdLowerLastTokenId(uint256 tokenId) {
-        if (tokenId > _lastTokenId)
-            revert IncorrectValue("Cannot burn token with id higher than last token id");
-        _;
-    }
-
     constructor(
         address _defaultAdmin,
         address _minter,
@@ -111,7 +105,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     
     function _burnTicket(
         uint256 tokenId
-    ) internal onlyApprovedOrOwner(tokenId) notTokenIdLowerLastTokenId(tokenId) {
+    ) internal onlyApprovedOrOwner(tokenId) {
         (
             address burningTokenOwner,
             uint256 burningTokenParentId,
