@@ -111,7 +111,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     
     function _burnTicket(
         uint256 tokenId
-    ) internal onlyApprovedOrOwner(tokenId) notTokenIdLowerLastTokenId {
+    ) internal onlyApprovedOrOwner(tokenId) notTokenIdLowerLastTokenId(tokenId) {
         (
             address burningTokenOwner,
             uint256 burningTokenParentId,
