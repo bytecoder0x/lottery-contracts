@@ -131,31 +131,52 @@ describe("KarrotTicket", async () => {
         });
     });
 
-    it("Should burn tickets", async function () {
-        const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
-        const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
-        const organization = await ethers.getContractAt("KarrotOrganization", organizationAddress);
-        const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
-        await organization.grantRole(minterRole, minter.address);
-        await organization.connect(minter).mintTo(user1.address, []);
-        await campaign.grantRole(minterRole, minter.address);
-        const ownerOrganizationNft = await organization.ownerToken(user1.address);
-        await campaign.connect(minter).mintToOrganization(ownerOrganizationNft, []);
+    describe("Burning", function () {
 
-        const user1OrganizationNft = await organization.ownerToken(user1.address);
-        await karrotTicket.connect(minter).mintToCampaign(
-            user1OrganizationNft,
-            [],
-        );
-        const isApproved = await karrotTicket.isApprovedOrOwner(user1.address, 1);
-        console.log(isApproved);
-        const ownerOfToken = await karrotTicket.ownerOf(1);
-        console.log(ownerOfToken);
-        console.log(user1.address);
+        it("Should burn ticket", async function () {
+            const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+            const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+            const organization = await ethers.getContractAt("KarrotOrganization", organizationAddress);
+            const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
+            await organization.grantRole(minterRole, minter.address);
+            await organization.connect(minter).mintTo(user1.address, []);
+            await campaign.grantRole(minterRole, minter.address);
+            const ownerOrganizationNft = await organization.ownerToken(user1.address);
+            await campaign.connect(minter).mintToOrganization(ownerOrganizationNft, []);
 
-        const ticketToBurn = 1;
-        await karrotTicket.connect(user1).burnTicket(ticketToBurn);
-        // expect(await karrotTicket.ownerOf(ticketToBurn)).to.be.eq();
+            const user1OrganizationNft = await organization.ownerToken(user1.address);
+            await karrotTicket.connect(minter).mintToCampaign(
+                user1OrganizationNft,
+                [],
+            );
+
+            const ticketToBurn = 1;
+            await karrotTicket.connect(user1).burnTicket(ticketToBurn);
+            await expect(karrotTicket.connect(user1).burnTicket(ticketToBurn)).to.be.revertedWith("ERC721InvalidTokenId");
+        });
+
+        it("Should burn tickets", async function () {
+            const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+            const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+            const organization = await ethers.getContractAt("KarrotOrganization", organizationAddress);
+            const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
+            await organization.grantRole(minterRole, minter.address);
+            await organization.connect(minter).mintTo(user1.address, []);
+            await campaign.grantRole(minterRole, minter.address);
+            const ownerOrganizationNft = await organization.ownerToken(user1.address);
+            await campaign.connect(minter).mintToOrganization(ownerOrganizationNft, []);
+
+            const user1OrganizationNft = await organization.ownerToken(user1.address);
+            await karrotTicket.connect(minter).mintToCampaignBatch(
+                10,
+                user1OrganizationNft,
+                [],
+            );
+            const ticketsToBurn: number[] = [10,9,8,7,6];
+
+            await karrotTicket.connect(user1).burnBatch(ticketsToBurn);
+            await expect(karrotTicket.connect(user1).burnTicket(9)).to.be.revertedWith("ERC721InvalidTokenId");
+        });
     });
 
     it("Should not allow to deploy with wrong factory", async function () {
