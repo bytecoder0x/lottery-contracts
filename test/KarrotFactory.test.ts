@@ -80,6 +80,7 @@ describe("KarrotFactory", async () => {
         await expect(karrotFactory.connect(user1).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
 
     });
+
     it("Should test all functions with 'withSetupMinterContract' modifier with negative scenario", async function () {
         const organizationDeployerLibrary = await (await ethers.getContractFactory("OrganizationDeployerLibrary")).deploy();
         const campaignDeployerLibrary = await (await ethers.getContractFactory("CampaignDeployerLibrary")).deploy();
@@ -120,5 +121,4 @@ describe("KarrotFactory", async () => {
         const interfaceIDHex = '0x' + interfaceID.toString(16).padStart(8, '0');
         expect(await karrotFactory.supportsInterface(interfaceIDHex)).to.equal(true);
     });
-
 });
