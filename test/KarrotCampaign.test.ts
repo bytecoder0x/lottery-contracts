@@ -36,7 +36,16 @@ describe("KarrotCampaign", async () => {
         await organization.connect(minter).mintTo(user1.address, []);
         const organizationId = await organization.ownerToken(user1.address);
         await campaign.connect(minter).mintToOrganization(organizationId, []);
+        const mintedTokenCampaignId = 1;
+
         expect(await campaign.balanceOf(organization.address)).to.be.eq(1);
+        expect((await campaign.directOwnerOf(mintedTokenCampaignId)).owner_).to.be.eq(organization.address);
+    });
+
+    it("Should set ticket contracts", async function () {
+        const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+        campaign.connect(owner).setTicketContract(karrotTicket.address)
+        expect(await campaign.ticketsContract()).to.be.eq(karrotTicket.address);
     });
 
     it("Should support AccessControl interface", async function () {
