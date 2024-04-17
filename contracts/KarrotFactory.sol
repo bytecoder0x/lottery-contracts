@@ -220,8 +220,6 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         string memory _campaignName
     ) private returns (address) {
 
-        if (bytes(_campaignName).length == 0) revert IncorrectValue("Campaign name is empty");
-
         address newTicket = TicketDeployerLibrary.deployTicket(
             _defaultAdmin,
             minterContract,
