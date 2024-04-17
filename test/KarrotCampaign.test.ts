@@ -39,7 +39,10 @@ describe("KarrotCampaign", async () => {
         const mintedTokenCampaignId = 1;
 
         expect(await campaign.balanceOf(organization.address)).to.be.eq(1);
-        expect((await campaign.directOwnerOf(mintedTokenCampaignId)).owner_).to.be.eq(organization.address);
+        const directOwner = await campaign.directOwnerOf(mintedTokenCampaignId);
+        expect(directOwner.isNFT).to.be.eq(true);
+        expect(directOwner.owner_).to.be.eq(organization.address);
+        expect(directOwner.parentId).to.be.eq(organizationId);
     });
 
     it("Should set ticket contracts", async function () {
