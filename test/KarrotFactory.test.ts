@@ -63,11 +63,12 @@ describe("KarrotFactory", async () => {
 
     });
 
-    it("Should test all functions with 'onlyRole' modifier with negative scenario", async function () {
-        const DEFAULT_ADMIN_ROLE = ethers.constants.AddressZero;
+    it("Should test all functions with 'onlyRole(DEFAULT_ADMIN_ROLE)' modifier with negative scenario", async function () {
+        const DEFAULT_ADMIN_ROLE = ethers.constants.HashZero;
         await expect(karrotFactory.connect(user1).setMinterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
-        await expect(karrotFactory.connect(owner).setMinterContract(organizationAddress)).to.be.revertedWith("InterfaceNotSupported");
+    });
 
+    it("Should test all functions with 'onlyRole(DEPLOYER)' modifier with negative scenario", async function () {
         const currentTime = Math.floor(Date.now() / 1000);
         const mintDeadline = currentTime + 86400;
         const burnDeadline = currentTime + 172800;
@@ -78,7 +79,10 @@ describe("KarrotFactory", async () => {
         await expect(karrotFactory.connect(user1).deployOrganizationContract(owner.address, "Test Organization")).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
         await expect(karrotFactory.connect(user1).deployCampaignAndTicketContract(owner.address, lotteryAddress, organizationAddress, "Test Campaign")).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
         await expect(karrotFactory.connect(user1).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
+    });
 
+    it("Should not support incorrect interface", async function () {
+        await expect(karrotFactory.connect(owner).setMinterContract(organizationAddress)).to.be.revertedWith("InterfaceNotSupported");
     });
 
     it("Should test all functions with 'withSetupMinterContract' modifier with negative scenario", async function () {
@@ -103,7 +107,7 @@ describe("KarrotFactory", async () => {
         await expect(karrotFactory1.connect(owner).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("Minter contract not set");
     });
 
-    it("Should support AccessControl interface", async function () {
+    it("Should support AccessControl and IKarrotFactory interfaces", async function () {
         let functionSignature = [
             'hasRole(bytes32,address)',
             'getRoleAdmin(bytes32)',
@@ -120,5 +124,30 @@ describe("KarrotFactory", async () => {
 
         const interfaceIDHex = '0x' + interfaceID.toString(16).padStart(8, '0');
         expect(await karrotFactory.supportsInterface(interfaceIDHex)).to.equal(true);
+
+        let functionSignatureFactory = [
+            'isOrganization(address)',
+            'isLottery(address)',
+            'campaignOrganization(address)',
+            'ticketsCampaign(address)',
+            'getAllLotteries()',
+            'getAllOrganizations()',
+            'getAllCampaigns()',
+            'getAllTickets()',
+            'setMinterContract(address)',
+            'deployLotteryContract(address,uint32,uint32,uint32)',
+            'deployOrganizationContract(address,string)',
+            'deployCampaignAndTicketContract(address,address,address,string)',
+            'deployOrganizationAndCampaigns(address,address,string,string[])'
+        ];
+        let interfaceIDFactory = BigInt(0);
+
+        for (const signature of functionSignatureFactory) {
+            const selector = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(2, 10);
+            interfaceIDFactory ^= BigInt('0x' + selector);
+        }
+
+        const interfaceIDHexFactory = '0x' + interfaceID.toString(16).padStart(8, '0');
+        expect(await karrotFactory.supportsInterface(interfaceIDHexFactory)).to.equal(true);
     });
 });
