@@ -212,7 +212,7 @@ describe("KarrotTicket", async () => {
             }
         }
 
-        it("Should burn tickets", async function () {
+        it("Should burn ticket", async function () {
             const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
             await campaign.setTicketContract(karrotTicket.address);
             await organization.grantRole(minterRole, minter.address);
@@ -220,25 +220,29 @@ describe("KarrotTicket", async () => {
             await organization.connect(minter).mintTo(user2.address, []);
             await campaign.grantRole(minterRole, minter.address);
 
-            let user1Data = await mintTickets(karrotTicket, user1, 5);
-            let user2Data = await mintTickets(karrotTicket, user2, 3);
-            expect(user1Data.ticketIds.length).to.be.eq(5);
-            expect(user2Data.ticketIds.length).to.be.eq(3);
+            let user1Data = await mintTickets(karrotTicket, user1, 2);
+            expect(user1Data.ticketIds.length).to.be.eq(2);
             
-            expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(8);
-            const ticketsToBurn = 3;
-            await campaign.connect(user1)["burnTicketBatch(uint256)"](ticketsToBurn);
+            expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(2);
+            await campaign.connect(user1)["burnTicket()"]();
 
             const user1NewTicketIdsData = await campaign.childrenOf(user1Data.userCampaignId);
-            const user2NewTicketIdsData = await campaign.childrenOf(user2Data.userCampaignId);
             const user1NewTicketIds = user1NewTicketIdsData.map(ticketId => ticketId.tokenId);
-            const user2NewTicketIds = user2NewTicketIdsData.map(ticketId => ticketId.tokenId);
-            expect(user1NewTicketIds.length).to.be.eq(2);
-            expect(user2NewTicketIds.length).to.be.eq(3);
+            expect(user1NewTicketIds.length).to.be.eq(1);
             await checkTicketOwnership(karrotTicket, user1NewTicketIds, user1Data.userCampaignId, user1);
-            await checkTicketOwnership(karrotTicket, user2NewTicketIds, user2Data.userCampaignId, user2);
 
-            expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(5);
+            expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(1);
+        });
+
+        it("Should not allow to burn tickets in KarrotTicket contract", async function () {
+            const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+            await campaign.setTicketContract(karrotTicket.address);
+            await organization.grantRole(minterRole, minter.address);
+            await organization.connect(minter).mintTo(user1.address, []);
+            await organization.connect(minter).mintTo(user2.address, []);
+            await campaign.grantRole(minterRole, minter.address);
+
+            await expect(karrotTicket.connect(user1).burnLastTicket()).to.be.revertedWith("Only Campaign can burn tickets");
         });
     });
 
