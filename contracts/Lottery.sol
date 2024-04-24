@@ -7,6 +7,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {ILottery} from "./interface/ILottery.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import "hardhat/console.sol";
@@ -221,22 +222,23 @@ contract Lottery is AccessControl, ILottery {
     }
 
     //TODO: move to a separate contract
-    function redeem(address ticketContract, uint[] memory campaignTickets) external {
+    function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
         if (block.timestamp > burnDeadline) {
             revert IncorrectCondition("Burn period finished yet");
         }
         if (redemptionPrice == 0) {
             revert IncorrectValue("Redemption price not set");
         }
-        uint redemptionAmount = campaignTickets.length * redemptionPrice;
+        uint redemptionAmount = amountOfTicketsToBurn * redemptionPrice;
         if (redemptionCap > 0 && redeemed + redemptionAmount > redemptionCap) {
             revert IncorrectValue("Redemption cap reached");
         }
         //approve for lottery should be granted before
-        IKarrotTicket(ticketContract).burnBatch(campaignTickets);
+        address campaignAddress = IKarrotTicket(ticketContract).campaign();
+        IKarrotCampaign(campaignAddress).burnTicketBatch(amountOfTicketsToBurn);
         IERC20(rewardToken).safeTransfer(msg.sender, redemptionAmount);
         redeemed += redemptionAmount;
-        emit TicketRedeemed(msg.sender, ticketContract, campaignTickets, redemptionAmount);
+        emit TicketRedeemed(msg.sender, ticketContract, amountOfTicketsToBurn, redemptionAmount);
     }
 
     function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
