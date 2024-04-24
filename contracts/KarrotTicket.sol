@@ -62,15 +62,17 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         }
         return tokenIds;
     }
-    function burnTicket(uint tokenId) public{
-        _burnTicket(tokenId);
+    
+    function burnLastTicket() external {
+        if(msg.sender != campaign){
+            revert IncorrectValue("Only Campaign can burn tickets");
+        }
+        uint previousLastTiketId = _lastTokenId;
+        _burn(previousLastTiketId, 0);
+        emit TicketBurned(previousLastTiketId);
+        _lastTokenId--;
     }
 
-    function burnBatch(uint256[] memory tokenIds) public {
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            _burnTicket(tokenIds[i]);
-        }
-    }
 
     function getLotteryContract() public view override returns (address) {
         return IKarrotCampaign(campaign).lottery();
@@ -101,36 +103,5 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
 
         emit TicketMintedToCampaign(_lastTokenId, parentId, campaign);
 
-    }
-    
-    function _burnTicket(
-        uint256 tokenId
-    ) internal onlyApprovedOrOwner(tokenId) {
-        (
-            address burningTokenOwner,
-            uint256 burningTokenParentId,
-
-        ) = directOwnerOf(tokenId);
-
-        if (tokenId != _lastTokenId) {
-            (
-                address lastTokenOwner,
-                uint256 lastTokenParentId,
-
-            ) = directOwnerOf(_lastTokenId);
-            _updateOwnerAndClearApprovals(
-                tokenId,
-                lastTokenParentId,
-                lastTokenOwner
-            );
-            _updateOwnerAndClearApprovals(
-                _lastTokenId,
-                burningTokenParentId,
-                burningTokenOwner
-            );
-        }
-        _burn(_lastTokenId, 0);
-        emit TicketBurned(_lastTokenId);
-        _lastTokenId--;
     }
 }

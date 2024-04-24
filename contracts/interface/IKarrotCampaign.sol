@@ -19,4 +19,12 @@ interface IKarrotCampaign is IERC7401, IKarrotErc7401Base {
     function lottery() external view returns (address);
 
     function ticketsContract() external view returns (address);
+
+    function burnTicket() external;
+    
+    function burnTicket(uint campaignId) external;
+    
+    function burnTicketBatch(uint256 amountOfTicketsToBurn) external;
+    
+    function burnTicketBatch(uint campaignId, uint256 amountOfTicketsToBurn) external;
 }

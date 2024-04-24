@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
+import "hardhat/console.sol";
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC7401} from "@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC7401.sol";
@@ -23,6 +24,8 @@ contract KarrotCampaign is
     address public lottery;
     address public organization;
     address public ticketsContract;
+
+    mapping(uint256 => uint256) public ownerToken;
 
     constructor(
         address _defaultAdmin,
@@ -50,12 +53,12 @@ contract KarrotCampaign is
     function mintToOrganization(
         uint256 parentId,
         bytes memory data
-    ) public onlyRole(MINTER_ROLE) notBeforeMintClosed returns (uint256) {
-        _lastTokenId++;
-        _nestMint(organization, _lastTokenId, parentId, data);
-        _approve(msg.sender, _lastTokenId);
-        emit CampaignTokenMintedToOrganization(_lastTokenId, msg.sender, parentId);
-        return _lastTokenId;
+    ) public onlyRole(MINTER_ROLE) notBeforeMintClosed returns (uint256 mintedTokenId) {
+        mintedTokenId = ++_lastTokenId;
+        _nestMint(organization, mintedTokenId, parentId, data);
+        ownerToken[parentId] = mintedTokenId;
+        _approve(msg.sender, mintedTokenId);
+        emit CampaignTokenMintedToOrganization(mintedTokenId, msg.sender, parentId);
     }
 
     function setTicketContract(
@@ -76,6 +79,33 @@ contract KarrotCampaign is
         ticketsContract = _ticketsContract;
     }
 
+    function burnTicket() external {
+        uint campaignId = _getUserCampaignId();
+        _burnTicket(campaignId);
+    }
+
+    function burnTicketBatch(uint256 amountOfTicketsToBurn) public {
+        uint campaignId = _getUserCampaignId();
+        burnTicketBatch(campaignId, amountOfTicketsToBurn);
+    }
+
+    function burnTicket(uint campaignId) public {
+        _burnTicket(campaignId);
+    }
+
+    function burnTicketBatch(uint campaignId, uint256 amountOfTicketsToBurn) public {
+        //this check doesn't give 100% guarantee that the user is trying to burn the correct amount of tickets
+        //as _activeChildren may have not only tickets in case of manual child accepting.
+        //If this scenario happens the contract will revert with panic code 0x11 
+        //that is also a desired behaviour
+        if (amountOfTicketsToBurn > _activeChildren[campaignId].length) {
+            revert IncorrectValue("Not enough tickets to burn");
+        }
+        for(uint i; i < amountOfTicketsToBurn; i++) {
+            _burnTicket(campaignId);
+        }
+    }
+
     function ownerOf(
         uint256 tokenId
     ) public view override(RMRKNestable, IERC7401) returns (address) {
@@ -91,5 +121,90 @@ contract KarrotCampaign is
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {
         return interfaceId == type(IKarrotCampaign).interfaceId || 
             super.supportsInterface(interfaceId);
+    }
+
+    function _burnTicket(uint256 campaignId) internal {
+        Child[] storage campaignTickets = _activeChildren[campaignId];
+        uint256 ticketIdToBurn = _findTicketIdToBurn(campaignTickets);
+        uint lastTiketId = IKarrotTicket(ticketsContract).totalSupply(); //last token id == total supply
+
+        uint lastTiketOwnerId;
+        if (lastTiketId != ticketIdToBurn) { //meaning that we are burning not the last ticket id
+            (, lastTiketOwnerId, ) = IKarrotTicket(ticketsContract).directOwnerOf(lastTiketId);
+        } else {
+            lastTiketOwnerId = campaignId;
+        }
+
+        uint256 lastTiketIndexInChildren = 
+            _findTiketIndex(lastTiketId, _activeChildren[lastTiketOwnerId]);
+
+        //transfer the burning ticket from children of the burning campaign to the owner of the last ticket id
+        _transferChild(
+            campaignId,
+            address(this),
+            lastTiketOwnerId,
+            campaignTickets.length - 1, 
+            ticketsContract,
+            ticketIdToBurn,
+            false,
+            new bytes(0)
+        );
+        _acceptChild(
+            lastTiketOwnerId,
+            _pendingChildren[lastTiketOwnerId].length - 1,
+            ticketsContract,
+            ticketIdToBurn
+        );
+
+        //transfer the last ticket id from the owner of the last ticket id to the burning campaign
+        _transferChild(
+            lastTiketOwnerId,
+            address(this),
+            campaignId,
+            lastTiketIndexInChildren,
+            ticketsContract,
+            lastTiketId,
+            false,
+            new bytes(0)
+        );
+
+        _pendingChildren[campaignId].pop();
+ 
+        IKarrotTicket(ticketsContract).burnLastTicket();
+    }
+
+    function _findTicketIdToBurn(Child[] storage campaignTickets) private returns (uint256 ticketIdToBurn) {
+        uint i = campaignTickets.length - 1;
+        address ticketsContractCache = ticketsContract;
+        while (i >= 0) {
+            if (campaignTickets[i].contractAddress == ticketsContractCache) {
+                return campaignTickets[i].tokenId;
+            } else {
+                //remove any element from children that is not a ticket
+                _childIsInActive[campaignTickets[i].contractAddress][campaignTickets[i].tokenId];
+                campaignTickets.pop();
+                if (i > 0) {
+                    i--;
+                } else {
+                    break;
+                }
+            }
+        }
+        revert IncorrectCondition("No tickets found to burn");
+    }
+
+    function _getUserCampaignId() private view returns (uint256) {
+        uint organizationId = IKarrotOrganization(organization).ownerToken(msg.sender);
+        if (organizationId == 0) revert IncorrectValue("User is not an owner of any organization");
+        return ownerToken[organizationId];
+    }
+
+    function _findTiketIndex(uint256 ticketId, Child[] memory tickets) private view returns (uint256) {
+        for (uint256 i = 0; i < tickets.length; i++) {
+            if (tickets[i].tokenId == ticketId && tickets[i].contractAddress == ticketsContract) {
+                return i;
+            }
+        }
+        //there is no way to get here as the last ticket id must be in the children of the campaign
     }
 }
