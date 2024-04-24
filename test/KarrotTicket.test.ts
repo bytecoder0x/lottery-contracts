@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 import { assert, expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployBasicContracts } from "./utis";
+import { BigNumber } from "ethers";
 
 describe("KarrotTicket", async () => {
     let ticket: KarrotTicket;
@@ -115,7 +116,7 @@ describe("KarrotTicket", async () => {
                 user1OrganizationNft,
                 [],
             )).to.be.revertedWith("MintTimeEnded");
-            await ethers.provider.send("evm_increaseTime", [-2000])
+            //await ethers.provider.send("evm_increaseTime", [-2000])
 
         });
 
@@ -125,112 +126,117 @@ describe("KarrotTicket", async () => {
 
         it("Should burn ticket", async function () {
             const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+            await campaign.setTicketContract(karrotTicket.address);
             await organization.grantRole(minterRole, minter.address);
             await organization.connect(minter).mintTo(user1.address, []);
             await campaign.grantRole(minterRole, minter.address);
             const ownerOrganizationNft = await organization.ownerToken(user1.address);
             await campaign.connect(minter).mintToOrganization(ownerOrganizationNft, []);
-
-            const user1OrganizationNft = await organization.ownerToken(user1.address);
-            await karrotTicket.connect(minter).mintToCampaign(
-                user1OrganizationNft,
-                [],
-            );
-            expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(1);
-            const ticketToBurn = 1;
-            await karrotTicket.connect(user1).burnTicket(ticketToBurn);
-            expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(0);
-        });
-
-        it("Should burn tickets", async function () {
-            const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
-            await organization.grantRole(minterRole, minter.address);
-            await organization.connect(minter).mintTo(user1.address, []);
-            await organization.connect(minter).mintTo(user2.address, []);
-
-            await campaign.grantRole(minterRole, minter.address);
-            const ownerOrganizationNft1 = await organization.ownerToken(user1.address);
-            const ownerOrganizationNft2 = await organization.ownerToken(user2.address);
-
-            await campaign.connect(minter).mintToOrganization(ownerOrganizationNft1, []);
-            await campaign.connect(minter).mintToOrganization(ownerOrganizationNft2, []);
-
-            const pendingChildren = await organization.pendingChildrenOf(ownerOrganizationNft1);
+            const pendingChildren = await organization.pendingChildrenOf(ownerOrganizationNft);
             const childToAccept = pendingChildren[0];
             const childIndex = 0;
             await organization.connect(user1).acceptChild(
-                ownerOrganizationNft1,
+                ownerOrganizationNft,
                 childIndex,
                 childToAccept.contractAddress,
                 childToAccept.tokenId
             );
-            let campaignId = await organization.childrenOf(ownerOrganizationNft1);
+            let campaignId = await organization.childrenOf(ownerOrganizationNft);
 
-            await karrotTicket.connect(minter).mintToCampaignBatch(
-                5,
+            await karrotTicket.connect(minter).mintToCampaign(
                 campaignId[0].tokenId,
                 [],
             );
-            const pendingChildren2 = await organization.pendingChildrenOf(ownerOrganizationNft2);
-            const childToAccept2 = pendingChildren2[0];
-            const childIndex2 = 0;
-            await organization.connect(user2).acceptChild(
-                ownerOrganizationNft2,
-                childIndex2,
-                childToAccept2.contractAddress,
-                childToAccept2.tokenId
+
+            expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(1);
+            let pendingChildrenTickets1 = await campaign.pendingChildrenOf(campaignId[0].tokenId);
+            const childToAcceptTicket1 = pendingChildrenTickets1[0];
+            await campaign.connect(user1).acceptChild(
+                campaignId[0].tokenId,
+                0,
+                childToAcceptTicket1.contractAddress,
+                childToAcceptTicket1.tokenId
             );
-            let campaignId2 = await organization.childrenOf(ownerOrganizationNft2);
+            let children = await campaign.childrenOf(campaignId[0].tokenId);
+            expect(children.length).to.be.eq(1);
+            await campaign.connect(user1)["burnTicket()"]();
+            children = await campaign.childrenOf(campaignId[0].tokenId);
+            expect(children.length).to.be.eq(0);
+            expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(0);
+        });
+
+        async function mintTickets(karrotTicket: KarrotTicket, user: SignerWithAddress, numberTicketsToMint: number) {
+            const ownerOrganizationNft = await organization.ownerToken(user.address);
+            await campaign.connect(minter).mintToOrganization(ownerOrganizationNft, []);
+            const organizationPendingChildren = await organization.pendingChildrenOf(ownerOrganizationNft);
+            const campaignToAccept = organizationPendingChildren[0];
+            const childIndex = 0;
+            await organization.connect(user).acceptChild(
+                ownerOrganizationNft,
+                childIndex,
+                campaignToAccept.contractAddress,
+                campaignToAccept.tokenId
+            );
+            const userCampaignId = campaignToAccept.tokenId;
 
             await karrotTicket.connect(minter).mintToCampaignBatch(
-                3,
-                campaignId2[0].tokenId,
+                numberTicketsToMint,
+                userCampaignId,
                 [],
             );
 
-            let pendingChildrenTickets1 = await campaign.pendingChildrenOf(campaignId[0].tokenId);
-            let i = 0;
-            while (i < pendingChildrenTickets1.length) {
-                const childToAcceptTicket1 = pendingChildrenTickets1[i];
-                await campaign.connect(user1).acceptChild(
-                    campaignId[0].tokenId,
+            const pendingTickets = await campaign.pendingChildrenOf(userCampaignId);
+            for (let i = pendingTickets.length - 1; i >= 0; i--) {
+                const ticketToAccept = pendingTickets[i];
+                await campaign.connect(user).acceptChild(
+                    userCampaignId,
                     i,
-                    childToAcceptTicket1.contractAddress,
-                    childToAcceptTicket1.tokenId
+                    ticketToAccept.contractAddress,
+                    ticketToAccept.tokenId
                 );
-
-                pendingChildrenTickets1 = await campaign.pendingChildrenOf(campaignId[0].tokenId);
-            }
-            let pendingChildrenTickets2 = await campaign.pendingChildrenOf(campaignId2[0].tokenId);
-            i = 0;
-            while (i < pendingChildrenTickets2.length) {
-                const childToAcceptTicket2 = pendingChildrenTickets2[i];
-                await campaign.connect(user2).acceptChild(
-                    campaignId2[0].tokenId,
-                    i,
-                    childToAcceptTicket2.contractAddress,
-                    childToAcceptTicket2.tokenId
-                );
-                pendingChildrenTickets2 = await campaign.pendingChildrenOf(campaignId2[0].tokenId);
             }
 
+            const ticketIds = await campaign.childrenOf(userCampaignId);
+            return {
+                ticketIds: ticketIds.map(ticketId => ticketId.tokenId),
+                userCampaignId: userCampaignId
+            };
+        }
 
-            let ticketId1 = await campaign.childrenOf(campaignId[0].tokenId);
-            let ticketId2 = await campaign.childrenOf(campaignId2[0].tokenId);
-            expect(ticketId1.length).to.be.eq(5);
-            expect(ticketId2.length).to.be.eq(3);
+        async function checkTicketOwnership(karrotTicket: KarrotTicket, userTicketIds: BigNumber[], userCampaignId: BigNumber, owner: SignerWithAddress) {
+            for (let i = 0; i < userTicketIds.length; i++) {
+                const ticketId = userTicketIds[i];
+                const ticketDirectOwner = await karrotTicket.directOwnerOf(ticketId);
+                expect(ticketDirectOwner.parentId).to.be.eq(userCampaignId);
+                expect(await karrotTicket.ownerOf(ticketId)).to.be.eq(owner.address);
+            }
+        }
 
+        it("Should burn tickets", async function () {
+            const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+            await campaign.setTicketContract(karrotTicket.address);
+            await organization.grantRole(minterRole, minter.address);
+            await organization.connect(minter).mintTo(user1.address, []);
+            await organization.connect(minter).mintTo(user2.address, []);
+            await campaign.grantRole(minterRole, minter.address);
 
+            let user1Data = await mintTickets(karrotTicket, user1, 5);
+            let user2Data = await mintTickets(karrotTicket, user2, 3);
+            expect(user1Data.ticketIds.length).to.be.eq(5);
+            expect(user2Data.ticketIds.length).to.be.eq(3);
+            
             expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(8);
-            const ticketsToBurn: number[] = [1, 2, 3];
-            await karrotTicket.connect(user1).burnBatch(ticketsToBurn);
-            await expect(karrotTicket.connect(user1).burnTicket(3)).to.be.revertedWith("ERC721NotApprovedOrOwner");
+            const ticketsToBurn = 3;
+            await campaign.connect(user1)["burnTicketBatch(uint256)"](ticketsToBurn);
 
-            ticketId1 = await campaign.childrenOf(campaignId[0].tokenId);
-            ticketId2 = await campaign.childrenOf(campaignId2[0].tokenId);
-
-            expect(ticketId1.length).to.be.eq(2);
-            expect(ticketId2.length).to.be.eq(3);
+            const user1NewTicketIdsData = await campaign.childrenOf(user1Data.userCampaignId);
+            const user2NewTicketIdsData = await campaign.childrenOf(user2Data.userCampaignId);
+            const user1NewTicketIds = user1NewTicketIdsData.map(ticketId => ticketId.tokenId);
+            const user2NewTicketIds = user2NewTicketIdsData.map(ticketId => ticketId.tokenId);
+            expect(user1NewTicketIds.length).to.be.eq(2);
+            expect(user2NewTicketIds.length).to.be.eq(3);
+            await checkTicketOwnership(karrotTicket, user1NewTicketIds, user1Data.userCampaignId, user1);
+            await checkTicketOwnership(karrotTicket, user2NewTicketIds, user2Data.userCampaignId, user2);
 
             expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(5);
         });
