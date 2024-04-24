@@ -122,6 +122,21 @@ contract KarrotCampaign is
             super.supportsInterface(interfaceId);
     }
 
+    function _beforeAcceptChild(
+        uint256 parentId,
+        uint256 childIndex,
+        address childAddress,
+        uint256 childId
+    ) internal virtual override {
+        if (
+            !IKarrotTicket(childAddress).supportsInterface(
+                type(IKarrotTicket).interfaceId
+            )
+        ) {
+            revert InterfaceNotSupported();
+        }
+    }
+
     function _burnTicket(uint256 campaignId) internal {
         Child[] storage campaignTickets = _activeChildren[campaignId];
         uint256 ticketIdToBurn = _findTicketIdToBurn(campaignTickets);
