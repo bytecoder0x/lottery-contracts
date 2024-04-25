@@ -123,19 +123,15 @@ contract KarrotCampaign is
     }
 
     function _beforeAcceptChild(
-        uint256 parentId,
-        uint256 childIndex,
+        uint256,
+        uint256,
         address childAddress,
-        uint256 childId
+        uint256
     ) internal virtual override {
-        if (
-            !IKarrotTicket(childAddress).supportsInterface(
-                type(IKarrotTicket).interfaceId
-            )
-        ) {
-            revert InterfaceNotSupported();
-        }
+        if (childAddress != ticketsContract)
+            revert IncorrectCondition("Only ticket can be child of campaign");
     }
+
 
     function _burnTicket(uint256 campaignId) internal {
         Child[] storage campaignTickets = _activeChildren[campaignId];
