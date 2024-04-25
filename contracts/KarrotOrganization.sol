@@ -45,4 +45,19 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
         return interfaceId == type(IKarrotOrganization).interfaceId || 
             super.supportsInterface(interfaceId);
     }
+
+    function _beforeAcceptChild(
+        uint256,
+        uint256,
+        address childAddress,
+        uint256
+    ) internal virtual override {
+        if (
+            !IKarrotOrganization(childAddress).supportsInterface(
+                type(IKarrotOrganization).interfaceId
+            )
+        ) {
+            revert IncorrectCondition("Only campaign can be child of organization");
+        }
+    }
 }
