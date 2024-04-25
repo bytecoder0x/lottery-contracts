@@ -8,6 +8,7 @@ import {RMRKNestable} from "@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMR
 import {KarrotErc7401Base} from "./base/KarrotErc7401Base.sol";
 
 import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
+import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 
 contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     
@@ -44,5 +45,20 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {
         return interfaceId == type(IKarrotOrganization).interfaceId || 
             super.supportsInterface(interfaceId);
+    }
+
+    function _beforeAcceptChild(
+        uint256,
+        uint256,
+        address childAddress,
+        uint256
+    ) internal virtual override {
+        if (
+            !IKarrotCampaign(childAddress).supportsInterface(
+                type(IKarrotCampaign).interfaceId
+            )
+        ) {
+            revert IncorrectCondition("Only campaign can be child of organization");
+        }
     }
 }
