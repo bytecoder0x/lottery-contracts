@@ -164,14 +164,14 @@ describe("KarrotCampaign", async () => {
 
     it("Should prevent accept child if it is not ticket", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
-        const ERC7401Mock = await (await ethers.getContractFactory("ERC7401Mock")).deploy(campaign.address, owner.address, minter.address, "Test ERC7401");
+        const ERC7401Mock = await (await ethers.getContractFactory("ERC7401Mock")).deploy(owner.address, minter.address, "Test ERC7401");
         await campaign.setTicketContract(karrotTicket.address);
         await organization.grantRole(minterRole, minter.address);
         await organization.connect(minter).mintTo(user1.address, []);
         await campaign.grantRole(minterRole, minter.address);
         await campaign.connect(minter).mintToOrganization(1, []);
 
-        await ERC7401Mock.connect(minter).mintToCampaign(1, []);
+        await ERC7401Mock.connect(minter).mintTo(1, campaign.address);
         await expect(campaign.connect(minter).acceptChild(1, 0, ERC7401Mock.address, 1))
             .to.be.revertedWith("Only ticket can be child of campaign");
         expect((await campaign.childrenOf(1)).length).to.eq(0)
