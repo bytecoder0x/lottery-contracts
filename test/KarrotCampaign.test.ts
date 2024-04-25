@@ -1,9 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { KarrotOrganization, KarrotCampaign, KarrotTicket, ERC7401Mock } from "../typechain-types";
+import { KarrotOrganization, KarrotCampaign, KarrotTicket } from "../typechain-types";
 import { ethers } from "hardhat";
 import { assert, expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployBasicContracts } from "./utis";
+import { BigNumber } from "ethers";
 
 describe("KarrotCampaign", async () => {
     let campaign: KarrotCampaign;
@@ -159,8 +160,21 @@ describe("KarrotCampaign", async () => {
 
         await expect(campaign.connect(owner)["burnTicketBatch(uint256)"](ticketsToBurn)).to.be.revertedWith("User is not an owner of any organization");
         await expect(campaign.connect(user1)["burnTicketBatch(uint256)"](ticketsToBurn2)).to.be.revertedWith("Not enough tickets to burn");
-        //TODO: mock ERC7401 Contract, and test else scenario in _findTicketIdToBurn
+    });
 
+    it("Should prevent accept child if it is not ticket", async function () {
+        const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+        const ERC7401Mock = await (await ethers.getContractFactory("ERC7401Mock")).deploy(campaign.address, owner.address, minter.address, "Test ERC7401");
+        await campaign.setTicketContract(karrotTicket.address);
+        await organization.grantRole(minterRole, minter.address);
+        await organization.connect(minter).mintTo(user1.address, []);
+        await campaign.grantRole(minterRole, minter.address);
+        await campaign.connect(minter).mintToOrganization(1, []);
+
+        await ERC7401Mock.connect(minter).mintToCampaign(1, []);
+        await expect(campaign.connect(minter).acceptChild(1, 0, ERC7401Mock.address, 1))
+            .to.be.revertedWith("Only ticket can be child of campaign");
+        expect((await campaign.childrenOf(1)).length).to.eq(0)
     });
 
     async function checkTicketOwnership(karrotTicket: KarrotTicket, userTicketIds: BigNumber[], userCampaignId: BigNumber, owner: SignerWithAddress) {

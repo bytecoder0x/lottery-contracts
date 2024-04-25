@@ -25,7 +25,7 @@ contract ERC7401Mock is KarrotErc7401Base {
         campaign = _campaign;
     }
 
-    function mintToCampaign(uint parentId, bytes memory data) internal {
+    function mintToCampaign(uint parentId, bytes memory data) external {
         _lastTokenId++;
         _nestMint(campaign, _lastTokenId, parentId, data);
         _approve(msg.sender, _lastTokenId);
