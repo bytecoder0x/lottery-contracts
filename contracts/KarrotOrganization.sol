@@ -8,6 +8,7 @@ import {RMRKNestable} from "@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMR
 import {KarrotErc7401Base} from "./base/KarrotErc7401Base.sol";
 
 import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
+import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 
 contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     
@@ -53,8 +54,8 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
         uint256
     ) internal virtual override {
         if (
-            !IKarrotOrganization(childAddress).supportsInterface(
-                type(IKarrotOrganization).interfaceId
+            !IKarrotCampaign(childAddress).supportsInterface(
+                type(IKarrotCampaign).interfaceId
             )
         ) {
             revert IncorrectCondition("Only campaign can be child of organization");
