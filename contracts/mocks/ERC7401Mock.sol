@@ -3,31 +3,16 @@ pragma solidity 0.8.21;
 
 import {KarrotErc7401Base} from "../base/KarrotErc7401Base.sol";
 
-import {IKarrotCampaign} from "../interface/IKarrotCampaign.sol";
-
 contract ERC7401Mock is KarrotErc7401Base {
-    address campaign;
-
     constructor(
-        address _campaign,
         address _defaultAdmin,
         address _minter,
         string memory _name
-    ) KarrotErc7401Base(_defaultAdmin, _minter, _name) {
-        if (
-            !IKarrotCampaign(_campaign).supportsInterface(
-                type(IKarrotCampaign).interfaceId
-            )
-        ) {
-            revert InterfaceNotSupported();
-        }
+    ) KarrotErc7401Base(_defaultAdmin, _minter, _name) {}
 
-        campaign = _campaign;
-    }
-
-    function mintToCampaign(uint parentId, bytes memory data) external {
+    function mintTo(uint parentId, address to) external {
         _lastTokenId++;
-        _nestMint(campaign, _lastTokenId, parentId, data);
+        _nestMint(to, _lastTokenId, parentId, new bytes(0));
         _approve(msg.sender, _lastTokenId);
     }
 }
