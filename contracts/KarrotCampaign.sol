@@ -135,7 +135,7 @@ contract KarrotCampaign is
 
     function _burnTicket(uint256 campaignId) internal {
         Child[] storage campaignTickets = _activeChildren[campaignId];
-        uint256 ticketIdToBurn = _findTicketIdToBurn(campaignTickets);
+        uint256 ticketIdToBurn = campaignTickets[campaignTickets.length - 1].tokenId;
         uint lastTiketId = IKarrotTicket(ticketsContract).totalSupply(); //last token id == total supply
 
         uint lastTiketOwnerId;
@@ -181,26 +181,6 @@ contract KarrotCampaign is
         _pendingChildren[campaignId].pop();
  
         IKarrotTicket(ticketsContract).burnLastTicket();
-    }
-
-    function _findTicketIdToBurn(Child[] storage campaignTickets) private returns (uint256 ticketIdToBurn) {
-        uint i = campaignTickets.length - 1;
-        address ticketsContractCache = ticketsContract;
-        while (i >= 0) {
-            if (campaignTickets[i].contractAddress == ticketsContractCache) {
-                return campaignTickets[i].tokenId;
-            } else {
-                //remove any element from children that is not a ticket
-                _childIsInActive[campaignTickets[i].contractAddress][campaignTickets[i].tokenId];
-                campaignTickets.pop();
-                if (i > 0) {
-                    i--;
-                } else {
-                    break;
-                }
-            }
-        }
-        revert IncorrectCondition("No tickets found to burn");
     }
 
     function _getUserCampaignId() private view returns (uint256) {
