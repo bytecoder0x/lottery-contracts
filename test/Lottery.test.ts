@@ -142,10 +142,37 @@ describe.only("Lottery", async () => {
   describe("Lottery initialized", async function () {
     beforeEach(async function () {
       await ethers.provider.send("evm_increaseTime", [2001]);
-      await lottery.initializeLottery(0);
+    });
+
+    it("Lottery initialized correctly for 1 organization", async function () {
+      await lottery.initializeLottery(1);
+      const organizations = await lottery.getAllOrganizations();
+      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
+
+      expect(organizations[0]).to.be.eq(organizationAddresses[0]);
+      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
+      expect(await lottery.initializedOrganizationsCount()).to.equal(1);
+      expect(await lottery.lotteryTicketsTotalSupply()).to.equal(organazationsTicketsCount[0]);
+    });
+
+    it("Lottery initialized correctly when expected number of organizations greater than actual number", async function () {
+      await lottery.initializeLottery(5); // expected 2
+
+      expect(await lottery.initializedOrganizationsCount()).to.equal(2);
+      const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
+      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
+      const organizations = await lottery.getAllOrganizations();
+
+      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
+      expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
+      expect(organizations[0]).to.be.eq(organizationAddresses[0]);
+      expect(organizations[1]).to.be.eq(organizationAddresses[1]);
+      expect(await lottery.lotteryTicketsTotalSupply()).to.equal(expectedTicketsCount);
     });
 
     it("Lottery initialized correctly", async function () {
+      await lottery.initializeLottery(0);
+
       expect(await lottery.initializedOrganizationsCount()).to.equal(2);
       const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
       const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
@@ -198,15 +225,18 @@ describe.only("Lottery", async () => {
     });
 
     it("Can't call initializeLottery twice", async function () {
+      await lottery.initializeLottery(0);
       await expect(lottery.initializeLottery(0)).to.be.revertedWith("Lottery already initialized");
     });
 
     it("Can't call runLottery before lottery time come", async function () {
+      await lottery.initializeLottery(0);
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery time not reached yet");
     });
 
     describe("Lottery run", async function () {
       beforeEach(async function () {
+        await lottery.initializeLottery(0);
         await ethers.provider.send("evm_increaseTime", [1000]);
         await lottery.runLottery();
       });
@@ -236,6 +266,29 @@ describe.only("Lottery", async () => {
         await lottery2.runLottery();
 
         await expect(lottery2.rewardWinners(0)).to.be.revertedWith("All tiers already processed");
+      });
+
+      it("Reward token is transferred to one user who won jackpot", async function () {
+        const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+        await lottery.rewardWinners(1);
+        const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+        const lotteryTicketId = await lottery.tierWinners(0, 0);
+        const [ticketAddress, ticketId] = await lottery.getUnderlyingTicket(lotteryTicketId);
+        const ticketContract = await ethers.getContractAt("KarrotTicket", ticketAddress);
+        const owner = await ticketContract.ownerOf(ticketId);
+        const amountToken = Number(await lottery.winnerAmount(lotteryTicketId));
+        const balanceOfWinner = Number(await rewardToken.balanceOf(owner));
+
+        expect(amountToken).to.eq(balanceOfWinner);
+        expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - balanceOfWinner);
+      });
+
+      it("Correct reward when expected number of tieris greater than actual number", async function () {
+        const distributedAmount = Number(ethers.utils.parseEther("190"));
+        const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+        await lottery.rewardWinners(5);
+        const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+        expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - distributedAmount);
       });
 
       it("Reward token is transferred to winners", async function () {
@@ -294,6 +347,9 @@ describe.only("Lottery", async () => {
       await expect(lottery.connect(user1).setRedemptionPrice(1)).to.be.revertedWith(
         "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
       );
+      await expect(lottery.connect(user1).setRedemptionCap(1)).to.be.revertedWith(
+        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+      );
     });
 
     it("Should prevents redemption price from set to 0", async function () {
@@ -342,8 +398,26 @@ describe.only("Lottery", async () => {
     // });
   });
 
-  describe("Terms and conditions for setup and initialize lottery", async function () {});
+  describe("Terms and conditions for setup lottery", async function () {});
 
+  it("Should support AccessControl interface", async function () {
+    let functionSignature = [
+      "hasRole(bytes32,address)",
+      "getRoleAdmin(bytes32)",
+      "grantRole(bytes32,address)",
+      "revokeRole(bytes32,address)",
+      "renounceRole(bytes32,address)",
+    ];
+    let interfaceID = BigInt(0);
+
+    for (const signature of functionSignature) {
+      const selector = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(2, 10);
+      interfaceID ^= BigInt("0x" + selector);
+    }
+
+    const interfaceIDHex = "0x" + interfaceID.toString(16).padStart(8, "0");
+    expect(await lottery.supportsInterface(interfaceIDHex)).to.equal(true);
+  });
   after(async function () {
     //revert to initial state to remove time manipulation results
     await network.provider.send("evm_revert", [hardhatSnapshotId]);
