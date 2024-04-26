@@ -191,6 +191,11 @@ describe.only("Lottery", async () => {
         await expect(lottery.runLottery()).to.be.revertedWith("Lottery already run");
       });
 
+      it("Can't reward winners twice", async function () {
+        await lottery.rewardWinners(0);
+        await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery already processed");
+      });
+
       it("Reward token is transferred to winners", async function () {
         type Winner = {
           owner: string;
@@ -237,10 +242,43 @@ describe.only("Lottery", async () => {
         const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
         expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - totalSpentTokens);
       });
+    });
 
-      it("Can't reward winners twice", async function () {
-        await lottery.rewardWinners(0);
-        await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery already processed");
+    describe("Redemption functionality", async function () {
+      //       function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
+      //     if (redemptionPrice == 0) {
+      //         revert IncorrectValue("Redemption price can't be 0");
+      //     }
+      //     redemptionPrice = _redemptionPrice;
+      //     emit SetRedemptionPrice(_redemptionPrice);
+      // }
+
+      // function setRedemptionCap(uint _redemptionCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
+      //     //redemptionCap can be 0, meaning no cap
+      //     redemptionCap = _redemptionCap;
+      //     emit SetRedemptionCap(_redemptionCap);
+      // }
+      it("Should prevents non-admin set redemption price and cap", async function () {
+        const adminRole = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+        await expect(lottery.connect(user1).setRedemptionPrice(1)).to.be.revertedWith(
+          "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+        );
+        await expect(lottery.connect(user1).setRedemptionCap(1)).to.be.revertedWith(
+          "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+        );
+      });
+
+      it("Should prevents redemption price from set to 0", async function () {
+        await expect(lottery.setRedemptionPrice(0)).to.be.revertedWith("Redemption price can't be 0");
+      });
+
+      it.only("Correct set redemption price and cap", async function () {
+        const redemptionPrice = 100;
+        await lottery.setRedemptionPrice(100);
+        await lottery.setRedemptionCap(redemptionPrice);
+        expect(await lottery.redemptionPrice()).to.be.eq(redemptionPrice);
+        expect(await lottery.redemptionCap()).to.be.eq(redemptionPrice);
       });
     });
   });
