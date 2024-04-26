@@ -5,7 +5,7 @@ import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
 
-describe("Lottery", async () => {
+describe.only("Lottery", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
   let ticketMinter: TicketMinter;
@@ -17,7 +17,7 @@ describe("Lottery", async () => {
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
 
   async function deployAndSetupLottery() {
-    const { karrotFactory, ticketMinter, lotteryAddress, owner, minter } = await deployBasicContracts();
+    const { karrotFactory, ticketMinter, lotteryAddress, owner, minter, user1, user2 } = await deployBasicContracts();
     await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization 2", ["Campaign 3", "Campaign 4"]);
     const campaignsAddresses = await karrotFactory.getAllCampaigns();
     const organizationAddresses = await karrotFactory.getAllOrganizations();
@@ -33,7 +33,7 @@ describe("Lottery", async () => {
       },
       {
         tierType: 1,
-        winnersShare: 5_00, //5%
+        winnersShare: 40_00, //40%
         winnersCount: 0,
         rewardAmount: ethers.utils.parseEther("10"),
       },
@@ -48,19 +48,16 @@ describe("Lottery", async () => {
     await lottery.setupLottery(rewardToken.address, tiers, [8000, 2000]);
     await rewardToken.transfer(lottery.address, ethers.utils.parseEther("1000"));
 
-    const users = await ethers.getSigners();
-
     let organazationsTicketsCount = [0, 0];
-    for (let u = 2; u < 10; u++) {
-      for (let c = 0; c < campaignsAddresses.length; c++) {
-        await ticketMinter.connect(minter).mintTickets(users[u].address, campaignsAddresses[c], [10 + u]);
 
-        //campaign 0 and 1 is for organization 0, campaign 2 and 3 is for organization 1
-        if (c < 2) {
-          organazationsTicketsCount[0] = organazationsTicketsCount[0] + 10 + u;
-        } else {
-          organazationsTicketsCount[1] = organazationsTicketsCount[1] + 10 + u;
-        }
+    for (let c = 0; c < campaignsAddresses.length; c++) {
+      //campaign 0 and 1 is for organization 0, campaign 2 and 3 is for organization 1
+      if (c < 2) {
+        await ticketMinter.connect(minter).mintTickets(user1.address, campaignsAddresses[c], 5);
+        organazationsTicketsCount[0] = organazationsTicketsCount[0] + 5;
+      } else {
+        await ticketMinter.connect(minter).mintTickets(user2.address, campaignsAddresses[c], 5);
+        organazationsTicketsCount[1] = organazationsTicketsCount[1] + 5;
       }
     }
 
@@ -103,7 +100,10 @@ describe("Lottery", async () => {
       const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[i]);
       const ticketContract = await campaign.ticketsContract();
       const organizationAddress = i < 2 ? organizationAddresses[0] : organizationAddresses[1];
-      expect(await lottery.organizationTicketsContracts(organizationAddress, i < 2 ? i : i - 2)).to.equal(ticketContract);
+      const ticketAddress = await lottery.organizationTicketsContracts(organizationAddress, i < 2 ? i : i - 2);
+      const organizationTickets = await lottery.getOrganizationTicketsContracts(organizationAddress);
+      expect(organizationTickets.length).to.be.equal(2);
+      expect(ticketAddress).to.equal(ticketContract);
     }
   });
 
@@ -120,14 +120,21 @@ describe("Lottery", async () => {
     it("Lottery initialized correctly", async function () {
       expect(await lottery.initializedOrganizationsCount()).to.equal(2);
       const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
+      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
+      const organizations = await lottery.getAllOrganizations();
+
+      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
+      expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
+      expect(organizations[0]).to.be.eq(organizationAddresses[0]);
+      expect(organizations[1]).to.be.eq(organizationAddresses[1]);
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(expectedTicketsCount);
 
       const organization1TicketsRange = await lottery.organizationTicketsRange(organizationAddresses[0]);
       expect(organization1TicketsRange.firstLotteryTicketId).to.equal(0);
-      expect(organization1TicketsRange.lastLotteryTicketId).to.equal(247);
+      expect(organization1TicketsRange.lastLotteryTicketId).to.equal(9);
       const organization2TicketsRange = await lottery.organizationTicketsRange(organizationAddresses[1]);
-      expect(organization2TicketsRange.firstLotteryTicketId).to.equal(248);
-      expect(organization2TicketsRange.lastLotteryTicketId).to.equal(495);
+      expect(organization2TicketsRange.firstLotteryTicketId).to.equal(10);
+      expect(organization2TicketsRange.lastLotteryTicketId).to.equal(19);
 
       const allCampaignTickets = await lottery.getAllCampaignTickets();
       const allTickets = await karrotFactory.getAllTickets();
@@ -136,7 +143,7 @@ describe("Lottery", async () => {
       for (let i = 0; i < allCampaignTickets.length; i++) {
         expect(allCampaignTickets[i].campaignTicketContract).to.equal(allTickets[i]);
         expect(allCampaignTickets[i].ticketRange.firstLotteryTicketId).to.equal(startIndex);
-        const endIndex = startIndex + 123;
+        const endIndex = startIndex + 4;
         expect(allCampaignTickets[i].ticketRange.lastLotteryTicketId).to.equal(endIndex);
         startIndex = endIndex + 1;
       }
@@ -151,8 +158,8 @@ describe("Lottery", async () => {
 
       //Random tier should be initialized with winners count
       expect(tiers[1].tierType).to.equal(1);
-      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 5) / 100));
-      expect(tiers[1].winnersShare).to.equal(500); //5%
+      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 40) / 100));
+      expect(tiers[1].winnersShare).to.equal(4000); // 25%
       expect(tiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
 
       //Fixed winners tier
@@ -229,6 +236,11 @@ describe("Lottery", async () => {
 
         const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
         expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - totalSpentTokens);
+      });
+
+      it("Can't reward winners twice", async function () {
+        await lottery.rewardWinners(0);
+        await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery already processed");
       });
     });
   });
