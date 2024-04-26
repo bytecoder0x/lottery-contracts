@@ -242,7 +242,7 @@ contract Lottery is AccessControl, ILottery {
     }
 
     function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (redemptionPrice == 0) {
+        if (_redemptionPrice == 0) {
             revert IncorrectValue("Redemption price can't be 0");
         }
         redemptionPrice = _redemptionPrice;
