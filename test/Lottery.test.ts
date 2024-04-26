@@ -224,6 +224,20 @@ describe.only("Lottery", async () => {
         await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery already processed");
       });
 
+      it("Can't reward if all tiers already processed or tiers do not exist", async function () {
+        // To test this scenario, needs a lottery without tiers
+        const currentTime = Math.floor(Date.now() / 1000);
+        await karrotFactory.deployLotteryContract(owner.address, currentTime + 4000, currentTime + 5000, currentTime + 6000);
+        const lotteryAddress2 = await karrotFactory.lotteries(1);
+        const lottery2 = (await ethers.getContractAt("Lottery", lotteryAddress2)) as Lottery;
+        await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress2, "Test Organization 3", ["Campaign 5", "Campaign 6"]);
+        await lottery2.setupLottery(rewardToken.address, [], [10000]);
+        await ethers.provider.send("evm_increaseTime", [7000]);
+        await lottery2.runLottery();
+
+        await expect(lottery2.rewardWinners(0)).to.be.revertedWith("All tiers already processed");
+      });
+
       it("Reward token is transferred to winners", async function () {
         type Winner = {
           owner: string;
