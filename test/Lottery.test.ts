@@ -398,7 +398,145 @@ describe.only("Lottery", async () => {
     // });
   });
 
-  describe("Terms and conditions for setup lottery", async function () {});
+  describe("Terms and conditions for setup lottery", async function () {
+    let lottery2;
+
+    async function deployLottery() {
+      const currentTime = Math.floor(Date.now() / 1000);
+      await karrotFactory.deployLotteryContract(owner.address, currentTime + 1000, currentTime + 2000, currentTime + 3000);
+      const lotteryAddress2 = await karrotFactory.lotteries(1);
+      await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress2, "Test Organization 3", ["Campaign 5", "Campaign 6"]);
+      const lottery2 = (await ethers.getContractAt("Lottery", lotteryAddress2)) as Lottery;
+      return lottery2;
+    }
+
+    beforeEach(async function () {
+      lottery2 = await loadFixture(deployLottery);
+    });
+
+    it("Should prevents if non-admin setup", async function () {
+      const adminRole = ethers.constants.HashZero;
+      await expect(lottery.connect(user1).setupLottery(rewardToken.address, [], [])).to.be.revertedWith(
+        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+      );
+    });
+
+    it("Should prevents setup after lottery time", async function () {
+      await ethers.provider.send("evm_increaseTime", [3001]);
+      await expect(lottery.setupLottery(rewardToken.address, [], [])).to.be.revertedWith("Can't setup after lottery time");
+    });
+
+    it("Should prevents setup if reward token is not a contract", async function () {
+      await expect(lottery.setupLottery(user1.address, [], [])).to.be.revertedWith("Reward token is not a contract");
+    });
+
+    it("Should prevents setup if incorrect organization shares count", async function () {
+      await expect(lottery.setupLottery(rewardToken.address, [], [])).to.be.revertedWith("Incorrect organization shares count");
+    });
+
+    it("Should prevents setup if organization shares count more than bips or 0", async function () {
+      await expect(lottery.setupLottery(rewardToken.address, [], [12000, 2000])).to.be.revertedWith("Incorrect organization shares");
+      await expect(lottery.setupLottery(rewardToken.address, [], [0, 2000])).to.be.revertedWith("Incorrect organization shares");
+    });
+
+    it("Should prevents setup if total shares amounu is not 100%", async function () {
+      await expect(lottery.setupLottery(rewardToken.address, [], [8000, 1999])).to.be.revertedWith("Total shares sum must be 100%");
+    });
+
+    it("Should prevents setup if first tier is not jackpot", async function () {
+      const tier0 = {
+        tierType: 1, // Random
+        winnersShare: 0,
+        winnersCount: 1,
+        rewardAmount: ethers.utils.parseEther("100"),
+      };
+
+      await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("First tier must be Jackpot");
+    });
+
+    it("Should prevents setup if jackpot tier has more than 2 winners", async function () {
+      const tier0 = {
+        tierType: 0,
+        winnersShare: 0,
+        winnersCount: 2,
+        rewardAmount: ethers.utils.parseEther("100"),
+      };
+
+      await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("There must be 1 winner in Jackpot tier");
+    });
+
+    it("Should prevents setup if reward amount equal 0", async function () {
+      const tier0 = {
+        tierType: 0,
+        winnersShare: 0,
+        winnersCount: 1,
+        rewardAmount: 0,
+      };
+
+      await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("Incorrect tier values");
+    });
+
+    it("Should prevents setup if tiers in the wrong order", async function () {
+      const tier0 = {
+        tierType: 0,
+        winnersShare: 0,
+        winnersCount: 1,
+        rewardAmount: ethers.utils.parseEther("100"),
+      };
+
+      const tier1 = {
+        tierType: 1,
+        winnersShare: 40_00,
+        winnersCount: 1,
+        rewardAmount: ethers.utils.parseEther("10"),
+      };
+
+      const tier2 = {
+        tierType: 2,
+        winnersShare: 0,
+        winnersCount: 10,
+        rewardAmount: ethers.utils.parseEther("1"),
+      };
+
+      await expect(lottery.setupLottery(rewardToken.address, [tier0, tier2, tier1], [8000, 2000])).to.be.revertedWith("Incorrect tier order");
+    });
+
+    it("Should prevents setup if winners share equal 0 for random tier", async function () {
+      const tier0 = {
+        tierType: 0,
+        winnersShare: 0,
+        winnersCount: 1,
+        rewardAmount: ethers.utils.parseEther("100"),
+      };
+
+      const tier1 = {
+        tierType: 1,
+        winnersShare: 0,
+        winnersCount: 1,
+        rewardAmount: ethers.utils.parseEther("10"),
+      };
+
+      await expect(lottery.setupLottery(rewardToken.address, [tier0, tier1], [8000, 2000])).to.be.revertedWith("Winners share can't be 0 for random tier");
+    });
+
+    it("Should prevents setup if winners count equal 0 for fixed tier", async function () {
+      const tier0 = {
+        tierType: 0,
+        winnersShare: 0,
+        winnersCount: 1,
+        rewardAmount: ethers.utils.parseEther("100"),
+      };
+
+      const tier2 = {
+        tierType: 2,
+        winnersShare: 0,
+        winnersCount: 0,
+        rewardAmount: ethers.utils.parseEther("1"),
+      };
+
+      await expect(lottery.setupLottery(rewardToken.address, [tier0, tier2], [8000, 2000])).to.be.revertedWith("Winners count can't be 0 for fixed tier");
+    });
+  });
 
   it("Should support AccessControl interface", async function () {
     let functionSignature = [
@@ -418,6 +556,7 @@ describe.only("Lottery", async () => {
     const interfaceIDHex = "0x" + interfaceID.toString(16).padStart(8, "0");
     expect(await lottery.supportsInterface(interfaceIDHex)).to.equal(true);
   });
+
   after(async function () {
     //revert to initial state to remove time manipulation results
     await network.provider.send("evm_revert", [hardhatSnapshotId]);
