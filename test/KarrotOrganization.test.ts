@@ -15,7 +15,7 @@ describe("KarrotOrganization", async () => {
     const [owner, minter, user1, user2] = await ethers.getSigners();
     const organization = await (await ethers.getContractFactory("KarrotOrganization")).deploy(owner.address, minter.address, "Test Organization");
     return { organization, owner, minter, user1, user2 };
-  };
+  }
 
   beforeEach("Init test environment", async () => {
     const fixture = await loadFixture(deployOrganization);
@@ -37,9 +37,7 @@ describe("KarrotOrganization", async () => {
       const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
       await organization.grantRole(minterRole, minter.address);
 
-      await expect(organization.connect(minter).mintTo(user1.address, []))
-        .to.emit(organization, 'Transfer')
-        .withArgs(ethers.constants.AddressZero, user1.address, 1);
+      await expect(organization.connect(minter).mintTo(user1.address, [])).to.emit(organization, "Transfer").withArgs(ethers.constants.AddressZero, user1.address, 1);
 
       const tokenId = await organization.ownerToken(user1.address);
       expect(tokenId).to.be.eq(1);
@@ -48,19 +46,20 @@ describe("KarrotOrganization", async () => {
 
     it("Should prevents minting to the owner who already has a token", async function () {
       await organization.connect(minter).mintTo(user1.address, []);
-      await expect(organization.connect(minter).mintTo(user1.address, []))
-        .to.be.revertedWith("IncorrectCondition");
+      await expect(organization.connect(minter).mintTo(user1.address, [])).to.be.revertedWith("IncorrectCondition");
     });
     it("Should prevents non-minter from minting tokens", async function () {
       const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
-      await expect(organization.connect(user2).mintTo(user1.address, []))
-        .to.be.revertedWith("AccessControl: account " + user2.address.toLowerCase() + " is missing role " + minterRole);
+      await expect(organization.connect(user2).mintTo(user1.address, [])).to.be.revertedWith(
+        "AccessControl: account " + user2.address.toLowerCase() + " is missing role " + minterRole
+      );
     });
     it("Should revokes minter role and prevents token minting", async function () {
       const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
       await organization.revokeRole(minterRole, minter.address);
-      await expect(organization.connect(minter).mintTo(user2.address, []))
-        .to.be.revertedWith("AccessControl: account " + minter.address.toLowerCase() + " is missing role " + minterRole);
+      await expect(organization.connect(minter).mintTo(user2.address, [])).to.be.revertedWith(
+        "AccessControl: account " + minter.address.toLowerCase() + " is missing role " + minterRole
+      );
     });
   });
   describe("KarrotErc7401Base", function () {
@@ -79,68 +78,78 @@ describe("KarrotOrganization", async () => {
     });
     it("Should support AccessControl interface", async function () {
       let functionSignature = [
-        'hasRole(bytes32,address)',
-        'getRoleAdmin(bytes32)',
-        'grantRole(bytes32,address)',
-        'revokeRole(bytes32,address)',
-        'renounceRole(bytes32,address)'
+        "hasRole(bytes32,address)",
+        "getRoleAdmin(bytes32)",
+        "grantRole(bytes32,address)",
+        "revokeRole(bytes32,address)",
+        "renounceRole(bytes32,address)",
       ];
       let interfaceID = BigInt(0);
 
       for (const signature of functionSignature) {
         const selector = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(2, 10);
-        interfaceID ^= BigInt('0x' + selector);
+        interfaceID ^= BigInt("0x" + selector);
       }
 
-      const interfaceIDHex = '0x' + interfaceID.toString(16).padStart(8, '0');
+      const interfaceIDHex = "0x" + interfaceID.toString(16).padStart(8, "0");
       expect(await organization.supportsInterface(interfaceIDHex)).to.equal(true);
     });
 
     it("Should support RMRKNestable interface", async function () {
       const functionSignatures = [
-        'ownerOf(uint256)',
-        'directOwnerOf(uint256)',
-        'burn(uint256,uint256)',
-        'addChild(uint256,uint256,bytes)',
-        'acceptChild(uint256,uint256,address,uint256)',
-        'rejectAllChildren(uint256,uint256)',
-        'transferChild(uint256,address,uint256,uint256,address,uint256,bool,bytes)',
-        'childrenOf(uint256)',
-        'pendingChildrenOf(uint256)',
-        'childOf(uint256,uint256)',
-        'pendingChildOf(uint256,uint256)',
-        'nestTransferFrom(address,address,uint256,uint256,bytes)'
+        "ownerOf(uint256)",
+        "directOwnerOf(uint256)",
+        "burn(uint256,uint256)",
+        "addChild(uint256,uint256,bytes)",
+        "acceptChild(uint256,uint256,address,uint256)",
+        "rejectAllChildren(uint256,uint256)",
+        "transferChild(uint256,address,uint256,uint256,address,uint256,bool,bytes)",
+        "childrenOf(uint256)",
+        "pendingChildrenOf(uint256)",
+        "childOf(uint256,uint256)",
+        "pendingChildOf(uint256,uint256)",
+        "nestTransferFrom(address,address,uint256,uint256,bytes)",
       ];
       let interfaceID = BigInt(0);
 
       for (const signature of functionSignatures) {
         const selector = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(2, 10);
-        interfaceID ^= BigInt('0x' + selector);
+        interfaceID ^= BigInt("0x" + selector);
       }
 
-      const interfaceIDHex = '0x' + interfaceID.toString(16).padStart(8, '0');
+      const interfaceIDHex = "0x" + interfaceID.toString(16).padStart(8, "0");
       expect(await organization.supportsInterface(interfaceIDHex)).to.equal(true);
     });
 
     it("Should not support a random interface", async function () {
-      //IERC1363 
+      //IERC1363
       let interfaceID = BigInt(0);
       const functionSignatures = [
-        'transferAndCall(address,uint256)',
-        'transferAndCall(address,uint256,bytes)',
-        'transferFromAndCall(address,address,uint256)',
-        'transferFromAndCall(address,address,uint256,bytes)',
-        'approveAndCall(address,uint256)',
-        'approveAndCall(address,uint256,bytes)'
+        "transferAndCall(address,uint256)",
+        "transferAndCall(address,uint256,bytes)",
+        "transferFromAndCall(address,address,uint256)",
+        "transferFromAndCall(address,address,uint256,bytes)",
+        "approveAndCall(address,uint256)",
+        "approveAndCall(address,uint256,bytes)",
       ];
 
       for (const signature of functionSignatures) {
         const selector = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(2, 10);
-        interfaceID ^= BigInt('0x' + selector);
+        interfaceID ^= BigInt("0x" + selector);
       }
 
-      const interfaceIDHex = '0x' + interfaceID.toString(16).padStart(8, '0');
+      const interfaceIDHex = "0x" + interfaceID.toString(16).padStart(8, "0");
       expect(await organization.supportsInterface(interfaceIDHex)).to.equal(false);
     });
+  });
+
+  it("Should prevent accept child if it does not have campaign interface", async function () {
+    const ERC7401Mock = await (await ethers.getContractFactory("ERC7401Mock")).deploy(owner.address, minter.address, "Test ERC7401");
+
+    await organization.connect(minter).mintTo(user1.address, []);
+    await ERC7401Mock.connect(minter).mintTo(1, organization.address);
+
+    await expect(organization.connect(minter).acceptChild(1, 0, ERC7401Mock.address, 1)).to.be.revertedWith("Only campaign can be child of organization");
+    expect((await organization.childrenOf(1)).length).to.eq(0);
   });
 });
