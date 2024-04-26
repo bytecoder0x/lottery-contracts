@@ -1,50 +1,49 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { KarrotFactory, TicketMinter, Lottery } from "../typechain-types";
+import { KarrotFactory, TicketMinter, Lottery, RewardTokenMintableMock, KarrotTicket } from "../typechain-types";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
 
 describe("Lottery", async () => {
   let hardhatSnapshotId: string;
-  let karrotFactory: KarrotFactory
+  let karrotFactory: KarrotFactory;
   let ticketMinter: TicketMinter;
   let lottery: Lottery;
+  let rewardToken: RewardTokenMintableMock;
   let organizationAddresses: string[];
   let campaignsAddresses: string[];
   let organazationsTicketsCount: number[];
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
 
   async function deployAndSetupLottery() {
-    const { karrotFactory, ticketMinter, lotteryAddress, owner, minter }
-      = await deployBasicContracts();
-    await karrotFactory.deployOrganizationAndCampaigns(
-      owner.address,
-      lotteryAddress,
-      "Test Organization 2",
-      ["Campaign 3", "Campaign 4"]
-    );
+    const { karrotFactory, ticketMinter, lotteryAddress, owner, minter } = await deployBasicContracts();
+    await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization 2", ["Campaign 3", "Campaign 4"]);
     const campaignsAddresses = await karrotFactory.getAllCampaigns();
     const organizationAddresses = await karrotFactory.getAllOrganizations();
 
     const rewardToken = await (await ethers.getContractFactory("RewardTokenMintableMock")).deploy();
-    const lottery = await ethers.getContractAt("Lottery", lotteryAddress) as Lottery;
-    const tiers = [{
-      tierType: 0,
-      winnersShare: 0,
-      winnersCount: 1,
-      rewardAmount: ethers.utils.parseEther("100")
-    }, {
-      tierType: 1,
-      winnersShare: 5_00, //5%
-      winnersCount: 0,
-      rewardAmount: ethers.utils.parseEther("10")
-    }, {
-      tierType: 2,
-      winnersShare: 0,
-      winnersCount: 10,
-      rewardAmount: ethers.utils.parseEther("1")
-    }];
+    const lottery = (await ethers.getContractAt("Lottery", lotteryAddress)) as Lottery;
+    const tiers = [
+      {
+        tierType: 0,
+        winnersShare: 0,
+        winnersCount: 1,
+        rewardAmount: ethers.utils.parseEther("100"),
+      },
+      {
+        tierType: 1,
+        winnersShare: 5_00, //5%
+        winnersCount: 0,
+        rewardAmount: ethers.utils.parseEther("10"),
+      },
+      {
+        tierType: 2,
+        winnersShare: 0,
+        winnersCount: 10,
+        rewardAmount: ethers.utils.parseEther("1"),
+      },
+    ];
 
     await lottery.setupLottery(rewardToken.address, tiers, [8000, 2000]);
     await rewardToken.transfer(lottery.address, ethers.utils.parseEther("1000"));
@@ -54,11 +53,7 @@ describe("Lottery", async () => {
     let organazationsTicketsCount = [0, 0];
     for (let u = 2; u < 10; u++) {
       for (let c = 0; c < campaignsAddresses.length; c++) {
-        await ticketMinter.connect(minter).mintTickets(
-          users[u].address,
-          campaignsAddresses[c],
-          [10 + u]
-        );
+        await ticketMinter.connect(minter).mintTickets(users[u].address, campaignsAddresses[c], [10 + u]);
 
         //campaign 0 and 1 is for organization 0, campaign 2 and 3 is for organization 1
         if (c < 2) {
@@ -73,18 +68,19 @@ describe("Lottery", async () => {
       karrotFactory,
       ticketMinter,
       lottery,
+      rewardToken,
       organizationAddresses,
       campaignsAddresses,
       organazationsTicketsCount,
       owner,
       minter,
       user1,
-      user2
+      user2,
     };
   }
 
   before(async function () {
-    hardhatSnapshotId =  await network.provider.send('evm_snapshot')
+    hardhatSnapshotId = await network.provider.send("evm_snapshot");
   });
 
   beforeEach("Init test environment", async () => {
@@ -92,6 +88,7 @@ describe("Lottery", async () => {
     karrotFactory = fixture.karrotFactory;
     ticketMinter = fixture.ticketMinter;
     lottery = fixture.lottery;
+    rewardToken = fixture.rewardToken;
     owner = fixture.owner;
     minter = fixture.minter;
     organizationAddresses = fixture.organizationAddresses;
@@ -99,7 +96,7 @@ describe("Lottery", async () => {
     organazationsTicketsCount = fixture.organazationsTicketsCount;
     user1 = fixture.user1;
     user2 = fixture.user2;
-  })
+  });
 
   it("Ticket contract is registered if deployed through factory", async function () {
     for (let i = 0; i < campaignsAddresses.length; i++) {
@@ -120,7 +117,7 @@ describe("Lottery", async () => {
       await lottery.initializeLottery(0);
     });
 
-    it("Lottery initialized correctly", async function () {  
+    it("Lottery initialized correctly", async function () {
       expect(await lottery.initializedOrganizationsCount()).to.equal(2);
       const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(expectedTicketsCount);
@@ -154,7 +151,7 @@ describe("Lottery", async () => {
 
       //Random tier should be initialized with winners count
       expect(tiers[1].tierType).to.equal(1);
-      expect(tiers[1].winnersCount).to.equal(Math.trunc(expectedTicketsCount * 5 / 100));
+      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 5) / 100));
       expect(tiers[1].winnersShare).to.equal(500); //5%
       expect(tiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
 
@@ -163,7 +160,6 @@ describe("Lottery", async () => {
       expect(tiers[2].winnersCount).to.equal(10);
       expect(tiers[2].winnersShare).to.equal(0);
       expect(tiers[2].rewardAmount).to.equal(ethers.utils.parseEther("1"));
-      
     });
 
     it("Can't call initializeLottery twice", async function () {
@@ -189,8 +185,50 @@ describe("Lottery", async () => {
       });
 
       it("Reward token is transferred to winners", async function () {
+        type Winner = {
+          owner: string;
+          amountToken: number;
+        };
+
+        const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+        const winners: Winner[] = [];
+        const tier1 = await lottery.getTier(1);
+        const tier2 = await lottery.getTier(2);
+        const totalWinnersTier1 = Number(tier1.winnersCount);
+        const totalWinnersTier2 = Number(tier2.winnersCount);
+
         await lottery.rewardWinners(0);
-        //TODO: check winners for each tier
+        await processTierWinners(0, 1);
+        await processTierWinners(1, totalWinnersTier1);
+        await processTierWinners(2, totalWinnersTier2);
+
+        async function processTierWinners(tier: number, totalWinners: number) {
+          for (let i = 0; i < totalWinners; i += 1) {
+            const lotteryTicketId = await lottery.tierWinners(tier, i);
+            const [ticketAddress, ticketId] = await lottery.getUnderlyingTicket(lotteryTicketId);
+            const ticketContract = await ethers.getContractAt("KarrotTicket", ticketAddress);
+            const owner = await ticketContract.ownerOf(ticketId);
+            const amountToken = Number(await lottery.winnerAmount(lotteryTicketId));
+            const index = winners.findIndex((winner) => winner.owner === owner);
+
+            if (index !== -1) {
+              winners[index].amountToken += amountToken;
+            } else {
+              winners.push({ owner, amountToken });
+            }
+          }
+        }
+
+        let totalSpentTokens = 0;
+        for (let i = 0; i < winners.length; i += 1) {
+          const balanceOfWinner = Number(await rewardToken.balanceOf(winners[i].owner));
+          totalSpentTokens += balanceOfWinner;
+
+          expect(winners[i].amountToken).to.eq(balanceOfWinner);
+        }
+
+        const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+        expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - totalSpentTokens);
       });
     });
   });
