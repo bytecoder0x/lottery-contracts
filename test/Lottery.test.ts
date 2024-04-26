@@ -241,45 +241,81 @@ describe.only("Lottery", async () => {
 
         const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
         expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - totalSpentTokens);
+
+        // await network.provider.send("evm_revert", [hardhatSnapshotId]);
       });
     });
+  });
 
-    describe("Redemption functionality", async function () {
-      //       function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
-      //     if (redemptionPrice == 0) {
-      //         revert IncorrectValue("Redemption price can't be 0");
-      //     }
-      //     redemptionPrice = _redemptionPrice;
-      //     emit SetRedemptionPrice(_redemptionPrice);
-      // }
+  describe("Redemption functionality", async function () {
+    // let lottery: Lottery;
 
-      // function setRedemptionCap(uint _redemptionCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
-      //     //redemptionCap can be 0, meaning no cap
-      //     redemptionCap = _redemptionCap;
-      //     emit SetRedemptionCap(_redemptionCap);
-      // }
-      it("Should prevents non-admin set redemption price and cap", async function () {
-        const adminRole = "0x0000000000000000000000000000000000000000000000000000000000000000";
+    // async function deployAndSetupLottery() {
+    //   await karrotFactory.deployLotteryContract(
+    //     owner.address,
+    //     +(new Date().getTime() / 1000).toFixed(0) + 1000,
+    //     +(new Date().getTime() / 1000).toFixed(0) + 2000,
+    //     +(new Date().getTime() / 1000).toFixed(0) + 3000
+    //   );
+    // }
+    // beforeEach(async function () {
+    //   // await lottery.runLottery();
+    // });
 
-        await expect(lottery.connect(user1).setRedemptionPrice(1)).to.be.revertedWith(
-          "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
-        );
-        await expect(lottery.connect(user1).setRedemptionCap(1)).to.be.revertedWith(
-          "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
-        );
-      });
+    it("Should prevents non-admin set redemption price and cap", async function () {
+      const adminRole = ethers.constants.HashZero;
 
-      it("Should prevents redemption price from set to 0", async function () {
-        await expect(lottery.setRedemptionPrice(0)).to.be.revertedWith("Redemption price can't be 0");
-      });
+      await expect(lottery.connect(user1).setRedemptionPrice(1)).to.be.revertedWith(
+        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+      );
+      await expect(lottery.connect(user1).setRedemptionCap(1)).to.be.revertedWith(
+        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+      );
+    });
 
-      it.only("Correct set redemption price and cap", async function () {
-        const redemptionPrice = 100;
-        await lottery.setRedemptionPrice(100);
-        await lottery.setRedemptionCap(redemptionPrice);
-        expect(await lottery.redemptionPrice()).to.be.eq(redemptionPrice);
-        expect(await lottery.redemptionCap()).to.be.eq(redemptionPrice);
-      });
+    it("Should prevents redemption price from set to 0", async function () {
+      await expect(lottery.setRedemptionPrice(0)).to.be.revertedWith("Redemption price can't be 0");
+    });
+
+    it("Should prevents redeem if burn period finished or price not set", async function () {
+      const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+      const ticketContract = await campaign.ticketsContract();
+      await expect(lottery.redeem(ticketContract, 2)).to.be.revertedWith("Redemption price not set");
+
+      await ethers.provider.send("evm_increaseTime", [2001]);
+      await expect(lottery.redeem(ticketContract, 2)).to.be.revertedWith("Burn period finished yet");
+    });
+
+    it("Should prevents redeem if redemption cap reached", async function () {
+      const redemptionPrice = ethers.utils.parseEther("100");
+      await lottery.setRedemptionPrice(redemptionPrice);
+      await lottery.setRedemptionCap(redemptionPrice);
+      const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+      const ticketContract = await campaign.ticketsContract();
+      await expect(lottery.redeem(ticketContract, 2)).to.be.revertedWith("Redemption cap reached");
+    });
+
+    it("Correct set redemption price and cap", async function () {
+      const redemptionPrice = ethers.utils.parseEther("100");
+      await lottery.setRedemptionPrice(redemptionPrice);
+      await lottery.setRedemptionCap(redemptionPrice);
+      expect(await lottery.redemptionPrice()).to.be.eq(redemptionPrice);
+      expect(await lottery.redemptionCap()).to.be.eq(redemptionPrice);
+    });
+
+    it("Correct set redemption price and cap", async function () {
+      const redemptionPrice = ethers.utils.parseEther("100");
+      const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+
+      const organization = await ethers.getContractAt("KarrotOrganization", organizationAddresses[0]);
+      const ticketAddress = await campaign.ticketsContract();
+      await lottery.setRedemptionPrice(redemptionPrice);
+
+      await organization.connect(user1).approve(lottery.address, 1);
+      console.log(await organization.isApprovedOrOwner(lottery.address, 1));
+      console.log(lottery.address);
+      await lottery.redeem(ticketAddress, 1);
+      // console.log(minter.address);
     });
   });
 
