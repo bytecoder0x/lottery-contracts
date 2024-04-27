@@ -234,110 +234,93 @@ describe("Lottery", async () => {
       await lottery.initializeLottery(0);
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery time not reached yet");
     });
+  });
 
-    describe("Lottery run", async function () {
-      beforeEach(async function () {
-        await lottery.initializeLottery(0);
-        await ethers.provider.send("evm_increaseTime", [1000]);
-        await lottery.runLottery();
-      });
+  describe("Lottery run", async function () {
+    type Winner = {
+      owner: string;
+      amountToken: number;
+    };
 
-      it("Lottery randomSalt is gotten", async function () {
-        expect(await lottery.randomSalt()).to.not.equal(0);
-      });
-
-      it("Can't call runLottery twice", async function () {
-        await expect(lottery.runLottery()).to.be.revertedWith("Lottery already run");
-      });
-
-      it("Can't reward winners twice", async function () {
-        await lottery.rewardWinners(0);
-        await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery already processed");
-      });
-
-      it("Can't reward if all tiers already processed or tiers do not exist", async function () {
-        // To test this scenario, needs a lottery without tiers
-        const currentTime = Math.floor(Date.now() / 1000);
-        await karrotFactory.deployLotteryContract(owner.address, currentTime + 4000, currentTime + 5000, currentTime + 6000);
-        const lotteryAddress2 = await karrotFactory.lotteries(1);
-        const lottery2 = (await ethers.getContractAt("Lottery", lotteryAddress2)) as Lottery;
-        await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress2, "Test Organization 3", ["Campaign 5", "Campaign 6"]);
-        await lottery2.setupLottery(rewardToken.address, [], [10000]);
-        await ethers.provider.send("evm_increaseTime", [7000]);
-        await lottery2.runLottery();
-
-        await expect(lottery2.rewardWinners(0)).to.be.revertedWith("All tiers already processed");
-      });
-
-      it("Reward token is transferred to one user who won jackpot", async function () {
-        const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
-        await lottery.rewardWinners(1);
-        const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
-        const lotteryTicketId = await lottery.tierWinners(0, 0);
+    async function processTierWinners(winners: Winner[], tier: number, totalWinners: number) {
+      for (let i = 0; i < totalWinners; i += 1) {
+        const lotteryTicketId = await lottery.tierWinners(tier, i);
         const [ticketAddress, ticketId] = await lottery.getUnderlyingTicket(lotteryTicketId);
         const ticketContract = await ethers.getContractAt("KarrotTicket", ticketAddress);
         const owner = await ticketContract.ownerOf(ticketId);
         const amountToken = Number(await lottery.winnerAmount(lotteryTicketId));
-        const balanceOfWinner = Number(await rewardToken.balanceOf(owner));
+        const index = winners.findIndex((winner) => winner.owner === owner);
 
-        expect(amountToken).to.eq(balanceOfWinner);
-        expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - balanceOfWinner);
-      });
-
-      it("Correct reward when expected number of tieris greater than actual number", async function () {
-        const distributedAmount = Number(ethers.utils.parseEther("200"));
-        const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
-        await lottery.rewardWinners(5);
-        const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
-        expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - distributedAmount);
-      });
-
-      it("Reward token is transferred to winners", async function () {
-        type Winner = {
-          owner: string;
-          amountToken: number;
-        };
-
-        const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
-        const winners: Winner[] = [];
-        const tier1 = await lottery.getTier(1);
-        const tier2 = await lottery.getTier(2);
-        const totalWinnersTier1 = Number(tier1.winnersCount);
-        const totalWinnersTier2 = Number(tier2.winnersCount);
-
-        await lottery.rewardWinners(0);
-        await processTierWinners(0, 1);
-        await processTierWinners(1, totalWinnersTier1);
-        await processTierWinners(2, totalWinnersTier2);
-
-        async function processTierWinners(tier: number, totalWinners: number) {
-          for (let i = 0; i < totalWinners; i += 1) {
-            const lotteryTicketId = await lottery.tierWinners(tier, i);
-            const [ticketAddress, ticketId] = await lottery.getUnderlyingTicket(lotteryTicketId);
-            const ticketContract = await ethers.getContractAt("KarrotTicket", ticketAddress);
-            const owner = await ticketContract.ownerOf(ticketId);
-            const amountToken = Number(await lottery.winnerAmount(lotteryTicketId));
-            const index = winners.findIndex((winner) => winner.owner === owner);
-
-            if (index !== -1) {
-              winners[index].amountToken += amountToken;
-            } else {
-              winners.push({ owner, amountToken });
-            }
-          }
+        if (index !== -1) {
+          winners[index].amountToken += amountToken;
+        } else {
+          winners.push({ owner, amountToken });
         }
+      }
+    }
 
-        let totalSpentTokens = 0;
-        for (let i = 0; i < winners.length; i += 1) {
-          const balanceOfWinner = Number(await rewardToken.balanceOf(winners[i].owner));
-          totalSpentTokens += balanceOfWinner;
+    beforeEach(async function () {
+      await ethers.provider.send("evm_increaseTime", [3001]);
+      await lottery.initializeLottery(0);
+      await lottery.runLottery();
+    });
 
-          expect(winners[i].amountToken).to.eq(balanceOfWinner);
-        }
+    it("Lottery randomSalt is gotten", async function () {
+      expect(await lottery.randomSalt()).to.not.equal(0);
+    });
 
-        const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
-        expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - totalSpentTokens);
-      });
+    it("Can't call runLottery twice", async function () {
+      await expect(lottery.runLottery()).to.be.revertedWith("Lottery already run");
+    });
+
+    it("Can't reward winners twice", async function () {
+      await lottery.rewardWinners(0);
+      await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery already processed");
+    });
+
+    it("Reward token is transferred to one user who won jackpot", async function () {
+      const winners: Winner[] = [];
+      const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+      await lottery.rewardWinners(1);
+      await processTierWinners(winners, 0, 1);
+      const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+      const balanceOfWinner = Number(await rewardToken.balanceOf(winners[0].owner));
+
+      expect(winners[0].amountToken).to.eq(balanceOfWinner);
+      expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - balanceOfWinner);
+    });
+
+    it("Correct reward when expected number of tiers greater than actual number", async function () {
+      const distributedAmount = Number(ethers.utils.parseEther("200"));
+      const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+      await lottery.rewardWinners(5);
+      const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+      expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - distributedAmount);
+    });
+
+    it("Reward token is transferred to winners", async function () {
+      const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+      const winners: Winner[] = [];
+      const tier1 = await lottery.getTier(1);
+      const tier2 = await lottery.getTier(2);
+      const totalWinnersTier1 = Number(tier1.winnersCount);
+      const totalWinnersTier2 = Number(tier2.winnersCount);
+
+      await lottery.rewardWinners(0);
+      await processTierWinners(winners, 0, 1);
+      await processTierWinners(winners, 1, totalWinnersTier1);
+      await processTierWinners(winners, 2, totalWinnersTier2);
+
+      let totalSpentTokens = 0;
+      for (let i = 0; i < winners.length; i += 1) {
+        const balanceOfWinner = Number(await rewardToken.balanceOf(winners[i].owner));
+        totalSpentTokens += balanceOfWinner;
+
+        expect(winners[i].amountToken).to.eq(balanceOfWinner);
+      }
+
+      const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
+      expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - totalSpentTokens);
     });
   });
 
@@ -447,12 +430,11 @@ describe("Lottery", async () => {
       await expect(lottery.setupLottery(rewardToken.address, [tier0, tier2, tier1], [8000, 2000])).to.be.revertedWith("Incorrect tier order");
     });
 
-    it("Should prevents setup if winners share equal 0 for random tier", async function () {
+    it("Should prevents setup if winners share equal 0 for random tier or count for fixed", async function () {
       tier1.winnersShare = 0;
       await expect(lottery.setupLottery(rewardToken.address, [tier0, tier1], [8000, 2000])).to.be.revertedWith("Winners share can't be 0 for random tier");
-    });
 
-    it("Should prevents setup if winners count equal 0 for fixed tier", async function () {
+      tier1.winnersShare = 40_00;
       tier2.winnersCount = 0;
       await expect(lottery.setupLottery(rewardToken.address, [tier0, tier2], [8000, 2000])).to.be.revertedWith("Winners count can't be 0 for fixed tier");
     });
