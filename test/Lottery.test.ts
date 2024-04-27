@@ -4,8 +4,9 @@ import { KarrotFactory, TicketMinter, Lottery, RewardTokenMintableMock, KarrotTi
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
+import { BigNumber } from "ethers";
 
-describe.only("Lottery", async () => {
+describe("Lottery", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
   let ticketMinter: TicketMinter;
@@ -33,7 +34,7 @@ describe.only("Lottery", async () => {
       },
       {
         tierType: 1,
-        winnersShare: 40_00, //40%
+        winnersShare: 45_00, // 45%
         winnersCount: 0,
         rewardAmount: ethers.utils.parseEther("10"),
       },
@@ -213,8 +214,8 @@ describe.only("Lottery", async () => {
 
       //Random tier should be initialized with winners count
       expect(tiers[1].tierType).to.equal(1);
-      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 40) / 100));
-      expect(tiers[1].winnersShare).to.equal(4000); // 25%
+      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 45) / 100));
+      expect(tiers[1].winnersShare).to.equal(4500); // 45%
       expect(tiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
 
       //Fixed winners tier
@@ -284,7 +285,7 @@ describe.only("Lottery", async () => {
       });
 
       it("Correct reward when expected number of tieris greater than actual number", async function () {
-        const distributedAmount = Number(ethers.utils.parseEther("190"));
+        const distributedAmount = Number(ethers.utils.parseEther("200"));
         const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
         await lottery.rewardWinners(5);
         const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
@@ -363,55 +364,39 @@ describe.only("Lottery", async () => {
       expect(await lottery.redemptionPrice()).to.be.eq(redemptionPrice);
       expect(await lottery.redemptionCap()).to.be.eq(redemptionPrice);
     });
-
-    // it("Should prevents redeem if burn period finished or price not set", async function () {
-    //   const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
-    //   const ticketContract = await campaign.ticketsContract();
-    //   await expect(lottery.redeem(ticketContract, 2)).to.be.revertedWith("Redemption price not set");
-
-    //   await ethers.provider.send("evm_increaseTime", [2001]);
-    //   await expect(lottery.redeem(ticketContract, 2)).to.be.revertedWith("Burn period finished yet");
-    // });
-
-    // it("Should prevents redeem if redemption cap reached", async function () {
-    //   const redemptionPrice = ethers.utils.parseEther("100");
-    //   await lottery.setRedemptionPrice(redemptionPrice);
-    //   await lottery.setRedemptionCap(redemptionPrice);
-    //   const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
-    //   const ticketContract = await campaign.ticketsContract();
-    //   await expect(lottery.redeem(ticketContract, 2)).to.be.revertedWith("Redemption cap reached");
-    // });
-
-    // it("redeem test", async function () {
-    //   const redemptionPrice = ethers.utils.parseEther("100");
-    //   const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
-
-    //   const organization = await ethers.getContractAt("KarrotOrganization", organizationAddresses[0]);
-    //   const ticketAddress = await campaign.ticketsContract();
-    //   await lottery.setRedemptionPrice(redemptionPrice);
-
-    //   await organization.connect(user1).approve(lottery.address, 1);
-    //   console.log(await organization.isApprovedOrOwner(lottery.address, 1));
-    //   console.log(lottery.address);
-    //   // await lottery.redeem(ticketAddress, 1);
-    //   // console.log(minter.address);
-    // });
   });
 
   describe("Terms and conditions for setup lottery", async function () {
-    let lottery2;
+    type Tier = {
+      tierType: number;
+      winnersShare: number;
+      winnersCount: number;
+      rewardAmount: BigNumber;
+    };
 
-    async function deployLottery() {
-      const currentTime = Math.floor(Date.now() / 1000);
-      await karrotFactory.deployLotteryContract(owner.address, currentTime + 1000, currentTime + 2000, currentTime + 3000);
-      const lotteryAddress2 = await karrotFactory.lotteries(1);
-      await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress2, "Test Organization 3", ["Campaign 5", "Campaign 6"]);
-      const lottery2 = (await ethers.getContractAt("Lottery", lotteryAddress2)) as Lottery;
-      return lottery2;
-    }
+    let tier0: Tier;
+    let tier1: Tier;
+    let tier2: Tier;
 
     beforeEach(async function () {
-      lottery2 = await loadFixture(deployLottery);
+      tier0 = {
+        tierType: 0,
+        winnersShare: 0,
+        winnersCount: 1,
+        rewardAmount: ethers.utils.parseEther("100"),
+      };
+      tier1 = {
+        tierType: 1,
+        winnersShare: 40_00, //40%
+        winnersCount: 0,
+        rewardAmount: ethers.utils.parseEther("10"),
+      };
+      tier2 = {
+        tierType: 2,
+        winnersShare: 0,
+        winnersCount: 10,
+        rewardAmount: ethers.utils.parseEther("1"),
+      };
     });
 
     it("Should prevents if non-admin setup", async function () {
@@ -444,96 +429,31 @@ describe.only("Lottery", async () => {
     });
 
     it("Should prevents setup if first tier is not jackpot", async function () {
-      const tier0 = {
-        tierType: 1, // Random
-        winnersShare: 0,
-        winnersCount: 1,
-        rewardAmount: ethers.utils.parseEther("100"),
-      };
-
+      tier0.tierType = 1;
       await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("First tier must be Jackpot");
     });
 
     it("Should prevents setup if jackpot tier has more than 2 winners", async function () {
-      const tier0 = {
-        tierType: 0,
-        winnersShare: 0,
-        winnersCount: 2,
-        rewardAmount: ethers.utils.parseEther("100"),
-      };
-
+      tier0.winnersCount = 2;
       await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("There must be 1 winner in Jackpot tier");
     });
 
     it("Should prevents setup if reward amount equal 0", async function () {
-      const tier0 = {
-        tierType: 0,
-        winnersShare: 0,
-        winnersCount: 1,
-        rewardAmount: 0,
-      };
-
+      tier0.rewardAmount = ethers.utils.parseEther("0");
       await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("Incorrect tier values");
     });
 
     it("Should prevents setup if tiers in the wrong order", async function () {
-      const tier0 = {
-        tierType: 0,
-        winnersShare: 0,
-        winnersCount: 1,
-        rewardAmount: ethers.utils.parseEther("100"),
-      };
-
-      const tier1 = {
-        tierType: 1,
-        winnersShare: 40_00,
-        winnersCount: 1,
-        rewardAmount: ethers.utils.parseEther("10"),
-      };
-
-      const tier2 = {
-        tierType: 2,
-        winnersShare: 0,
-        winnersCount: 10,
-        rewardAmount: ethers.utils.parseEther("1"),
-      };
-
       await expect(lottery.setupLottery(rewardToken.address, [tier0, tier2, tier1], [8000, 2000])).to.be.revertedWith("Incorrect tier order");
     });
 
     it("Should prevents setup if winners share equal 0 for random tier", async function () {
-      const tier0 = {
-        tierType: 0,
-        winnersShare: 0,
-        winnersCount: 1,
-        rewardAmount: ethers.utils.parseEther("100"),
-      };
-
-      const tier1 = {
-        tierType: 1,
-        winnersShare: 0,
-        winnersCount: 1,
-        rewardAmount: ethers.utils.parseEther("10"),
-      };
-
+      tier1.winnersShare = 0;
       await expect(lottery.setupLottery(rewardToken.address, [tier0, tier1], [8000, 2000])).to.be.revertedWith("Winners share can't be 0 for random tier");
     });
 
     it("Should prevents setup if winners count equal 0 for fixed tier", async function () {
-      const tier0 = {
-        tierType: 0,
-        winnersShare: 0,
-        winnersCount: 1,
-        rewardAmount: ethers.utils.parseEther("100"),
-      };
-
-      const tier2 = {
-        tierType: 2,
-        winnersShare: 0,
-        winnersCount: 0,
-        rewardAmount: ethers.utils.parseEther("1"),
-      };
-
+      tier2.winnersCount = 0;
       await expect(lottery.setupLottery(rewardToken.address, [tier0, tier2], [8000, 2000])).to.be.revertedWith("Winners count can't be 0 for fixed tier");
     });
   });
