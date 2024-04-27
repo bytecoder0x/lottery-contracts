@@ -248,8 +248,16 @@ describe("KarrotTicket", async () => {
 
         it("Should correctly burn last ticket", async function () {
             const lotteryAddress = await karrotFactory.lotteries(0) 
-            const karrotCampaignMock = await (await ethers.getContractFactory("KarrotCampaignMock")).deploy(owner.address, minter.address, lotteryAddress, "Test KarrotCampaignMock");
-            const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, karrotCampaignMock.address, "Test KarrotTicket");
+            const karrotCampaignMock = await (await ethers.getContractFactory("KarrotCampaignMock")).deploy(
+                owner.address,
+                minter.address,
+                lotteryAddress,
+                "Test KarrotCampaignMock");
+            const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(
+                owner.address,
+                minter.address,
+                karrotCampaignMock.address,
+                "Test KarrotTicket");
             await karrotCampaignMock.setTicketContract(karrotTicket.address);
             await karrotCampaignMock.mintTo(user1.address);
             await karrotTicket.connect(minter).mintToCampaignBatch(2, 1, []);
