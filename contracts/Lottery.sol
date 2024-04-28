@@ -40,10 +40,6 @@ contract Lottery is AccessControl, ILottery {
     mapping(uint256 => uint256) public winnerAmount;
     mapping(uint256 => uint256[]) public tierWinners;
     bool public lotteryProcessed;
-
-    uint public redemptionPrice;
-    uint public redeemed;
-    uint public redemptionCap;
     
     constructor(
         address _defaultAdmin,
@@ -218,40 +214,6 @@ contract Lottery is AccessControl, ILottery {
             lotteryProcessed = true;
             emit LotteryFinished();
         }
-    }
-
-    //TODO: move to a separate contract
-    function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
-        if (block.timestamp > burnDeadline) {
-            revert IncorrectCondition("Burn period finished yet");
-        }
-        if (redemptionPrice == 0) {
-            revert IncorrectValue("Redemption price not set");
-        }
-        uint redemptionAmount = amountOfTicketsToBurn * redemptionPrice;
-        if (redemptionCap > 0 && redeemed + redemptionAmount > redemptionCap) {
-            revert IncorrectValue("Redemption cap reached");
-        }
-        //approve for lottery should be granted before
-        address campaignAddress = IKarrotTicket(ticketContract).campaign();
-        IKarrotCampaign(campaignAddress).burnTicketBatch(amountOfTicketsToBurn);
-        IERC20(rewardToken).safeTransfer(msg.sender, redemptionAmount);
-        redeemed += redemptionAmount;
-        emit TicketRedeemed(msg.sender, ticketContract, amountOfTicketsToBurn, redemptionAmount);
-    }
-
-    function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_redemptionPrice == 0) {
-            revert IncorrectValue("Redemption price can't be 0");
-        }
-        redemptionPrice = _redemptionPrice;
-        emit SetRedemptionPrice(_redemptionPrice);
-    }
-
-    function setRedemptionCap(uint _redemptionCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        //redemptionCap can be 0, meaning no cap
-        redemptionCap = _redemptionCap;
-        emit SetRedemptionCap(_redemptionCap);
     }
 
     function getUnderlyingTicket(uint lotteryTicketId) public view returns (address, uint256) {
