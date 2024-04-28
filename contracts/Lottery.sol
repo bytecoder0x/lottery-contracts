@@ -10,7 +10,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {ILottery} from "./interface/ILottery.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
-import "hardhat/console.sol";
+
 contract Lottery is AccessControl, ILottery {
     using SafeERC20 for IERC20;
 
@@ -199,7 +199,6 @@ contract Lottery is AccessControl, ILottery {
         }
         for (uint t = processedTiersCountCache; t < processedTiersCountCache + tiersCount; t++) {
             Tier memory tier = tiers[t];
-            console.log("tier index: %s | tier type: %s", t, uint(tier.tierType));
             if (tier.tierType != TierType.Fixed) {
                 uint tierTotalRewardAmount = _rewardWinnersForTier(0, lotteryTicketsTotalSupply - 1, t, tier);
                 emit TierProcessed(t, address(0), tierTotalRewardAmount);
@@ -322,16 +321,12 @@ contract Lottery is AccessControl, ILottery {
         Tier memory tier
     ) internal returns (uint tierTotalRewardAmount) {
         uint ticketsInRange = endTicketId - startTicketId + 1;
-        console.log("tickets in range %s", ticketsInRange);
         for(uint w; w < tier.winnersCount; w++) {
             uint lotteryTicketId = uint(keccak256(abi.encode(randomSalt, tierIndex, w))) % ticketsInRange + startTicketId;
-            console.log("   lottery ticket id %s", lotteryTicketId);
             lotteryTicketId = _checkTickedIsNotWinner(lotteryTicketId);
             (address campaignTicketContract, uint campaignTicketId) = getUnderlyingTicket(lotteryTicketId);
             address owner = IKarrotTicket(campaignTicketContract).ownerOf(campaignTicketId);
-            console.log("   reward %s for %s tier with %s amount", owner, tierIndex, tier.rewardAmount / 1e18);
             rewardToken.safeTransfer(owner, tier.rewardAmount);
-
             winnerAmount[lotteryTicketId] = tier.rewardAmount;
             tierWinners[tierIndex].push(lotteryTicketId);
             emit WinnerDefined(owner, lotteryTicketId, campaignTicketContract, campaignTicketId, uint256(tier.tierType), tier.rewardAmount);
