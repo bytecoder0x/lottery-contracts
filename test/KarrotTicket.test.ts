@@ -8,7 +8,7 @@ import { BigNumber } from "ethers";
 
 describe("KarrotTicket", async () => {
     let ticket: KarrotTicket;
-    let karrotFactory: KarrotFactory
+    let karrotFactory: KarrotFactory;
     let ticketMinter: TicketMinter;
     let organizationAddress: string;
     let campaignsAddresses: string[];
@@ -243,6 +243,35 @@ describe("KarrotTicket", async () => {
             await campaign.grantRole(minterRole, minter.address);
 
             await expect(karrotTicket.connect(user1).burnLastTicket()).to.be.revertedWith("Only Campaign can burn tickets");
+        });
+        
+
+        it("Should correctly burn last ticket", async function () {
+            const lotteryAddress = await karrotFactory.lotteries(0) 
+            const karrotCampaignMock = await (await ethers.getContractFactory("KarrotCampaignMock")).deploy(
+                owner.address,
+                minter.address,
+                lotteryAddress,
+                "Test KarrotCampaignMock");
+            const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(
+                owner.address,
+                minter.address,
+                karrotCampaignMock.address,
+                "Test KarrotTicket");
+            await karrotCampaignMock.setTicketContract(karrotTicket.address);
+            await karrotCampaignMock.mintTo(user1.address);
+            await karrotTicket.connect(minter).mintToCampaignBatch(2, 1, []);
+            await karrotCampaignMock.connect(user1).acceptChild(1, 0, karrotTicket.address, 1);
+            await karrotCampaignMock.connect(user1).acceptChild(1, 0, karrotTicket.address, 2);
+            
+            expect(await karrotTicket.balanceOf(karrotCampaignMock.address)).to.be.eq(2);
+            expect(await karrotTicket.totalSupply()).to.be.eq(2);
+            await karrotCampaignMock.burnTicket();
+            expect(await karrotTicket.balanceOf(karrotCampaignMock.address)).to.be.eq(1);
+            expect(await karrotTicket.totalSupply()).to.be.eq(1);
+            await karrotCampaignMock.burnTicket();
+            expect(await karrotTicket.balanceOf(karrotCampaignMock.address)).to.be.eq(0);
+            expect(await karrotTicket.totalSupply()).to.be.eq(0);
         });
     });
 
