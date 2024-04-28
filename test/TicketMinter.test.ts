@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { KarrotFactory, TicketMinter } from "../typechain-types";
+import { KarrotFactory, TicketMinter, KarrotOrganization, RewardTokenMintableMock } from "../typechain-types";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
@@ -12,6 +12,8 @@ describe("TicketMinter", async () => {
   let organizationAddress: string;
   let campaignsAddresses: string[];
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
+  let organization: KarrotOrganization;
+  let rewardTokenMintableMock: RewardTokenMintableMock;
 
   before(async function () {
     hardhatSnapshotId = await network.provider.send('evm_snapshot')
@@ -67,6 +69,75 @@ describe("TicketMinter", async () => {
       campaignsAddresses[0],
       [2, 3])).to.be.revertedWith("MintTimeEnded");
   });
+
+  it("Should not allow to deploy with wrong factory", async function () {
+    const [owner, minter] = await ethers.getSigners();
+    const organization = await (await ethers.getContractFactory("KarrotOrganization")).deploy(owner.address, minter.address, "Test Organization");
+
+    await expect((await ethers.getContractFactory("TicketMinter")).deploy(owner.address, minter.address, organization.address))
+      .to.be.revertedWith("InterfaceNotSupported");
+  });
+
+  it("Should not allow to mint batch with mismatching endOwners and ticketsCounts", async function () {
+
+    await expect(ticketMinter.connect(minter).mintTicketsBatch(
+      [user1.address, user2.address],
+      campaignsAddresses[0],
+      [2])).to.be.revertedWith("endOwners and ticketsCounts length mismatch");
+  });
+
+  it("Should mint tickets to an existing organization token", async function () {
+
+    const organization = await ethers.getContractAt("KarrotOrganization", organizationAddress);
+    const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
+    await organization.grantRole(minterRole, minter.address);
+
+    await ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      campaignsAddresses[0],
+      2
+    );
+    await ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      campaignsAddresses[0],
+      2
+    );
+    expect(await organization.balanceOf(user1.address)).to.equal(1);
+  });
+
+  it("Should revert if no organization found for campaign", async function () {
+    let randomCompany = ethers.Wallet.createRandom().address;
+    await expect(ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      randomCompany,
+      2)).to.be.revertedWith("No organization found for campaign");
+  });
+
+  it("Should support AccessControl interface", async function () {
+    let functionSignature = [
+      'hasRole(bytes32,address)',
+      'getRoleAdmin(bytes32)',
+      'grantRole(bytes32,address)',
+      'revokeRole(bytes32,address)',
+      'renounceRole(bytes32,address)'
+    ];
+    let interfaceID = BigInt(0);
+
+    for (const signature of functionSignature) {
+      const selector = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(2, 10);
+      interfaceID ^= BigInt('0x' + selector);
+    }
+
+    const interfaceIDHex = '0x' + interfaceID.toString(16).padStart(8, '0');
+    expect(await ticketMinter.supportsInterface(interfaceIDHex)).to.equal(true);
+  });
+
+  it("Should prevents non-minter from minting tokens", async function () {
+    const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
+    await expect(ticketMinter.connect(user2).mintTickets(user1.address, campaignsAddresses[0], 2))
+      .to.be.revertedWith("AccessControl: account " + user2.address.toLowerCase() + " is missing role " + minterRole);
+  });
+
   after(async function () {
     //revert to initial state to remove time manipulation results
     await network.provider.send("evm_revert", [hardhatSnapshotId]);

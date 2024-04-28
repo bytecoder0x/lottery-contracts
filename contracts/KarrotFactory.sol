@@ -245,5 +245,3 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
             super.supportsInterface(interfaceId);
     }
 }
-
-
