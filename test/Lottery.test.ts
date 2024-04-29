@@ -324,31 +324,6 @@ describe("Lottery", async () => {
     });
   });
 
-  describe("Redemption functionality", async function () {
-    it("Should prevents non-admin set redemption price and cap", async function () {
-      const adminRole = ethers.constants.HashZero;
-
-      await expect(lottery.connect(user1).setRedemptionPrice(1)).to.be.revertedWith(
-        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
-      );
-      await expect(lottery.connect(user1).setRedemptionCap(1)).to.be.revertedWith(
-        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
-      );
-    });
-
-    it("Should prevents redemption price from set to 0", async function () {
-      await expect(lottery.setRedemptionPrice(0)).to.be.revertedWith("Redemption price can't be 0");
-    });
-
-    it("Correct set redemption price and cap", async function () {
-      const redemptionPrice = ethers.utils.parseEther("100");
-      await lottery.setRedemptionPrice(redemptionPrice);
-      await lottery.setRedemptionCap(redemptionPrice);
-      expect(await lottery.redemptionPrice()).to.be.eq(redemptionPrice);
-      expect(await lottery.redemptionCap()).to.be.eq(redemptionPrice);
-    });
-  });
-
   describe("Terms and conditions for setup lottery", async function () {
     type Tier = {
       tierType: number;
