@@ -38,6 +38,8 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     }
 
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
+        address campaignAddress = IKarrotTicket(ticketContract).campaign();
+        address organizationAddress = IKarrotCampaign(campaignAddress).organization();
         uint32 burnDeadline = ILottery(lottery).burnDeadline();
 
         if (block.timestamp > burnDeadline) {
@@ -50,12 +52,14 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         if (redemptionCap > 0 && redeemed + redemptionAmount > redemptionCap) {
             revert IncorrectValue("Redemption cap reached");
         }
-        
-        address campaignAddress = IKarrotTicket(ticketContract).campaign();
-        address organizationAddress = IKarrotCampaign(campaignAddress).organization();
-
         uint organizationId = IKarrotOrganization(organizationAddress).ownerToken(msg.sender);
-        if (organizationId == 0) revert IncorrectValue("User is not an owner of any organization");
+        if (organizationId == 0) {
+            revert IncorrectValue("User is not an owner of any organization");
+        }
+        bool isRegisteredTicket = _checkTiketRegistration(ticketContract, organizationAddress);
+        if (!isRegisteredTicket) {
+            revert IncorrectValue("The ticket is not registered");
+        }
 
         uint campaignId = IKarrotCampaign(campaignAddress).ownerToken(organizationId);
         IKarrotCampaign(campaignAddress).burnTicketBatch(campaignId, amountOfTicketsToBurn);
@@ -76,5 +80,15 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         //redemptionCap can be 0, meaning no cap
         redemptionCap = _redemptionCap;
         emit SetRedemptionCap(_redemptionCap);
+    }
+
+    function _checkTiketRegistration(address _ticket, address _organization) view private returns(bool) {
+        address[] memory tickets = ILottery(lottery).getOrganizationTicketsContracts(_organization);
+        for (uint i = 0; i < tickets.length; i++) {
+            if (tickets[i] == _ticket) {
+                return true;
+            }
+        }
+        return false;
     }
 }
