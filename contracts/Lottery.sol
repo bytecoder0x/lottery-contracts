@@ -186,9 +186,6 @@ contract Lottery is AccessControl, ILottery {
         if (lotteryProcessed) {
             revert ActionPerformed("Lottery already processed");
         }
-        if (processedTiersCount == tiers.length) {
-            revert ActionPerformed("All tiers already processed");
-        }
         uint processedTiersCountCache = processedTiersCount; //cache value for gas optimization
         if (tiersCount == 0 || tiersCount > tiers.length - processedTiersCountCache) {
             tiersCount = tiers.length - processedTiersCountCache;
