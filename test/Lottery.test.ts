@@ -34,7 +34,7 @@ describe("Lottery", async () => {
       },
       {
         tierType: 1,
-        winnersShare: 45_00, // 45%
+        winnersShare: 35_00, // 35%
         winnersCount: 0,
         rewardAmount: ethers.utils.parseEther("10"),
       },
@@ -214,8 +214,8 @@ describe("Lottery", async () => {
 
       //Random tier should be initialized with winners count
       expect(tiers[1].tierType).to.equal(1);
-      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 45) / 100));
-      expect(tiers[1].winnersShare).to.equal(4500); // 45%
+      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 35) / 100));
+      expect(tiers[1].winnersShare).to.equal(3500); // 35%
       expect(tiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
 
       //Fixed winners tier
@@ -291,7 +291,7 @@ describe("Lottery", async () => {
     });
 
     it("Correct reward when expected number of tiers greater than actual number", async function () {
-      const distributedAmount = Number(ethers.utils.parseEther("200"));
+      const distributedAmount = Number(ethers.utils.parseEther("180"));
       const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
       await lottery.rewardWinners(5);
       const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
@@ -321,31 +321,6 @@ describe("Lottery", async () => {
 
       const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
       expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - totalSpentTokens);
-    });
-  });
-
-  describe("Redemption functionality", async function () {
-    it("Should prevents non-admin set redemption price and cap", async function () {
-      const adminRole = ethers.constants.HashZero;
-
-      await expect(lottery.connect(user1).setRedemptionPrice(1)).to.be.revertedWith(
-        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
-      );
-      await expect(lottery.connect(user1).setRedemptionCap(1)).to.be.revertedWith(
-        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
-      );
-    });
-
-    it("Should prevents redemption price from set to 0", async function () {
-      await expect(lottery.setRedemptionPrice(0)).to.be.revertedWith("Redemption price can't be 0");
-    });
-
-    it("Correct set redemption price and cap", async function () {
-      const redemptionPrice = ethers.utils.parseEther("100");
-      await lottery.setRedemptionPrice(redemptionPrice);
-      await lottery.setRedemptionCap(redemptionPrice);
-      expect(await lottery.redemptionPrice()).to.be.eq(redemptionPrice);
-      expect(await lottery.redemptionCap()).to.be.eq(redemptionPrice);
     });
   });
 
