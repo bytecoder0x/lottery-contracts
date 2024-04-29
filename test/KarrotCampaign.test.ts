@@ -50,6 +50,15 @@ describe("KarrotCampaign", async () => {
         expect(directOwner.parentId).to.be.eq(organizationId);
     });
 
+    it("Should prevent mint campaign if organization already has this campaign", async function () {
+        const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
+        await organization.grantRole(minterRole, minter.address);
+        await campaign.grantRole(minterRole, minter.address);
+        await organization.connect(minter).mintTo(user1.address, []);
+        await campaign.connect(minter).mintToOrganization(1, []); 
+        await expect(campaign.connect(minter).mintToOrganization(1, [])).to.be.revertedWith("Organization already has this campaign");
+    });
+
     it("Should set ticket contracts", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
         campaign.connect(owner).setTicketContract(karrotTicket.address)
