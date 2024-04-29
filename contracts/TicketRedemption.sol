@@ -2,6 +2,7 @@
 pragma solidity 0.8.21;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -10,7 +11,6 @@ import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {ILottery} from "./interface/ILottery.sol";
-
 import {ITicketRedemption} from "./interface/ITicketRedemption.sol";
 
 contract TicketRedemption is ITicketRedemption, AccessControl {
@@ -24,11 +24,17 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
 
     IERC20 public rewardToken;
 
-    constructor(address _defaultAdmin, address _rewardToken, address _lottery) {
-        rewardToken = IERC20(_rewardToken);
+    constructor(address _defaultAdmin, address _lottery) {
         lottery = _lottery;
-
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
+    }
+
+    function setRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE)  {
+        if (Address.isContract(_rewardToken) == false) {
+            revert IncorrectValue("Reward token is not a contract");
+        }
+
+        rewardToken = IERC20(_rewardToken);
     }
 
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
