@@ -25,7 +25,7 @@ contract KarrotCampaign is
     address public ticketsContract;
 
     mapping(uint256 => uint256) public ownerToken;
-    mapping(uint256 => address) public organizationToCampaign;
+    mapping(uint256 => bool) public organizationToCampaign;
 
 
     constructor(
@@ -55,13 +55,13 @@ contract KarrotCampaign is
         uint256 parentId,
         bytes memory data
     ) public onlyRole(MINTER_ROLE) notBeforeMintClosed returns (uint256 mintedTokenId) {
-        if (organizationToCampaign[parentId] != address(0)) {
+        if (organizationToCampaign[parentId]) {
             revert IncorrectCondition("Organization already has this campaign");
         }
 
         mintedTokenId = ++_lastTokenId;
         _nestMint(organization, mintedTokenId, parentId, data);
-        organizationToCampaign[parentId] = address(this);
+        organizationToCampaign[parentId] = true;
         ownerToken[parentId] = mintedTokenId;
         _approve(msg.sender, mintedTokenId);
         emit CampaignTokenMintedToOrganization(mintedTokenId, msg.sender, parentId);
