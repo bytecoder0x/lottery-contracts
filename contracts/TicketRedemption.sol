@@ -25,7 +25,16 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     IERC20 public rewardToken;
 
     constructor(address _defaultAdmin, address _lottery) {
+        if (
+            !ILottery(_lottery).supportsInterface(
+                type(ILottery).interfaceId
+            )
+        ) {
+            revert InterfaceNotSupported();
+        }
+
         lottery = _lottery;
+        
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
 
