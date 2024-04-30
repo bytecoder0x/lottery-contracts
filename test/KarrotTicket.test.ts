@@ -99,7 +99,6 @@ describe("KarrotTicket", async () => {
             await organization.connect(minter).mintTo(user1.address, []);
             await campaign.grantRole(minterRole, minter.address);
             const ownerOrganizationNft = await organization.ownerToken(user1.address);
-            await campaign.connect(minter).mintToOrganization(ownerOrganizationNft, []);
 
             await campaign.connect(minter).mintToOrganization(ownerOrganizationNft, []);
             const user1OrganizationNft = await organization.ownerToken(user1.address);
