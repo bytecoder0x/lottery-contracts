@@ -139,8 +139,10 @@ contract KarrotCampaign is
             revert IncorrectCondition("Only ticket can be child of campaign");
     }
 
-
     function _burnTicket(uint256 campaignId) internal {
+        bool isApprovedOrOwner = _isApprovedOrOwner(msg.sender, campaignId);
+        if(!isApprovedOrOwner) revert IncorrectCondition("User is not aprroved or owner");
+
         Child[] storage campaignTickets = _activeChildren[campaignId];
         uint256 ticketIdToBurn = campaignTickets[campaignTickets.length - 1].tokenId;
         uint lastTiketId = IKarrotTicket(ticketsContract).totalSupply(); //last token id == total supply
