@@ -263,10 +263,6 @@ contract Lottery is AccessControl, ILottery {
         return allCampaignTickets;
     }
 
-    function checkIsRegisteredTicket(address _address) public view returns (bool) {
-        return isRegisteredTicket[_address];
-    }
-
     function _checkTickedIsNotWinner(uint lotteryTicketId) internal view returns (uint) {
         if (winnerAmount[lotteryTicketId] > 0) {
             uint newId = lotteryTicketId + 1;

@@ -40,7 +40,7 @@ interface ILottery is IERC165, IKarrotErrors {
     }
     
     function registerTicketContract(address ticketContract) external;
-    function checkIsRegisteredTicket(address _address) external view returns (bool);
+    function isRegisteredTicket(address) external view returns (bool);
     
     function mintDeadline() external view returns (uint32);
     function burnDeadline() external view returns (uint32);
