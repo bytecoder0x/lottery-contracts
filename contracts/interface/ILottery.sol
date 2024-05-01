@@ -9,12 +9,9 @@ interface ILottery is IERC165, IKarrotErrors {
     event RegisterTicketContract(address indexed organization, address indexed ticketContract);
     event LotteryInitialized(uint indexed organizationsCount);
     event LotterySetup(address indexed rewardToken, Tier[] tiers, uint[] organizationSharesForFixedTiers);
-    event TicketRedeemed(address indexed redeemer, address ticketContract, uint ticketsCount, uint redemptionAmount);
     event TierProcessed(uint indexed tierIndex, address indexed organization, uint256 totalRewardAmount);
     event WinnerDefined(address indexed winner, uint256 indexed lotteryTicketId, address campaignTicketContract, uint256 indexed campaignTicketId, uint256 tierType, uint256 rewardAmount);
     event LotteryFinished();
-    event SetRedemptionPrice(uint redemptionPrice);
-    event SetRedemptionCap(uint redemptionCap);
 
     struct CampaignTickets {
         address campaignTicketContract;
