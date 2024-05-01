@@ -90,4 +90,11 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         redemptionCap = _redemptionCap;
         emit SetRedemptionCap(_redemptionCap);
     }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(AccessControl, IERC165) returns (bool) {
+        return interfaceId == type(ITicketRedemption).interfaceId || 
+            AccessControl.supportsInterface(interfaceId);
+    }
 }
