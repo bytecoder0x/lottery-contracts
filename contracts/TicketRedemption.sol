@@ -65,7 +65,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         if (organizationId == 0) {
             revert IncorrectValue("User is not an owner of any organization");
         }
-        bool isRegisteredTicket = ILottery(lottery).checkIsRegisteredTicket(ticketContract);
+        bool isRegisteredTicket = ILottery(lottery).isRegisteredTicket(ticketContract);
         if (!isRegisteredTicket) {
             revert IncorrectValue("The ticket is not registered");
         }
