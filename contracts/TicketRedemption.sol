@@ -65,7 +65,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         if (organizationId == 0) {
             revert IncorrectValue("User is not an owner of any organization");
         }
-        bool isRegisteredTicket = _checkTiketRegistration(ticketContract, organizationAddress);
+        bool isRegisteredTicket = ILottery(lottery).checkIsRegisteredTicket(ticketContract);
         if (!isRegisteredTicket) {
             revert IncorrectValue("The ticket is not registered");
         }
@@ -89,15 +89,5 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         //redemptionCap can be 0, meaning no cap
         redemptionCap = _redemptionCap;
         emit SetRedemptionCap(_redemptionCap);
-    }
-
-    function _checkTiketRegistration(address _ticket, address _organization) view private returns(bool) {
-        address[] memory tickets = ILottery(lottery).getOrganizationTicketsContracts(_organization);
-        for (uint i = 0; i < tickets.length; i++) {
-            if (tickets[i] == _ticket) {
-                return true;
-            }
-        }
-        return false;
     }
 }
