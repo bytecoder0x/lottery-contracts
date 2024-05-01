@@ -226,7 +226,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address _lottery
     ) private returns (address) {
         address newRedemption= address(
-            new TicketRedemption{salt: keccak256(abi.encodePacked(lotteries.length))}(
+            new TicketRedemption{salt: keccak256(abi.encodePacked(redemptions.length))}(
                 _defaultAdmin,
                 _lottery
             )
