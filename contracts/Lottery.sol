@@ -28,6 +28,7 @@ contract Lottery is AccessControl, ILottery {
     uint[] public organizationSharesForFixedTiers;
 
     uint public initializedOrganizationsCount;
+    mapping(address => bool) public isRegisteredTicket;
     mapping(address => bool) public isOrganizationAdded;
     mapping(address => address[]) public organizationTicketsContracts;
     mapping(address => TicketRange) public organizationTicketsRange;
@@ -68,6 +69,7 @@ contract Lottery is AccessControl, ILottery {
             organizations.push(organization);
             isOrganizationAdded[organization] = true;
         }
+        isRegisteredTicket[_ticketContract] = true;
         organizationTicketsContracts[organization].push(_ticketContract);
         emit RegisterTicketContract(organization, _ticketContract);
     }

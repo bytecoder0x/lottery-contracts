@@ -6,6 +6,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {KarrotOrganization} from "./KarrotOrganization.sol";
 import {KarrotCampaign} from "./KarrotCampaign.sol";
 import {Lottery} from "./Lottery.sol";
+import {TicketRedemption} from "./TicketRedemption.sol";
 import {KarrotTicket} from "./KarrotTicket.sol";
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -24,6 +25,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     address public minterContract;
 
     address[] public lotteries;
+    address[] public redemptions;
     address[] public organizations;
     address[] public campaigns;
     address[] public tickets;
@@ -58,22 +60,23 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         emit MinterContractUpdated(_minterContract);
     }
 
-    function deployLotteryContract(
+    function deployLotteryAndRedemptionContract(
         address _defaultAdmin,
         uint32 _mintDeadline,
         uint32 _burnDeadline,
         uint32 _lotteryTime
-    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address) {
-         
-            address newLottery = _deployLotteryContract(
+    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address newLottery, address newRedemption) {
+    
+            newLottery = _deployLotteryContract(
                 _defaultAdmin,
                 _mintDeadline,
                 _burnDeadline,
                 _lotteryTime
             );
-            emit LotteryContractDeployed(newLottery);
+            newRedemption = _deployRedemptionContract(_defaultAdmin, newLottery);
 
-            return newLottery;
+            emit LotteryContractDeployed(newLottery);
+            emit RedemptionContractDeployed(newRedemption);
     }
 
     function deployOrganizationContract(
@@ -132,6 +135,10 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     function getAllLotteries() external view returns (address[] memory) {
         return lotteries;
+    }
+
+    function getAllRedemptions() external view returns (address[] memory) {
+        return redemptions;
     }
 
     function getAllOrganizations() external view returns (address[] memory) {
@@ -212,6 +219,20 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         lotteries.push(newLottery);
         isLottery[newLottery] = true;
         return newLottery;
+    }
+
+    function _deployRedemptionContract(
+        address _defaultAdmin,
+        address _lottery
+    ) private returns (address) {
+        address newRedemption= address(
+            new TicketRedemption{salt: keccak256(abi.encodePacked(redemptions.length))}(
+                _defaultAdmin,
+                _lottery
+            )
+        );
+        redemptions.push(newRedemption);
+        return newRedemption;
     }
 
     function _deployTicketContract(

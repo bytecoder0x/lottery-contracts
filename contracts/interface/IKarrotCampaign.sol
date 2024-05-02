@@ -10,6 +10,8 @@ interface IKarrotCampaign is IERC7401, IKarrotErc7401Base {
     event CampaignTokenMintedToOrganization(uint256 indexed tokenId, address indexed minter, uint256 indexed organizationTokenParentId);
     event TicketContractSet(address indexed ticketsContract, address indexed setter);
 
+    function ownerToken(uint256 tokenId) external view returns (uint256);
+
     function mintToOrganization(uint256 parentId, bytes memory data) external returns (uint256);
 
     function setTicketContract(address ticketContract) external;

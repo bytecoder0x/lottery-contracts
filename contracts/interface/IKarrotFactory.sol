@@ -8,6 +8,7 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
 
     event MinterContractUpdated(address indexed minterContract);
     event LotteryContractDeployed(address indexed lotteryContract);
+    event RedemptionContractDeployed(address indexed redemptionContract);
     event OrganizationContractDeployed(address indexed organizationContract);
     event CampaignContractDeployed(address indexed campaignContract, address indexed organization);
     event TicketContractDeployed(address indexed ticketContract, address indexed campaign);
@@ -17,18 +18,19 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
     function campaignOrganization(address campaign) external view returns (address organization);
     function ticketsCampaign(address ticketContract) external view returns (address campaign);
     function getAllLotteries() external view returns (address[] memory);
+    function getAllRedemptions() external view returns (address[] memory);
     function getAllOrganizations() external view returns (address[] memory);
     function getAllCampaigns() external view returns (address[] memory);
     function getAllTickets() external view returns (address[] memory);
 
     function setMinterContract(address _minterContract) external;
 
-    function deployLotteryContract(
+    function deployLotteryAndRedemptionContract(
         address defaultAdmin,
         uint32 mintDeadline,
         uint32 burnDeadline,
         uint32 lotteryTime
-    ) external returns (address deployedLottery);
+    ) external returns (address deployedLottery, address deployedRedemption);
 
     function deployOrganizationContract(
         address defaultAdmin,
