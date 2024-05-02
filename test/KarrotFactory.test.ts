@@ -52,6 +52,22 @@ describe("KarrotFactory", async () => {
 
     });
 
+    it("Should deploy Lottery And Redemption Contracts", async function () {
+        const mintDeadline = +(new Date().getTime() / 1000).toFixed(0) + 1000;
+        const burnDeadline = +(new Date().getTime() / 1000).toFixed(0) + 2000;
+        const lotteryTime = +(new Date().getTime() / 1000).toFixed(0) + 3000;
+        const allLotteries = await karrotFactory.getAllLotteries();
+        const allRedemptions = await karrotFactory.getAllRedemptions()
+
+        await karrotFactory.connect(owner).deployLotteryAndRedemptionContract(owner.address, mintDeadline, burnDeadline, lotteryTime);
+        const newValueofAllLotteries = await karrotFactory.getAllLotteries();
+        const newValueofAllRedemptions = await karrotFactory.getAllRedemptions();
+
+        expect(newValueofAllLotteries.length).to.be.eq(allLotteries.length + 1);
+        expect(newValueofAllRedemptions.length).to.be.eq(allRedemptions.length + 1);
+
+    });
+
     it("Should not allow to deploy Campaign And Ticket Contracts with invalid values", async function () {
 
         await expect(karrotFactory.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, lotteryAddress, "Test Campaign")).to.be.revertedWith("Not valid organization contract");
