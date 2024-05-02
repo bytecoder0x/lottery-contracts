@@ -22,13 +22,14 @@ export async function deployFactoryAndMinter() {
 export async function deployBasicContracts() {
     const { karrotFactory, ticketMinter, owner, minter, user1, user2 } = await deployFactoryAndMinter();
 
-    await karrotFactory.deployLotteryContract(
+    await karrotFactory.deployLotteryAndRedemptionContract(
         owner.address,
         +(((new Date().getTime()) / 1000).toFixed(0)) + 1000,
         +(((new Date().getTime()) / 1000).toFixed(0)) + 2000,
         +(((new Date().getTime()) / 1000).toFixed(0)) + 3000,
     );
     const lotteryAddress = await karrotFactory.lotteries(0);
+    const redemptionAddress = await karrotFactory.redemptions(0);
 
     await karrotFactory.deployOrganizationAndCampaigns(
         owner.address,
@@ -39,5 +40,5 @@ export async function deployBasicContracts() {
     const organizationAddress = await karrotFactory.organizations(0);
     const campaignsAddresses = await karrotFactory.getAllCampaigns();
 
-    return { karrotFactory, ticketMinter, organizationAddress, campaignsAddresses, lotteryAddress, owner, minter, user1, user2 };
+    return { karrotFactory, ticketMinter, organizationAddress, campaignsAddresses, lotteryAddress, redemptionAddress, owner, minter, user1, user2 };
 }
