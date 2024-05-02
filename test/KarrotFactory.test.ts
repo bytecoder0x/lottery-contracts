@@ -75,7 +75,7 @@ describe("KarrotFactory", async () => {
         const lotteryTime = currentTime + 259200;
 
         const deployerRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("DEPLOYER"));
-        await expect(karrotFactory.connect(user1).deployLotteryContract(owner.address, mintDeadline, burnDeadline, lotteryTime)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
+        await expect(karrotFactory.connect(user1).deployLotteryAndRedemptionContract(owner.address, mintDeadline, burnDeadline, lotteryTime)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
         await expect(karrotFactory.connect(user1).deployOrganizationContract(owner.address, "Test Organization")).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
         await expect(karrotFactory.connect(user1).deployCampaignAndTicketContract(owner.address, lotteryAddress, organizationAddress, "Test Campaign")).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
         await expect(karrotFactory.connect(user1).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + deployerRole);
@@ -101,7 +101,7 @@ describe("KarrotFactory", async () => {
         const burnDeadline = currentTime + 172800;
         const lotteryTime = currentTime + 259200;
 
-        await expect(karrotFactory1.connect(owner).deployLotteryContract(owner.address, mintDeadline, burnDeadline, lotteryTime)).to.be.revertedWith("Minter contract not set");
+        await expect(karrotFactory1.connect(owner).deployLotteryAndRedemptionContract(owner.address, mintDeadline, burnDeadline, lotteryTime)).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployOrganizationContract(owner.address, "Test Organization")).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, organizationAddress, "Test Campaign")).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("Minter contract not set");

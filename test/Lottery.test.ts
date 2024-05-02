@@ -113,9 +113,9 @@ describe("Lottery", async () => {
     const burnDeadline = +(new Date().getTime() / 1000).toFixed(0) + 2000;
     const lotteryTime = +(new Date().getTime() / 1000).toFixed(0) + 3000;
 
-    await expect(karrotFactory.deployLotteryContract(owner.address, 0, burnDeadline, lotteryTime)).to.be.revertedWith("Incorrect time values");
-    await expect(karrotFactory.deployLotteryContract(owner.address, mintDeadline, 0, lotteryTime)).to.be.revertedWith("Incorrect time values");
-    await expect(karrotFactory.deployLotteryContract(owner.address, mintDeadline, burnDeadline, 0)).to.be.revertedWith("Incorrect time values");
+    await expect(karrotFactory.deployLotteryAndRedemptionContract(owner.address, 0, burnDeadline, lotteryTime)).to.be.revertedWith("Incorrect time values");
+    await expect(karrotFactory.deployLotteryAndRedemptionContract(owner.address, mintDeadline, 0, lotteryTime)).to.be.revertedWith("Incorrect time values");
+    await expect(karrotFactory.deployLotteryAndRedemptionContract(owner.address, mintDeadline, burnDeadline, 0)).to.be.revertedWith("Incorrect time values");
   });
 
   it("Should prevents non-registar from register ticket", async function () {
