@@ -5,11 +5,12 @@ import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
 
-describe("Lottery", async () => {
+describe("TicketRedemption", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
   let ticketMinter: TicketMinter;
   let lottery: Lottery;
+  let redemption: TicketRedemption;
   let rewardToken: RewardTokenMintableMock;
   let organizationAddresses: string[];
   let campaignsAddresses: string[];
@@ -44,6 +45,7 @@ describe("Lottery", async () => {
       karrotFactory,
       ticketMinter,
       lottery,
+      redemption,
       rewardToken,
       organizationAddresses,
       campaignsAddresses,
@@ -64,6 +66,7 @@ describe("Lottery", async () => {
     karrotFactory = fixture.karrotFactory;
     ticketMinter = fixture.ticketMinter;
     lottery = fixture.lottery;
+    redemption = fixture.redemption;
     rewardToken = fixture.rewardToken;
     owner = fixture.owner;
     minter = fixture.minter;
@@ -72,6 +75,87 @@ describe("Lottery", async () => {
     organazationsTicketsCount = fixture.organazationsTicketsCount;
     user1 = fixture.user1;
     user2 = fixture.user2;
+  });
+
+  it("Should prevents non-admin set redemption price and cap", async function () {
+    const adminRole = ethers.constants.HashZero;
+
+    await expect(redemption.connect(user1).setRedemptionPrice(1)).to.be.revertedWith(
+      "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+    );
+    await expect(redemption.connect(user1).setRedemptionCap(1)).to.be.revertedWith(
+      "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+    );
+  });
+
+  it("Should prevents redemption price from set to 0", async function () {
+    await expect(redemption.setRedemptionPrice(0)).to.be.revertedWith("Redemption price can't be 0");
+  });
+
+  it("Should prevents redeem if burn period finished or price not set", async function () {
+    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+    const ticketContract = await campaign.ticketsContract();
+    await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Redemption price not set");
+
+    await ethers.provider.send("evm_increaseTime", [2001]);
+    await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Burn period finished yet");
+  });
+
+  it("Should prevents redeem if redemption cap reached", async function () {
+    const redemptionPrice = ethers.utils.parseEther("100");
+    await redemption.setRedemptionPrice(redemptionPrice);
+    await redemption.setRedemptionCap(redemptionPrice);
+    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+    const ticketContract = await campaign.ticketsContract();
+    await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Redemption cap reached");
+  });
+
+  it("Should prevents ticket redemption if sender does not own any organization", async function () {
+    const redemptionPrice = ethers.utils.parseEther("100");
+    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+    const ticketAddress = await campaign.ticketsContract();
+    await redemption.setRedemptionPrice(redemptionPrice);
+    await redemption.setRedemptionCap(redemptionPrice);
+    await expect(redemption.connect(minter).redeem(ticketAddress, 1)).to.be.revertedWith("User is not an owner of any organization");
+  });
+
+  it("Should prevents ticket redemption if ticket is not registered", async function () {
+    const redemptionPrice = ethers.utils.parseEther("100");
+    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+    const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+    await redemption.setRedemptionPrice(redemptionPrice);
+    await redemption.setRedemptionCap(redemptionPrice);
+    await expect(redemption.connect(user1).redeem(karrotTicket.address, 1)).to.be.revertedWith("The ticket is not registered");
+  });
+
+  it("Correct set redemption price and cap", async function () {
+    const redemptionPrice = ethers.utils.parseEther("100");
+    await redemption.setRedemptionPrice(redemptionPrice);
+    await redemption.setRedemptionCap(redemptionPrice);
+    expect(await redemption.redemptionPrice()).to.be.eq(redemptionPrice);
+    expect(await redemption.redemptionCap()).to.be.eq(redemptionPrice);
+  });
+
+  it("Correct redemption of tickets", async function () {
+    const redemptionPrice = ethers.utils.parseEther("1");
+    const redemptionCap = ethers.utils.parseEther("10");
+    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+    const ticketAddress = await campaign.ticketsContract();
+    const oldAmountTicket = (await campaign.childrenOf(1)).length;
+    const oldBalanceOfRedemption = await rewardToken.balanceOf(redemption.address);
+    await redemption.setRedemptionPrice(redemptionPrice);
+    await redemption.setRedemptionCap(redemptionCap);
+    await redemption.setRewardToken(rewardToken.address);
+    await campaign.connect(user1).approve(redemption.address, 1)
+    await redemption.connect(user1).redeem(ticketAddress, 3);
+    const balanceOfWinner = await rewardToken.balanceOf(user1.address);
+    const rewardAmount = redemptionPrice.mul(3);
+    const newAmountTicket = (await campaign.childrenOf(1)).length;
+    const newBalanceOfRedemption = await rewardToken.balanceOf(redemption.address);
+
+    expect(newBalanceOfRedemption).to.be.eq(oldBalanceOfRedemption.sub(rewardAmount));
+    expect(newAmountTicket).to.be.eq(oldAmountTicket - 3);
+    expect(balanceOfWinner).to.be.eq(rewardAmount);
   });
 
   after(async function () {
