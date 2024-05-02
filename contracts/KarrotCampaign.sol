@@ -140,8 +140,9 @@ contract KarrotCampaign is
     }
 
     function _burnTicket(uint256 campaignId) internal {
-        bool isApprovedOrOwner = _isApprovedOrOwner(msg.sender, campaignId);
-        if(!isApprovedOrOwner) revert IncorrectCondition("User is not aprroved or owner");
+        if(!_isApprovedOrOwner(msg.sender, campaignId)) {
+            revert IncorrectCondition("User is not aprroved or owner");
+        }
 
         Child[] storage campaignTickets = _activeChildren[campaignId];
         uint256 ticketIdToBurn = campaignTickets[campaignTickets.length - 1].tokenId;
