@@ -139,6 +139,23 @@ describe("KarrotCampaign", async () => {
         expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(5);
     });
 
+    it("Should prevents burn tickets if sender is not owner or aprroved", async function () {
+        const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+        await campaign.setTicketContract(karrotTicket.address);
+        await organization.grantRole(minterRole, minter.address);
+        await organization.connect(minter).mintTo(user1.address, []);
+        await organization.connect(minter).mintTo(user2.address, []);
+        await campaign.grantRole(minterRole, minter.address);
+        await mintTickets(karrotTicket, user1, 5);
+        await mintTickets(karrotTicket, user2, 5);
+
+        await expect(campaign.connect(user2)["burnTicketBatch(uint256,uint256)"](1, 1)).to.be.revertedWith("User is not aprroved or owner");
+        await campaign.connect(user1).approve(user2.address, 1)
+        expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(10);
+        await campaign.connect(user2)["burnTicketBatch(uint256,uint256)"](1, 1);
+        expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(9);
+    })
+
     it("Should test all burn minor scenarios", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
         await campaign.setTicketContract(karrotTicket.address);
