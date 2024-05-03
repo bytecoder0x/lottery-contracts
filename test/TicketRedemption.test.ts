@@ -158,6 +158,25 @@ describe("TicketRedemption", async () => {
     expect(balanceOfWinner).to.be.eq(rewardAmount);
   });
 
+  it("Should support AccessControl interface", async function () {
+    let functionSignature = [
+      "hasRole(bytes32,address)",
+      "getRoleAdmin(bytes32)",
+      "grantRole(bytes32,address)",
+      "revokeRole(bytes32,address)",
+      "renounceRole(bytes32,address)",
+    ];
+    let interfaceID = BigInt(0);
+
+    for (const signature of functionSignature) {
+      const selector = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(2, 10);
+      interfaceID ^= BigInt("0x" + selector);
+    }
+
+    const interfaceIDHex = "0x" + interfaceID.toString(16).padStart(8, "0");
+    expect(await redemption.supportsInterface(interfaceIDHex)).to.equal(true);
+  });
+
   after(async function () {
     await network.provider.send("evm_revert", [hardhatSnapshotId]);
   });
