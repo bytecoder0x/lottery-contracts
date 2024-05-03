@@ -34,7 +34,7 @@ describe("Lottery", async () => {
       },
       {
         tierType: 1,
-        winnersShare: 35_00, // 35%
+        winnersShare: 45_00, // 45%
         winnersCount: 0,
         rewardAmount: ethers.utils.parseEther("10"),
       },
@@ -214,8 +214,8 @@ describe("Lottery", async () => {
 
       //Random tier should be initialized with winners count
       expect(tiers[1].tierType).to.equal(1);
-      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 35) / 100));
-      expect(tiers[1].winnersShare).to.equal(3500); // 35%
+      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 45) / 100));
+      expect(tiers[1].winnersShare).to.equal(4500); // 45%
       expect(tiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
 
       //Fixed winners tier
@@ -297,7 +297,7 @@ describe("Lottery", async () => {
     });
 
     it("Correct reward when expected number of tiers greater than actual number", async function () {
-      const distributedAmount = Number(ethers.utils.parseEther("180"));
+      const distributedAmount = Number(ethers.utils.parseEther("200"));
       const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
       await lottery.rewardWinners(5);
       const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
