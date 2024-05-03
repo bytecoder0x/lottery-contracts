@@ -77,7 +77,7 @@ describe("TicketRedemption", async () => {
     user2 = fixture.user2;
   });
 
-  it("Should prevents non-admin set redemption price and cap", async function () {
+  it("Should prevents non-admin set redemption price, reward token and cap", async function () {
     const adminRole = ethers.constants.HashZero;
 
     await expect(redemption.connect(user1).setRedemptionPrice(1)).to.be.revertedWith(
@@ -86,6 +86,13 @@ describe("TicketRedemption", async () => {
     await expect(redemption.connect(user1).setRedemptionCap(1)).to.be.revertedWith(
       "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
     );
+    await expect(redemption.connect(user1).setRewardToken(rewardToken.address)).to.be.revertedWith(
+      "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+    );
+  });
+
+  it("Should prevents if reward token is not contract", async function () {
+    await expect(redemption.setRewardToken(user1.address)).to.be.revertedWith("Reward token is not a contract");
   });
 
   it("Should prevents redemption price from set to 0", async function () {
@@ -97,7 +104,7 @@ describe("TicketRedemption", async () => {
     const ticketContract = await campaign.ticketsContract();
     await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Redemption price not set");
 
-    await ethers.provider.send("evm_increaseTime", [2001]);
+    await ethers.provider.send("evm_increaseTime", [3001]);
     await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Burn period finished yet");
   });
 
@@ -128,12 +135,14 @@ describe("TicketRedemption", async () => {
     await expect(redemption.connect(user1).redeem(karrotTicket.address, 1)).to.be.revertedWith("The ticket is not registered");
   });
 
-  it("Correct set redemption price and cap", async function () {
+  it("Correct set redemption price, reward token and cap", async function () {
     const redemptionPrice = ethers.utils.parseEther("100");
     await redemption.setRedemptionPrice(redemptionPrice);
+    await redemption.setRewardToken(rewardToken.address);
     await redemption.setRedemptionCap(redemptionPrice);
     expect(await redemption.redemptionPrice()).to.be.eq(redemptionPrice);
     expect(await redemption.redemptionCap()).to.be.eq(redemptionPrice);
+    expect(await redemption.rewardToken()).to.be.eq(rewardToken.address);
   });
 
   it("Correct redemption of tickets", async function () {
