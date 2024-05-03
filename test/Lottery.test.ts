@@ -234,6 +234,12 @@ describe("Lottery", async () => {
       await lottery.initializeLottery(0);
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery time not reached yet");
     });
+
+    it("Can't call runLottery if lottery is not fully initialized", async function () {
+      await ethers.provider.send("evm_increaseTime", [3001]);
+      await lottery.initializeLottery(1);
+      await expect(lottery.runLottery()).to.be.revertedWith("Lottery is not fully initialized");
+    });
   });
 
   describe("Lottery run", async function () {
