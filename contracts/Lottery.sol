@@ -181,6 +181,9 @@ contract Lottery is AccessControl, ILottery {
         if (randomSalt != 0) {
             revert ActionPerformed("Lottery already run");
         }
+        if (initializedOrganizationsCount != organizations.length) {
+            revert ActionPerformed("Lottery is not fully initialized");
+        }
         randomSalt = uint256(keccak256(abi.encodePacked(block.prevrandao)));
     }
 
