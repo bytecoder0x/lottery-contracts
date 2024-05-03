@@ -152,26 +152,38 @@ describe("TicketRedemption", async () => {
     expect(await redemption.rewardToken()).to.be.eq(rewardToken.address);
   });
 
-  it("Correct redemption of tickets", async function () {
+  it("Correct redemption of tickets for different campaign", async function () {
     const redemptionPrice = ethers.utils.parseEther("1");
-    const redemptionCap = ethers.utils.parseEther("10");
-    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
-    const ticketAddress = await campaign.ticketsContract();
-    const oldAmountTicket = (await campaign.childrenOf(1)).length;
-    const oldBalanceOfRedemption = await rewardToken.balanceOf(redemption.address);
+    const redemptionCap = ethers.utils.parseEther("100");
+    const users = [user1, user2]
     await redemption.setRedemptionPrice(redemptionPrice);
     await redemption.setRedemptionCap(redemptionCap);
     await redemption.setRewardToken(rewardToken.address);
-    await campaign.connect(user1).approve(redemption.address, 1)
-    await redemption.connect(user1).redeem(ticketAddress, 3);
-    const balanceOfWinner = await rewardToken.balanceOf(user1.address);
-    const rewardAmount = redemptionPrice.mul(3);
-    const newAmountTicket = (await campaign.childrenOf(1)).length;
-    const newBalanceOfRedemption = await rewardToken.balanceOf(redemption.address);
 
-    expect(newBalanceOfRedemption).to.be.eq(oldBalanceOfRedemption.sub(rewardAmount));
-    expect(newAmountTicket).to.be.eq(oldAmountTicket - 3);
-    expect(balanceOfWinner).to.be.eq(rewardAmount);
+    let iteration = 0;
+    for (let u = 0; u < 2; u++) {
+
+      const user = users[u];
+      for (let c = 0; c < 2; c++) { 
+
+          const campaignAddress = campaignsAddresses[iteration];
+          const campaign = await ethers.getContractAt("KarrotCampaign", campaignAddress);
+          const ticketAddress = await campaign.ticketsContract();
+          const oldAmountTicket = (await campaign.childrenOf(1)).length;
+          const oldBalanceOfRedemption = await rewardToken.balanceOf(redemption.address);
+          await campaign.connect(user).approve(redemption.address, 1);
+          await redemption.connect(user).redeem(ticketAddress, 3);
+          const balanceOfUser = await rewardToken.balanceOf(user.address);
+          const rewardAmount = redemptionPrice.mul(3);
+          const newAmountTicket = (await campaign.childrenOf(1)).length;
+          const newBalanceOfRedemption = await rewardToken.balanceOf(redemption.address);
+          iteration +=1;
+
+          expect(newBalanceOfRedemption).to.be.eq(oldBalanceOfRedemption.sub(rewardAmount));
+          expect(newAmountTicket).to.be.eq(oldAmountTicket - 3);
+          expect(balanceOfUser).to.be.eq(rewardAmount.mul(c + 1));
+      }
+    }
   });
 
   it("Should support AccessControl ITicketRedemption interfaces", async function () {
