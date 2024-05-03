@@ -77,6 +77,13 @@ describe("TicketRedemption", async () => {
     user2 = fixture.user2;
   });
 
+  it("Should prevents deploy with wrong lottery", async function () {
+    const organization = await ethers.getContractAt("KarrotOrganization", organizationAddresses[0]);
+
+    await expect((await ethers.getContractFactory("TicketRedemption")).deploy(owner.address, organization.address))
+        .to.be.revertedWith("InterfaceNotSupported");
+});
+
   it("Should prevents non-admin set redemption price, reward token and cap", async function () {
     const adminRole = ethers.constants.HashZero;
 
@@ -167,7 +174,7 @@ describe("TicketRedemption", async () => {
     expect(balanceOfWinner).to.be.eq(rewardAmount);
   });
 
-  it("Should support AccessControl interface", async function () {
+  it("Should support AccessControl ITicketRedemption interfaces", async function () {
     let functionSignature = [
       "hasRole(bytes32,address)",
       "getRoleAdmin(bytes32)",
@@ -184,6 +191,22 @@ describe("TicketRedemption", async () => {
 
     const interfaceIDHex = "0x" + interfaceID.toString(16).padStart(8, "0");
     expect(await redemption.supportsInterface(interfaceIDHex)).to.equal(true);
+
+    let functionSignatureRedemption = [
+      'setRewardToken(address)',
+      'redeem(address,uint256)',
+      'setRedemptionPrice(uint256)',
+      'setRedemptionCap(uint256)'
+    ];
+    let interfaceIDRedemption = BigInt(0);
+
+    for (const signature of functionSignatureRedemption) {
+        const selector = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature)).slice(2, 10);
+        interfaceIDRedemption ^= BigInt('0x' + selector);
+    }
+
+    const interfaceIDHexRedemption = '0x' + interfaceIDRedemption.toString(16).padStart(8, '0');
+    expect(await redemption.supportsInterface(interfaceIDHexRedemption)).to.equal(true);
   });
 
   after(async function () {
