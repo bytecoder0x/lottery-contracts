@@ -16,6 +16,8 @@ import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ITicketMinter} from "./interface/ITicketMinter.sol";
 
+import {LotteryDeployerLibrary} from "./libraries/LotteryDeployerLibrary.sol";
+import {RedemptionDeployerLibrary} from "./libraries/RedemptionDeployerLibrary.sol";
 import {OrganizationDeployerLibrary} from "./libraries/OrganizationDeployerLibrary.sol";
 import {CampaignDeployerLibrary} from "./libraries/CampaignDeployerLibrary.sol";
 import {TicketDeployerLibrary} from "./libraries/TicketDeployerLibrary.sol";
@@ -207,15 +209,15 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         uint32 _burnDeadline,
         uint32 _lotteryTime
     ) private returns (address) {
-        address newLottery = address(
-            new Lottery{salt: keccak256(abi.encodePacked(lotteries.length))}(
-                _defaultAdmin,
-                address(this),
-                _mintDeadline,
-                _burnDeadline,
-                _lotteryTime
-            )
+
+        address newLottery = LotteryDeployerLibrary.deployLotteryContract(
+            _defaultAdmin, address(this), 
+            lotteries.length, 
+            _mintDeadline, 
+            _burnDeadline, 
+            _lotteryTime
         );
+        
         lotteries.push(newLottery);
         isLottery[newLottery] = true;
         return newLottery;
@@ -225,12 +227,13 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address _defaultAdmin,
         address _lottery
     ) private returns (address) {
-        address newRedemption= address(
-            new TicketRedemption{salt: keccak256(abi.encodePacked(redemptions.length))}(
-                _defaultAdmin,
-                _lottery
-            )
+
+        address newRedemption = RedemptionDeployerLibrary.deployRedemtionContract(
+            _defaultAdmin,
+            _lottery,
+            redemptions.length
         );
+
         redemptions.push(newRedemption);
         return newRedemption;
     }
