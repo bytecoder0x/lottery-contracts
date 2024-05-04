@@ -102,11 +102,15 @@ describe("KarrotFactory", async () => {
     });
 
     it("Should test all functions with 'withSetupMinterContract' modifier with negative scenario", async function () {
+        const lotteryDeployerLibrary = await (await ethers.getContractFactory("LotteryDeployerLibrary")).deploy();
+        const redemptionDeployerLibrary = await (await ethers.getContractFactory("RedemptionDeployerLibrary")).deploy();
         const organizationDeployerLibrary = await (await ethers.getContractFactory("OrganizationDeployerLibrary")).deploy();
         const campaignDeployerLibrary = await (await ethers.getContractFactory("CampaignDeployerLibrary")).deploy();
         const ticketDeployerLibrary = await (await ethers.getContractFactory("TicketDeployerLibrary")).deploy();
         const karrotFactory1 = await (await ethers.getContractFactory("KarrotFactory", {
             libraries: {
+                LotteryDeployerLibrary: lotteryDeployerLibrary.address,
+                RedemptionDeployerLibrary: redemptionDeployerLibrary.address,
                 OrganizationDeployerLibrary: organizationDeployerLibrary.address,
                 CampaignDeployerLibrary: campaignDeployerLibrary.address,
                 TicketDeployerLibrary: ticketDeployerLibrary.address
