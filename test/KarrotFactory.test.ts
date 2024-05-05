@@ -68,6 +68,12 @@ describe("KarrotFactory", async () => {
 
     });
 
+    it("Should not allow disable the same organization twice", async function () {
+        await karrotFactory.connect(owner).disableOrganization(organizationAddress);
+        await expect(karrotFactory.connect(owner).disableOrganization(organizationAddress)).to.be.revertedWith("Organization is already disabled");
+
+    });
+
     it("Should not allow to deploy Campaign And Ticket Contracts with invalid values", async function () {
 
         await expect(karrotFactory.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, lotteryAddress, "Test Campaign")).to.be.revertedWith("Not valid organization contract");
@@ -76,12 +82,14 @@ describe("KarrotFactory", async () => {
 
         await ethers.provider.send("evm_increaseTime", [2000]);
         await expect(karrotFactory.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, organizationAddress, "Test Campaign")).to.be.revertedWith("Mint deadline is in the past");
-
+        await karrotFactory.connect(owner).disableOrganization(organizationAddress);
+        await expect(karrotFactory.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, organizationAddress, "Test Campaign")).to.be.revertedWith("Organization is disabled");
     });
 
     it("Should test all functions with 'onlyRole(DEFAULT_ADMIN_ROLE)' modifier with negative scenario", async function () {
         const DEFAULT_ADMIN_ROLE = ethers.constants.HashZero;
         await expect(karrotFactory.connect(user1).setMinterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
+        await expect(karrotFactory.connect(user1).disableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
     });
 
     it("Should test all functions with 'onlyRole(DEPLOYER)' modifier with negative scenario", async function () {
