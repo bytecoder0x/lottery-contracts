@@ -57,6 +57,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (!activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already disabled");
         activeOrganizations.remove(_organization);
+
+        emit DisabledOrganization(_organization);
     }
 
     function setMinterContract(
