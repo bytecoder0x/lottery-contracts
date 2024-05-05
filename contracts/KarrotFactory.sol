@@ -2,6 +2,7 @@
 pragma solidity 0.8.21;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {KarrotOrganization} from "./KarrotOrganization.sol";
 import {KarrotCampaign} from "./KarrotCampaign.sol";
@@ -23,8 +24,12 @@ import {CampaignDeployerLibrary} from "./libraries/CampaignDeployerLibrary.sol";
 import {TicketDeployerLibrary} from "./libraries/TicketDeployerLibrary.sol";
 
 contract KarrotFactory is AccessControl, IKarrotFactory {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     bytes32 public constant DEPLOYER_ROLE = keccak256("DEPLOYER");
     address public minterContract;
+
+    EnumerableSet.AddressSet private activeOrganizations;
 
     address[] public lotteries;
     address[] public redemptions;
@@ -165,6 +170,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
             organizations.length,
             _organizationName
         );
+        activeOrganizations.add(newOrganization);
         organizations.push(newOrganization);
         isOrganization[newOrganization] = true;
         return newOrganization;
