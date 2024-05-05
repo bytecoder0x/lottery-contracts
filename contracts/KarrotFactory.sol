@@ -190,6 +190,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         string memory campaignName
     ) private returns (address deployedCampaign, address deployedTicket) {
         if (!isOrganization[organization]) revert IncorrectValue("Not valid organization contract");
+        if (!activeOrganizations.contains(organization)) revert IncorrectValue("Organization is disabled");
         if (!isLottery[lottery]) revert IncorrectValue("Not valid lottery contract");
         if (ILottery(lottery).mintDeadline() < block.timestamp) revert IncorrectCondition("Mint deadline is in the past");
         if (bytes(campaignName).length == 0) revert IncorrectValue("Campaign name is empty");
