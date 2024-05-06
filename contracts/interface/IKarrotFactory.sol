@@ -12,6 +12,7 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
     event OrganizationContractDeployed(address indexed organizationContract);
     event CampaignContractDeployed(address indexed campaignContract, address indexed organization);
     event TicketContractDeployed(address indexed ticketContract, address indexed campaign);
+    event EnableOrganization(address indexed organization);
     event DisabledOrganization(address indexed organization);
     
     function isOrganization(address organization) external view returns (bool);

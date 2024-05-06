@@ -52,6 +52,15 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         _setupRole(DEPLOYER_ROLE, _deployer);
     }
 
+    function enableOrganization(
+        address _organization
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enable");
+        activeOrganizations.add(_organization);
+
+        emit EnableOrganization(_organization);
+    }
+
     function disableOrganization(
         address _organization
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
