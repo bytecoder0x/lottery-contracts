@@ -211,7 +211,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     ) private returns (address) {
 
         address newLottery = LotteryDeployerLibrary.deployLotteryContract(
-            _defaultAdmin, address(this), 
+            _defaultAdmin, 
+            address(this), 
             lotteries.length, 
             _mintDeadline, 
             _burnDeadline, 
