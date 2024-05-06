@@ -74,6 +74,13 @@ describe("KarrotFactory", async () => {
 
     });
 
+    it("Should not allow enable the same organization twice", async function () {
+        await karrotFactory.connect(owner).disableOrganization(organizationAddress);
+        await karrotFactory.connect(owner).enableOrganization(organizationAddress);
+        await expect(karrotFactory.connect(owner).enableOrganization(organizationAddress)).to.be.revertedWith("Organization is already enable");
+
+    });
+
     it("Should not allow to deploy Campaign And Ticket Contracts with invalid values", async function () {
 
         await expect(karrotFactory.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, lotteryAddress, "Test Campaign")).to.be.revertedWith("Not valid organization contract");
@@ -90,6 +97,7 @@ describe("KarrotFactory", async () => {
         const DEFAULT_ADMIN_ROLE = ethers.constants.HashZero;
         await expect(karrotFactory.connect(user1).setMinterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
         await expect(karrotFactory.connect(user1).disableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
+        await expect(karrotFactory.connect(user1).enableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
     });
 
     it("Should test all functions with 'onlyRole(DEPLOYER)' modifier with negative scenario", async function () {
