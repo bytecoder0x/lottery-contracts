@@ -25,6 +25,8 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
     function getAllCampaigns() external view returns (address[] memory);
     function getAllTickets() external view returns (address[] memory);
 
+    function enableOrganization(address organization) external;
+    function disableOrganization(address organization) external;
     function setMinterContract(address _minterContract) external;
 
     function deployLotteryAndRedemptionContract(
