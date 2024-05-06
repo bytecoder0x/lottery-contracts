@@ -12,6 +12,8 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
     event OrganizationContractDeployed(address indexed organizationContract);
     event CampaignContractDeployed(address indexed campaignContract, address indexed organization);
     event TicketContractDeployed(address indexed ticketContract, address indexed campaign);
+    event EnableOrganization(address indexed organization);
+    event DisabledOrganization(address indexed organization);
     
     function isOrganization(address organization) external view returns (bool);
     function isLottery(address lottery) external view returns (bool);
@@ -23,6 +25,8 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
     function getAllCampaigns() external view returns (address[] memory);
     function getAllTickets() external view returns (address[] memory);
 
+    function enableOrganization(address organization) external;
+    function disableOrganization(address organization) external;
     function setMinterContract(address _minterContract) external;
 
     function deployLotteryAndRedemptionContract(

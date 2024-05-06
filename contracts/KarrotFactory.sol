@@ -2,6 +2,7 @@
 pragma solidity 0.8.21;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {KarrotOrganization} from "./KarrotOrganization.sol";
 import {KarrotCampaign} from "./KarrotCampaign.sol";
@@ -16,13 +17,19 @@ import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ITicketMinter} from "./interface/ITicketMinter.sol";
 
+import {LotteryDeployerLibrary} from "./libraries/LotteryDeployerLibrary.sol";
+import {RedemptionDeployerLibrary} from "./libraries/RedemptionDeployerLibrary.sol";
 import {OrganizationDeployerLibrary} from "./libraries/OrganizationDeployerLibrary.sol";
 import {CampaignDeployerLibrary} from "./libraries/CampaignDeployerLibrary.sol";
 import {TicketDeployerLibrary} from "./libraries/TicketDeployerLibrary.sol";
 
 contract KarrotFactory is AccessControl, IKarrotFactory {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     bytes32 public constant DEPLOYER_ROLE = keccak256("DEPLOYER");
     address public minterContract;
+
+    EnumerableSet.AddressSet private activeOrganizations;
 
     address[] public lotteries;
     address[] public redemptions;
@@ -43,6 +50,24 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     constructor(address _deployer) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(DEPLOYER_ROLE, _deployer);
+    }
+
+    function enableOrganization(
+        address _organization
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
+        activeOrganizations.add(_organization);
+
+        emit EnableOrganization(_organization);
+    }
+
+    function disableOrganization(
+        address _organization
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (!activeOrganizations.contains(_organization)) revert IncorrectValue("Non Karrot organization or organization is already disabled");
+        activeOrganizations.remove(_organization);
+
+        emit DisabledOrganization(_organization);
     }
 
     function setMinterContract(
@@ -163,6 +188,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
             organizations.length,
             _organizationName
         );
+        activeOrganizations.add(newOrganization);
         organizations.push(newOrganization);
         isOrganization[newOrganization] = true;
         return newOrganization;
@@ -175,6 +201,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         string memory campaignName
     ) private returns (address deployedCampaign, address deployedTicket) {
         if (!isOrganization[organization]) revert IncorrectValue("Not valid organization contract");
+        if (!activeOrganizations.contains(organization)) revert IncorrectValue("Organization is disabled");
         if (!isLottery[lottery]) revert IncorrectValue("Not valid lottery contract");
         if (ILottery(lottery).mintDeadline() < block.timestamp) revert IncorrectCondition("Mint deadline is in the past");
         if (bytes(campaignName).length == 0) revert IncorrectValue("Campaign name is empty");
@@ -207,15 +234,16 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         uint32 _burnDeadline,
         uint32 _lotteryTime
     ) private returns (address) {
-        address newLottery = address(
-            new Lottery{salt: keccak256(abi.encodePacked(lotteries.length))}(
-                _defaultAdmin,
-                address(this),
-                _mintDeadline,
-                _burnDeadline,
-                _lotteryTime
-            )
+
+        address newLottery = LotteryDeployerLibrary.deployLotteryContract(
+            _defaultAdmin, 
+            address(this), 
+            lotteries.length, 
+            _mintDeadline, 
+            _burnDeadline, 
+            _lotteryTime
         );
+        
         lotteries.push(newLottery);
         isLottery[newLottery] = true;
         return newLottery;
@@ -225,12 +253,13 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address _defaultAdmin,
         address _lottery
     ) private returns (address) {
-        address newRedemption= address(
-            new TicketRedemption{salt: keccak256(abi.encodePacked(redemptions.length))}(
-                _defaultAdmin,
-                _lottery
-            )
+
+        address newRedemption = RedemptionDeployerLibrary.deployRedemtionContract(
+            _defaultAdmin,
+            _lottery,
+            redemptions.length
         );
+
         redemptions.push(newRedemption);
         return newRedemption;
     }

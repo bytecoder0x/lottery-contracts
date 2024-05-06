@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
 import {KarrotCampaign} from "../KarrotCampaign.sol";

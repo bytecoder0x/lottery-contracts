@@ -3,11 +3,15 @@ import { ethers } from "hardhat";
 export async function deployFactoryAndMinter() {
     const [owner, minter, user1, user2] = await ethers.getSigners();
 
+    const lotteryDeployerLibrary = await (await ethers.getContractFactory("LotteryDeployerLibrary")).deploy();
+    const redemptionDeployerLibrary = await (await ethers.getContractFactory("RedemptionDeployerLibrary")).deploy();
     const organizationDeployerLibrary = await (await ethers.getContractFactory("OrganizationDeployerLibrary")).deploy();
     const campaignDeployerLibrary = await (await ethers.getContractFactory("CampaignDeployerLibrary")).deploy();
     const ticketDeployerLibrary = await (await ethers.getContractFactory("TicketDeployerLibrary")).deploy();
     const karrotFactory = await (await ethers.getContractFactory("KarrotFactory", {
         libraries: {
+            LotteryDeployerLibrary: lotteryDeployerLibrary.address,
+            RedemptionDeployerLibrary: redemptionDeployerLibrary.address,
             OrganizationDeployerLibrary: organizationDeployerLibrary.address,
             CampaignDeployerLibrary: campaignDeployerLibrary.address,
             TicketDeployerLibrary: ticketDeployerLibrary.address
