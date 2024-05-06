@@ -188,6 +188,9 @@ contract Lottery is AccessControl, ILottery {
     }
 
     function rewardWinners(uint tiersCount) external {
+        if (randomSalt == 0) {
+            revert ActionPerformed("Lottery is not run");
+        }
         if (lotteryProcessed) {
             revert ActionPerformed("Lottery already processed");
         }
