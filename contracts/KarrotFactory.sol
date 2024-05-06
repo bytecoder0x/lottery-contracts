@@ -55,7 +55,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     function enableOrganization(
         address _organization
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enable");
+        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
         activeOrganizations.add(_organization);
 
         emit EnableOrganization(_organization);
@@ -64,7 +64,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     function disableOrganization(
         address _organization
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (!activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already disabled");
+        if (!activeOrganizations.contains(_organization)) revert IncorrectValue("Non Karrot organization or organization is already disabled");
         activeOrganizations.remove(_organization);
 
         emit DisabledOrganization(_organization);
