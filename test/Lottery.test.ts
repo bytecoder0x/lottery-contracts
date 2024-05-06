@@ -240,6 +240,11 @@ describe("Lottery", async () => {
       await lottery.initializeLottery(1);
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery is not fully initialized");
     });
+
+    it("Can't call rewardWinners if lottery is not run", async function () {
+      await ethers.provider.send("evm_increaseTime", [3001]);
+      await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery is not run");
+    });
   });
 
   describe("Lottery run", async function () {
