@@ -70,14 +70,14 @@ describe("KarrotFactory", async () => {
 
     it("Should not allow disable the same organization twice", async function () {
         await karrotFactory.connect(owner).disableOrganization(organizationAddress);
-        await expect(karrotFactory.connect(owner).disableOrganization(organizationAddress)).to.be.revertedWith("Organization is already disabled");
+        await expect(karrotFactory.connect(owner).disableOrganization(organizationAddress)).to.be.revertedWith("Non Karrot organization or organization is already disabled");
 
     });
 
     it("Should not allow enable the same organization twice", async function () {
         await karrotFactory.connect(owner).disableOrganization(organizationAddress);
         await karrotFactory.connect(owner).enableOrganization(organizationAddress);
-        await expect(karrotFactory.connect(owner).enableOrganization(organizationAddress)).to.be.revertedWith("Organization is already enable");
+        await expect(karrotFactory.connect(owner).enableOrganization(organizationAddress)).to.be.revertedWith("Organization is already enabled");
 
     });
 
