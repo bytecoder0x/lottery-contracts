@@ -80,4 +80,16 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl {
             revert IncorrectCondition("Unable to transfer");
         }
     }
+
+    function fulfillRandomWords(
+        uint256 _requestId,
+        uint256[] memory randomWords
+    ) internal override {
+        if (s_requests[_requestId].paid == 0) revert IncorrectValue("Request not found");
+
+        s_requests[_requestId].fulfilled = true;
+        s_requests[_requestId].randomWord = randomWords[0];
+
+        emit RequestFulfilled(_requestId, randomWords[0]);
+    }
 }
