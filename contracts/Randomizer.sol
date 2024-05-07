@@ -72,4 +72,12 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl {
         }
         revert IncorrectCondition("Your request will take some time");
     }
+
+    function withdrawLink() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        LinkTokenInterface link = LinkTokenInterface(linkAddress);
+
+        if (!link.transfer(msg.sender, link.balanceOf(address(this)))){
+            revert IncorrectCondition("Unable to transfer");
+        }
+    }
 }
