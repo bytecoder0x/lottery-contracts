@@ -5,8 +5,9 @@ import "@chainlink/contracts/src/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
+import {IRandomizer} from "./interface/IRandomizer.sol";
 
-contract Randomizer is VRFV2WrapperConsumerBase, AccessControl {
+contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
     uint32 constant callbackGasLimit = 100000;
     uint32 constant numWords = 1;
     uint16 constant requestConfirmations = 3; // cannot be lower
