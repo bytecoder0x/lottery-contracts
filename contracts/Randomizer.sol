@@ -65,4 +65,11 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl {
         emit RequestSent(requestId, numWords);
         return requestId;
     }
+
+    function getStatus(uint256 requestId) public view returns (uint256) {
+        if (s_requests[requestId].fulfilled) {
+            return s_requests[requestId].randomWord;
+        }
+        revert IncorrectCondition("Your request will take some time");
+    }
 }
