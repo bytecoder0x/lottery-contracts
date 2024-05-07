@@ -28,6 +28,13 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl {
     event RequestSent(uint256 requestId, uint32 numWord);
     event RequestFulfilled(uint256 requestId, uint256 randomWord);
 
+    modifier onlyLottery() {
+        if (!IKarrotFactory(factoryAddress).isLottery(msg.sender)) {
+            revert IncorrectCondition("Only lottery can call this function");
+        }
+        _;
+    }
+
     constructor(
         address _link,
         address _vrfWrapper,
