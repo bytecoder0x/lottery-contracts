@@ -46,4 +46,23 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl {
 
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
+
+    function requestRandomNumber() external returns (uint256) {
+        uint256 requestId = requestRandomness(
+            callbackGasLimit,
+            requestConfirmations,
+            numWords
+        );
+
+        s_requests[requestId] = RequestStatus({
+            paid: VRF_V2_WRAPPER.calculateRequestPrice(callbackGasLimit),
+            randomWord: 0,
+            fulfilled: false
+        });
+
+        requestIds.push(requestId);
+        lastRequestId = requestId;
+        emit RequestSent(requestId, numWords);
+        return requestId;
+    }
 }
