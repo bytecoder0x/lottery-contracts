@@ -2,12 +2,11 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployBasicContracts } from "./utis";
-import { BigNumber } from "ethers";
-import { LinkToken, VRFCoordinatorV2Mock, VRFV2Wrapper, MockLinkToken } from "../typechain-types";
+import { VRFCoordinatorV2Mock, VRFV2Wrapper, MockLinkToken } from "../typechain-types";
 import { Randomizer } from "../typechain-types/contracts/Randomizer";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe("Randomizer", async () => {
+describe.only("Randomizer", async () => {
     let coordinator: VRFCoordinatorV2Mock;
     let wrapper: VRFV2Wrapper;
     let randomizer: Randomizer
@@ -20,28 +19,12 @@ describe("Randomizer", async () => {
     const pointOneLink = ethers.utils.parseEther("0.1");
     const pointZeroZeroThreeLink = ethers.utils.parseEther("0.003");
     const oneHundredLink = ethers.utils.parseEther("100")
-    const oneHundredGwei = ethers.utils.parseUnits("100", 9);
-    const wrapperGasOverhead = 60_000
-    const coordinatorGasOverhead = 52_000
+    const wrapperGasOverhead = 60000
+    const coordinatorGasOverhead = 52000
     const wrapperPremiumPercentage = 10
-    const maxNumWords = 10
+    const maxNumWords = 10;
     const weiPerUnitLink = pointZeroZeroThreeLink
-    const flatFee = pointOneLink
 
-    const calculatePrice = (
-        gasLimit: BigNumber,
-        _wrapperGasOverhead = wrapperGasOverhead,
-        _coordinatorGasOverhead = coordinatorGasOverhead,
-        _gasPriceWei = oneHundredGwei,
-        _weiPerUnitLink = weiPerUnitLink,
-        _wrapperPremium = wrapperPremiumPercentage,
-        _flatFee = flatFee
-    ) => {
-        const totalGas = BigNumber.from(0).add(gasLimit).add(_wrapperGasOverhead).add(_coordinatorGasOverhead)
-        const baseFee = BigNumber.from("1000000000000000000").mul(_gasPriceWei).mul(totalGas).div(_weiPerUnitLink)
-        const withPremium = baseFee.mul(BigNumber.from(100).add(_wrapperPremium)).div(100)
-        return withPremium.add(_flatFee)
-    }
 
     const deployRandomizer = async () => {
         const { karrotFactory, owner, minter: requester, user1, user2 } = await deployBasicContracts();
@@ -54,9 +37,8 @@ describe("Randomizer", async () => {
         const keyHash = "0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc";
         await wrapper.connect(owner).setConfig(wrapperGasOverhead, coordinatorGasOverhead, wrapperPremiumPercentage, keyHash, maxNumWords)
         await coordinator.connect(owner).fundSubscription(1, oneHundredLink)
-
         await link.transfer(randomizer.address, oneHundredLink);
-        console.log(await link.balanceOf(randomizer.address));
+
         return { coordinator, wrapper, randomizer, link, owner, requester, user1, user2 };
     }
 
