@@ -45,7 +45,7 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
 
-    function requestRandomNumber() external returns (uint256) {
+    function requestRandomNumber() external onlyLottery returns (uint256) {
         uint256 requestId = requestRandomness(
             callbackGasLimit,
             requestConfirmations,
@@ -64,7 +64,7 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         return requestId;
     }
 
-    function getRandomNumber(uint256 requestId) public view returns (uint256) {
+    function getRandomNumber(uint256 requestId) public view onlyLottery returns (uint256) {
         if (s_requests[requestId].fulfilled) {
             return s_requests[requestId].randomWord;
         }
