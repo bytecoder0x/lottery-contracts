@@ -39,6 +39,14 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         address _factory,
         address _defaultAdmin
     ) VRFV2WrapperConsumerBase(_link, _vrfWrapper) {
+        if (
+            !IKarrotFactory(_factory).supportsInterface(
+                type(IKarrotFactory).interfaceId
+            )
+        ) {
+            revert InterfaceNotSupported();
+        }
+        
         linkAddress = _link;
         factoryAddress = _factory;
 

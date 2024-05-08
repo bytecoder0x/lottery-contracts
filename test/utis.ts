@@ -58,8 +58,8 @@ export async function deployRandomizer(karrotFactory: KarrotFactory, owner: Sign
 
     const oneHundredLink = ethers.utils.parseEther("100");
     const keyHash = "0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc";
-    await wrapper.connect(owner).setConfig(60000, 52000, 10, keyHash, 10);
-    await coordinator.connect(owner).fundSubscription(1, oneHundredLink);
+    await wrapper.setConfig(60000, 52000, 10, keyHash, 10);
+    await coordinator.fundSubscription(1, oneHundredLink);
     await link.transfer(randomizer.address, oneHundredLink);
 
     return { coordinator, wrapper, randomizer, link };
