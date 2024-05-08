@@ -68,7 +68,7 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         if (s_requests[requestId].fulfilled) {
             return s_requests[requestId].randomWord;
         }
-        revert IncorrectCondition("Your request will take some time");
+        return 0;
     }
 
     function withdrawLink() public onlyRole(DEFAULT_ADMIN_ROLE) {
