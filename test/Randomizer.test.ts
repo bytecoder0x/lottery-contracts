@@ -53,4 +53,20 @@ describe.only("Randomizer", async () => {
         user1 = fixture.user1;
         user2 = fixture.user2;
     });
+
+    
+    it("Should successfully receive a random number", async () => {
+        await randomizer.connect(requester).requestRandomNumber()
+        const randomNumber =  Math.floor(Math.random() * 1000);
+        const lastRequestId = await randomizer.lastRequestId();
+        await coordinator.connect(owner).fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [randomNumber]);
+        const { paid, fulfilled } = await randomizer.s_requests(lastRequestId);
+        const randomWord = await randomizer.getStatus(lastRequestId);
+
+        expect(paid.add(await link.balanceOf(randomizer.address))).to.be.eq(oneHundredLink);
+        expect(fulfilled).to.be.true;
+        expect(randomNumber).to.be.eq(randomWord);
+
+        // // expect(paid).to.equal(price)
+    })
 });
