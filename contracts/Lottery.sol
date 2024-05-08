@@ -198,9 +198,6 @@ contract Lottery is AccessControl, ILottery {
     function rewardWinners(uint tiersCount) external {
         randomSalt = IRandomizer(randomizer).getRandomNumber(requestRandomNumberId);
 
-        if (randomSalt == 0) {
-            revert IncorrectCondition("Lottery is not run");
-        }
         if (lotteryProcessed) {
             revert ActionPerformed("Lottery already processed");
         }
