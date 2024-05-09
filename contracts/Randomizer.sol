@@ -77,6 +77,7 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
 
     function withdrawLink(uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         LinkTokenInterface link = LinkTokenInterface(linkAddress);
+
         if (_amount > link.balanceOf(address(this))) {
             revert IncorrectCondition("Not enough funds");
         }
@@ -100,8 +101,6 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         uint256 _requestId,
         uint256[] memory randomWords
     ) internal override {
-        if (s_requests[_requestId].paid == 0) revert IncorrectValue("Request not found");
-
         s_requests[_requestId].fulfilled = true;
         s_requests[_requestId].randomWord = randomWords[0];
 
