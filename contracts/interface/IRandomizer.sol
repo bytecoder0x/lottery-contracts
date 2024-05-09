@@ -12,5 +12,5 @@ interface IRandomizer is IERC165, IKarrotErrors {
 
     function getRandomNumber(uint256 requestId) external view returns (uint256);
 
-    function withdrawLink() external;
+    function withdrawLink(uint256 amount) external;
 }

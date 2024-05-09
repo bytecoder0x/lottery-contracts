@@ -75,12 +75,12 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         return 0;
     }
 
-    function withdrawLink() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function withdrawLink(uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         LinkTokenInterface link = LinkTokenInterface(linkAddress);
-
-        if (!link.transfer(msg.sender, link.balanceOf(address(this)))){
-            revert IncorrectCondition("Unable to transfer");
+        if (_amount > link.balanceOf(address(this))) {
+            revert IncorrectCondition("Not enough funds");
         }
+        link.transfer(msg.sender, _amount);
     }
 
     function supportsInterface(
