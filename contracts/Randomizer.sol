@@ -4,6 +4,7 @@ pragma solidity 0.8.21;
 import "@chainlink/contracts/src/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {IRandomizer} from "./interface/IRandomizer.sol";
 
@@ -85,6 +86,19 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         if (!link.transfer(msg.sender, link.balanceOf(address(this)))){
             revert IncorrectCondition("Unable to transfer");
         }
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        override(AccessControl, IERC165)
+        returns (bool)
+    {
+        return 
+            type(IRandomizer).interfaceId == interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function fulfillRandomWords(
