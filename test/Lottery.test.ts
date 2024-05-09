@@ -253,7 +253,7 @@ describe("Lottery", async () => {
 
     it("Can't call rewardWinners if lottery is not run", async function () {
       await ethers.provider.send("evm_increaseTime", [3001]);
-      await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery is not run");
+      await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery is not run or request is pending");
     });
   });
 

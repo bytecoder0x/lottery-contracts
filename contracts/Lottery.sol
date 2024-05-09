@@ -199,7 +199,7 @@ contract Lottery is AccessControl, ILottery {
         randomSalt = IRandomizer(randomizer).getRandomNumber(requestRandomNumberId);
 
         if (randomSalt == 0) {
-            revert IncorrectCondition("Lottery is not run");
+            revert IncorrectCondition("Lottery is not run or request is pending");
         }
         if (lotteryProcessed) {
             revert ActionPerformed("Lottery already processed");
