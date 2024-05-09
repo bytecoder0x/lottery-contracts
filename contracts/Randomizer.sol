@@ -68,7 +68,7 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         return requestId;
     }
 
-    function getRandomNumber(uint256 requestId) public view onlyLottery returns (uint256) {
+    function getRandomNumber(uint256 requestId) external view onlyLottery returns (uint256) {
         if (s_requests[requestId].fulfilled) {
             return s_requests[requestId].randomWord;
         }
