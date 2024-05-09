@@ -22,7 +22,7 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         bool fulfilled;
     }
 
-    mapping(uint256 => RequestStatus) public s_requests;
+    mapping(uint256 => RequestStatus) private s_requests;
 
     uint256[] public requestIds;
     uint256 public lastRequestId;
