@@ -24,9 +24,6 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
 
     mapping(uint256 => RequestStatus) private s_requests;
 
-    uint256[] public requestIds;
-    uint256 public lastRequestId;
-
     modifier onlyLottery() {
         if (!IKarrotFactory(factoryAddress).isLottery(msg.sender)) {
             revert IncorrectCondition("Only lottery can call this function");
@@ -47,7 +44,7 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         ) {
             revert InterfaceNotSupported();
         }
-        
+
         linkAddress = _link;
         factoryAddress = _factory;
 
@@ -67,8 +64,6 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
             fulfilled: false
         });
 
-        requestIds.push(requestId);
-        lastRequestId = requestId;
         emit RequestSent(requestId, numWords);
         return requestId;
     }
