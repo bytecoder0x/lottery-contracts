@@ -8,7 +8,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {IRandomizer} from "./interface/IRandomizer.sol";
 
-contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
+contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
     uint32 constant callbackGasLimit = 100000;
     uint32 constant numWords = 1;
     uint16 constant requestConfirmations = 3; // cannot be lower

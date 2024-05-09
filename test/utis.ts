@@ -49,18 +49,18 @@ export async function deployBasicContracts() {
     return { karrotFactory, ticketMinter, organizationAddress, campaignsAddresses, lotteryAddress, redemptionAddress, owner, minter, user1, user2 };
 }
 
-export async function deployRandomizer(karrotFactory: KarrotFactory, owner: SignerWithAddress) {
+export async function deployRandomGetter(karrotFactory: KarrotFactory, owner: SignerWithAddress) {
     const coordinator = await (await ethers.getContractFactory("VRFCoordinatorV2Mock", owner)).deploy(ethers.utils.parseEther("0.1"), 1e9);
     const linkEthFeed = await (await ethers.getContractFactory("MockV3Aggregator", owner)).deploy(18, ethers.utils.parseEther("0.003"));
     const link = await (await ethers.getContractFactory("MockLinkToken", owner)).deploy();
     const wrapper =  await (await ethers.getContractFactory("VRFV2Wrapper", owner)).deploy(link.address, linkEthFeed.address, coordinator.address);
-    const randomizer = await (await ethers.getContractFactory("Randomizer", owner)).deploy(link.address, wrapper.address, karrotFactory.address, owner.address) as Randomizer;
+    const randomGetter = await (await ethers.getContractFactory("RandomGetter", owner)).deploy(link.address, wrapper.address, karrotFactory.address, owner.address) as Randomizer;
 
     const oneHundredLink = ethers.utils.parseEther("100");
     const keyHash = "0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc";
     await wrapper.setConfig(60000, 52000, 10, keyHash, 10);
     await coordinator.fundSubscription(1, oneHundredLink);
-    await link.transfer(randomizer.address, oneHundredLink);
+    await link.transfer(randomGetter.address, oneHundredLink);
 
-    return { coordinator, wrapper, randomizer, link };
+    return { coordinator, wrapper, randomGetter, link };
 }
