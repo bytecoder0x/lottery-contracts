@@ -23,6 +23,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
     }
 
     mapping(uint256 => RequestStatus) public s_requests;
+    mapping(address => uint256) public randomNumbers;
 
     modifier onlyLottery() {
         if (!IKarrotFactory(factoryAddress).isLottery(msg.sender)) {
@@ -52,6 +53,10 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
     }
 
     function requestRandomNumber() external onlyLottery returns (uint256) {
+        if (randomNumbers[msg.sender] != 0) {
+            revert IncorrectCondition("Lottery already has random number");
+        }
+
         uint256 requestId = requestRandomness(
             callbackGasLimit,
             requestConfirmations,
@@ -68,8 +73,9 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         return requestId;
     }
 
-    function getRandomNumber(uint256 requestId) external view onlyLottery returns (uint256) {
+    function getRandomNumber(uint256 requestId) external onlyLottery returns (uint256) {
         if (s_requests[requestId].fulfilled) {
+            randomNumbers[msg.sender] = s_requests[requestId].randomWord;
             return s_requests[requestId].randomWord;
         }
         return 0;
