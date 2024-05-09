@@ -22,7 +22,7 @@ contract Randomizer is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         bool fulfilled;
     }
 
-    mapping(uint256 => RequestStatus) private s_requests;
+    mapping(uint256 => RequestStatus) public s_requests;
 
     modifier onlyLottery() {
         if (!IKarrotFactory(factoryAddress).isLottery(msg.sender)) {
