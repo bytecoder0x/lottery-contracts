@@ -81,6 +81,22 @@ describe("Randomizer", async () => {
         expect(randomSalt).to.be.eq(randomWord);
     });
 
+    
+    it("Should successfully receive 1 if random number equal 0", async function () {
+        await ethers.provider.send("evm_increaseTime", [3001]);
+        await lottery.initializeLottery(0);
+        await lottery.runLottery();
+        const lastRequestId = await lottery.requestRandomNumberId();
+        await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [0]);
+        await lottery.rewardWinners(0);
+        const { fulfilled, randomWord } = await randomGetter.s_requests(lastRequestId);
+        const randomSalt = await lottery.randomSalt();
+
+        expect(fulfilled).to.be.true;
+        expect(randomWord).to.be.eq(1);
+        expect(randomSalt).to.be.eq(1);
+    });
+
     it("Should prevents non-lottery call requestRandomNumber and getRandomNumber function", async function () {
         await expect(randomGetter.connect(user1).requestRandomNumber()).to.be.revertedWith("Only lottery can call this function");
         await expect(randomGetter.connect(user1).getRandomNumber(1)).to.be.revertedWith("Only lottery can call this function");

@@ -102,7 +102,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         uint256[] memory randomWords
     ) internal override {
         s_requests[_requestId].fulfilled = true;
-        s_requests[_requestId].randomWord = randomWords[0];
+        s_requests[_requestId].randomWord = randomWords[0] == 0 ? 1 : randomWords[0];
 
         emit RequestFulfilled(_requestId, randomWords[0]);
     }

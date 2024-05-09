@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { KarrotFactory, Randomizer } from "../typechain-types";
+import { KarrotFactory, RandomGetter } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 export async function deployFactoryAndMinter() {
@@ -54,7 +54,7 @@ export async function deployRandomGetter(karrotFactory: KarrotFactory, owner: Si
     const linkEthFeed = await (await ethers.getContractFactory("MockV3Aggregator", owner)).deploy(18, ethers.utils.parseEther("0.003"));
     const link = await (await ethers.getContractFactory("MockLinkToken", owner)).deploy();
     const wrapper =  await (await ethers.getContractFactory("VRFV2Wrapper", owner)).deploy(link.address, linkEthFeed.address, coordinator.address);
-    const randomGetter = await (await ethers.getContractFactory("RandomGetter", owner)).deploy(link.address, wrapper.address, karrotFactory.address, owner.address) as Randomizer;
+    const randomGetter = await (await ethers.getContractFactory("RandomGetter", owner)).deploy(link.address, wrapper.address, karrotFactory.address, owner.address) as RandomGetter;
 
     const oneHundredLink = ethers.utils.parseEther("100");
     const keyHash = "0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc";
