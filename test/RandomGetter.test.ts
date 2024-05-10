@@ -2,8 +2,7 @@ import { ethers } from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployBasicContracts, deployRandomGetter } from "./utis";
-import { VRFCoordinatorV2Mock, VRFV2Wrapper, MockLinkToken, Lottery, KarrotFactory, RandomGetter } from "../typechain-types";
-import { Randomizer } from "../typechain-types/contracts/Randomizer";
+import { VRFCoordinatorV2Mock, VRFV2Wrapper, MockLinkToken, Lottery, KarrotFactory, RandomGetter, LotteryMock } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 
@@ -95,6 +94,20 @@ describe("Randomizer", async () => {
         expect(fulfilled).to.be.true;
         expect(randomWord).to.be.eq(1);
         expect(randomSalt).to.be.eq(1);
+    });
+
+    it("Should prevents call requestRandomNumber if lottery already has random number", async function () {
+        const karrotFactoryMock = await (await ethers.getContractFactory("KarrotFactoryMock")).deploy();
+        const lotteryMock = await (await ethers.getContractFactory("LotteryMock")).deploy() as LotteryMock;
+        const { coordinator, wrapper, randomGetter } = await deployRandomGetter(karrotFactoryMock as unknown as KarrotFactory, owner);
+
+        await karrotFactoryMock.addToLottery(lotteryMock.address);
+        await lotteryMock.setupLottery(randomGetter.address);
+        await lotteryMock.runLottery();
+        await coordinator.fulfillRandomWordsWithOverride(1, wrapper.address, [1]);
+        await lotteryMock.rewardWinners();
+
+        await expect(lotteryMock.runLottery()).to.be.revertedWith("Lottery already has random number");
     });
 
     it("Should prevents non-lottery call requestRandomNumber and getRandomNumber function", async function () {
