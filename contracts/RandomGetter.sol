@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import "@chainlink/contracts/src/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
+import {VRFV2WrapperConsumerBase} from "@chainlink/contracts/src/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
