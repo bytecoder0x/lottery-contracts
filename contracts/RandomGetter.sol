@@ -13,7 +13,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     uint32 constant numWords = 1;
     uint16 constant requestConfirmations = 3; // cannot be lower
 
-    address factoryAddress;
+    IKarrotFactory factory;
     address linkAddress;
 
     struct RequestStatus {
@@ -26,7 +26,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     mapping(address => uint256) public randomNumbers;
 
     modifier onlyLottery() {
-        if (!IKarrotFactory(factoryAddress).isLottery(msg.sender)) {
+        if (!factory.isLottery(msg.sender)) {
             revert IncorrectCondition("Only lottery can call this function");
         }
         _;
@@ -47,7 +47,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         }
 
         linkAddress = _link;
-        factoryAddress = _factory;
+        factory = IKarrotFactory(_factory);
 
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
