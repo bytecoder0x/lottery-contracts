@@ -39,7 +39,7 @@ contract Lottery is AccessControl, ILottery {
     Tier[] public tiers;
     uint256 public processedTiersCount;
     IERC20 public rewardToken;
-    address public randomGetter;
+    IRandomGetter public randomGetter;
 
     mapping(uint256 => uint256) public winnerAmount;
     mapping(uint256 => uint256[]) public tierWinners;
@@ -136,7 +136,7 @@ contract Lottery is AccessControl, ILottery {
         }
 
         rewardToken = IERC20(_rewardToken);
-        randomGetter = _randomGetter;
+        randomGetter = IRandomGetter(_randomGetter);
 
         for (uint i; i < _tiers.length; i++) {
             Tier memory tier = _tiers[i]; 
@@ -192,11 +192,11 @@ contract Lottery is AccessControl, ILottery {
         if (initializedOrganizationsCount != organizations.length) {
             revert IncorrectCondition("Lottery is not fully initialized");
         }
-        requestRandomNumberId = IRandomGetter(randomGetter).requestRandomNumber();
+        requestRandomNumberId = randomGetter.requestRandomNumber();
     }
 
     function rewardWinners(uint tiersCount) external {
-        randomSalt = IRandomGetter(randomGetter).getRandomNumber(requestRandomNumberId);
+        randomSalt = randomGetter.getRandomNumber(requestRandomNumberId);
 
         if (randomSalt == 0) {
             revert IncorrectCondition("Lottery is not run or request is pending");
