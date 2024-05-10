@@ -52,6 +52,12 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         _setupRole(DEPLOYER_ROLE, _deployer);
     }
 
+    /**
+     * @notice Enables an organization to participate in the lottery.
+     * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _organization The address of the organization to be enabled.
+     * @dev If the organization is already enabled, reverts with an error message.
+     */
     function enableOrganization(
         address _organization
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -61,6 +67,12 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         emit EnableOrganization(_organization);
     }
 
+    /**
+     * @notice Disables an organization from participating in the lottery.
+     * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _organization The address of the organization to be disabled.
+     * @dev If the organization is Non Karrot or already disabled, reverts with an error message.
+     */
     function disableOrganization(
         address _organization
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -70,6 +82,12 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         emit DisabledOrganization(_organization);
     }
 
+    /**
+     * @notice Sets the minter contract address for ticket minting.
+     * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _minterContract The address of the minter contract to be set.
+     * @dev Reverts if the minter contract does not support the required interface.
+     */
     function setMinterContract(
         address _minterContract
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -85,6 +103,16 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         emit MinterContractUpdated(_minterContract);
     }
 
+    /**
+     * @notice Deploys a new lottery and redemption contract.
+     * @dev Only accessible by accounts with the DEPLOYER_ROLE.
+     * @param _defaultAdmin The address of the default admin for the contracts.
+     * @param _mintDeadline The deadline for ticket minting.
+     * @param _burnDeadline The deadline for ticket burning.
+     * @param _lotteryTime The time when the lottery will be conducted.
+     * @return newLottery The address of the newly deployed lottery contract.
+     * @return newRedemption The address of the newly deployed redemption contract.
+     */
     function deployLotteryAndRedemptionContract(
         address _defaultAdmin,
         uint32 _mintDeadline,
@@ -104,6 +132,13 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
             emit RedemptionContractDeployed(newRedemption);
     }
 
+    /**
+     * @notice Deploys a new organization contract.
+     * @dev Only accessible by accounts with the DEPLOYER_ROLE.
+     * @param defaultAdmin The address of the default admin for the contract.
+     * @param organizationName The name of the organization.
+     * @return newOrganization The address of the newly deployed organization contract.
+     */
     function deployOrganizationContract(
         address defaultAdmin,
         string memory organizationName
@@ -113,6 +148,16 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return newOrganization;
     }
 
+    /**
+     * @notice Deploys a new campaign and ticket contract.
+     * @dev Only accessible by accounts with the DEPLOYER_ROLE.
+     * @param defaultAdmin The address of the default admin for the contracts.
+     * @param lottery The address of the lottery contract.
+     * @param organization The address of the organization contract.
+     * @param campaignName The name of the campaign.
+     * @return newCampaign The address of the newly deployed campaign contract.
+     * @return newTicket The address of the newly deployed ticket contract.
+     */
     function deployCampaignAndTicketContract(
         address defaultAdmin,
         address lottery,
@@ -125,6 +170,17 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return (newCampaign, newTicket);
     }
 
+    /**
+     * @notice Deploys an organization contract and multiple campaigns with corresponding ticket contracts.
+     * @dev Only accessible by accounts with the DEPLOYER_ROLE.
+     * @param _defaultAdmin The address of the default admin for the contracts.
+     * @param _lottery The address of the lottery contract.
+     * @param _organizationName The name of the organization.
+     * @param _campaignNames An array of campaign names to be deployed.
+     * @return deployedOrganization The address of the newly deployed organization contract.
+     * @return deployedCampaigns An array containing the addresses of the newly deployed campaign contracts.
+     * @return deployedTickets An array containing the addresses of the newly deployed ticket contracts.
+     */
     function deployOrganizationAndCampaigns(
         address _defaultAdmin,
         address _lottery,
@@ -158,26 +214,52 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     }
 
+    /**
+     * @notice Returns the addresses of all deployed lottery contracts.
+     * @return An array containing the addresses of all lottery contracts.
+     */
     function getAllLotteries() external view returns (address[] memory) {
         return lotteries;
     }
 
+    /**
+     * @notice Returns the addresses of all deployed redemption contracts.
+     * @return An array containing the addresses of all redemption contracts.
+     */
     function getAllRedemptions() external view returns (address[] memory) {
         return redemptions;
     }
 
+    /**
+     * @notice Returns the addresses of all deployed organization contracts.
+     * @return An array containing the addresses of all organization contracts.
+     */
     function getAllOrganizations() external view returns (address[] memory) {
         return organizations;
     }
 
+    /**
+     * @notice Returns the addresses of all deployed campaign contracts.
+     * @return An array containing the addresses of all campaign contracts.
+     */
     function getAllCampaigns() external view returns (address[] memory) {
         return campaigns;
     }
 
+    /**
+     * @notice Returns the addresses of all deployed ticket contracts.
+     * @return An array containing the addresses of all ticket contracts.
+     */
     function getAllTickets() external view returns (address[] memory) {
         return tickets;
     }
 
+    /**
+     * @notice Deploys a new organization contract.
+     * @param defaultAdmin The address of the default admin for the contract.
+     * @param _organizationName The name of the organization.
+     * @return newOrganization The address of the newly deployed organization contract.
+     */
     function _deployOrganizationContract(
         address defaultAdmin,
         string memory _organizationName
@@ -194,6 +276,15 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return newOrganization;
     }
 
+    /**
+     * @notice Deploys a new campaign and ticket contract.
+     * @param defaultAdmin The address of the default admin for the contracts.
+     * @param lottery The address of the lottery contract.
+     * @param organization The address of the organization contract.
+     * @param campaignName The name of the campaign.
+     * @return deployedCampaign The address of the newly deployed campaign contract.
+     * @return deployedTicket The address of the newly deployed ticket contract.
+     */
     function _deployCampaignAndTicketContract(
         address defaultAdmin,
         address lottery,
@@ -228,6 +319,14 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         ILottery(lottery).registerTicketContract(deployedTicket);
     }
 
+    /**
+     * @notice Deploys a new lottery contract.
+     * @param _defaultAdmin The address of the default admin for the contract.
+     * @param _mintDeadline The deadline for ticket minting.
+     * @param _burnDeadline The deadline for ticket burning.
+     * @param _lotteryTime The time when the lottery will be conducted.
+     * @return newLottery The address of the newly deployed lottery contract.
+     */
     function _deployLotteryContract(
         address _defaultAdmin,
         uint32 _mintDeadline,
@@ -249,6 +348,12 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return newLottery;
     }
 
+    /**
+     * @notice Deploys a new redemption contract.
+     * @param _defaultAdmin The address of the default admin for the contract.
+     * @param _lottery The address of the associated lottery contract.
+     * @return newRedemption The address of the newly deployed redemption contract.
+     */
     function _deployRedemptionContract(
         address _defaultAdmin,
         address _lottery
@@ -264,6 +369,13 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return newRedemption;
     }
 
+    /**
+     * @notice Deploys a new ticket contract.
+     * @param _defaultAdmin The address of the default admin for the contract.
+     * @param _campaign The address of the associated campaign contract.
+     * @param _campaignName The name of the campaign.
+     * @return newTicket The address of the newly deployed ticket contract.
+     */
     function _deployTicketContract(
         address _defaultAdmin,
         address _campaign,
@@ -282,6 +394,12 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         ticketsCampaign[newTicket] = _campaign;
         return newTicket;
     }
+
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @param interfaceId The interface identifier.
+     * @return A boolean indicating whether the contract supports the interface.
+     */
     function supportsInterface(
         bytes4 interfaceId
     )
