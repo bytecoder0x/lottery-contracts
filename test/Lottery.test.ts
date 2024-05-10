@@ -409,8 +409,8 @@ describe("Lottery", async () => {
       await expect(lottery.setupLottery(user1.address, randomGetter.address, [], [])).to.be.revertedWith("Reward token is not a contract");
     });
 
-    it("Should prevents setup if randomizer token is not a contract", async function () {
-      await expect(lottery.setupLottery(rewardToken.address, user1.address, [], [])).to.be.revertedWith("Randomizer is not a contract");
+    it("Should prevents setup if randomGetter is not a contract", async function () {
+      await expect(lottery.setupLottery(rewardToken.address, user1.address, [], [])).to.be.revertedWith("RandomGetter is not a contract");
     });
 
     it("Should prevents setup if incorrect organization shares count", async function () {

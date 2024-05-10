@@ -9,7 +9,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {ILottery} from "./interface/ILottery.sol";
-import {IRandomizer} from "./interface/IRandomizer.sol";
+import {IRandomGetter} from "./interface/IRandomGetter.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 
 contract Lottery is AccessControl, ILottery {
@@ -39,7 +39,7 @@ contract Lottery is AccessControl, ILottery {
     Tier[] public tiers;
     uint256 public processedTiersCount;
     IERC20 public rewardToken;
-    address public randomizer;
+    address public randomGetter;
 
     mapping(uint256 => uint256) public winnerAmount;
     mapping(uint256 => uint256[]) public tierWinners;
@@ -118,7 +118,7 @@ contract Lottery is AccessControl, ILottery {
 
     function setupLottery(
         address _rewardToken,
-        address _randomizer,
+        address _randomGetter,
         Tier[] memory _tiers,
         uint[] memory _organizationSharesForFixedTiers
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -128,15 +128,15 @@ contract Lottery is AccessControl, ILottery {
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
         }
-        if (Address.isContract(_randomizer) == false) {
-            revert IncorrectValue("Randomizer is not a contract");
+        if (Address.isContract(_randomGetter) == false) {
+            revert IncorrectValue("RandomGetter is not a contract");
         }
         if (_organizationSharesForFixedTiers.length != organizations.length) {
             revert IncorrectValue("Incorrect organization shares count");
         }
 
         rewardToken = IERC20(_rewardToken);
-        randomizer = _randomizer;
+        randomGetter = _randomGetter;
 
         for (uint i; i < _tiers.length; i++) {
             Tier memory tier = _tiers[i]; 
@@ -192,11 +192,11 @@ contract Lottery is AccessControl, ILottery {
         if (initializedOrganizationsCount != organizations.length) {
             revert IncorrectCondition("Lottery is not fully initialized");
         }
-        requestRandomNumberId = IRandomizer(randomizer).requestRandomNumber();
+        requestRandomNumberId = IRandomGetter(randomGetter).requestRandomNumber();
     }
 
     function rewardWinners(uint tiersCount) external {
-        randomSalt = IRandomizer(randomizer).getRandomNumber(requestRandomNumberId);
+        randomSalt = IRandomGetter(randomGetter).getRandomNumber(requestRandomNumberId);
 
         if (randomSalt == 0) {
             revert IncorrectCondition("Lottery is not run or request is pending");

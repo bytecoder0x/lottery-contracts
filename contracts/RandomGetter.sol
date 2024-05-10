@@ -6,9 +6,9 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
-import {IRandomizer} from "./interface/IRandomizer.sol";
+import {IRandomGetter} from "./interface/IRandomGetter.sol";
 
-contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
+contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter {
     uint32 constant callbackGasLimit = 100000;
     uint32 constant numWords = 1;
     uint16 constant requestConfirmations = 3; // cannot be lower
@@ -99,7 +99,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomizer {
         returns (bool)
     {
         return 
-            type(IRandomizer).interfaceId == interfaceId ||
+            type(IRandomGetter).interfaceId == interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
