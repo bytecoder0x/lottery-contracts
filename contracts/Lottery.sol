@@ -199,11 +199,17 @@ contract Lottery is AccessControl, ILottery {
         requestRandomNumberId = randomGetter.requestRandomNumber();
     }
 
-    function rewardWinners(uint tiersCount) external {
-        randomSalt = randomGetter.getRandomNumber(requestRandomNumberId);
+    function setRandomSalt() external {
+        if (randomSalt != 0 || requestRandomNumberId == 0) {
+            revert IncorrectCondition("Random salt is already setted or lottery is not  run");
+        }
 
+        randomSalt = randomGetter.getRandomNumber(requestRandomNumberId);
+    }
+
+    function rewardWinners(uint tiersCount) external {
         if (randomSalt == 0) {
-            revert IncorrectCondition("Lottery is not run or request is pending");
+            revert IncorrectCondition("Request is pending or randomSalt is not set");
         }
         if (lotteryProcessed) {
             revert ActionPerformed("Lottery already processed");

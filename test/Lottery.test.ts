@@ -253,7 +253,11 @@ describe("Lottery", async () => {
 
     it("Can't call rewardWinners if lottery is not run", async function () {
       await ethers.provider.send("evm_increaseTime", [3001]);
-      await expect(lottery.rewardWinners(0)).to.be.revertedWith("Lottery is not run or request is pending");
+      await expect(lottery.rewardWinners(0)).to.be.revertedWith("Request is pending or randomSalt is not set");
+    });
+
+    it("Can't call setRandomSalt if lottery is not run", async function () {
+      await expect(lottery.setRandomSalt()).to.be.revertedWith("Random salt is already setted or lottery is not  run");
     });
   });
 
@@ -292,6 +296,7 @@ describe("Lottery", async () => {
       const lastRequestId = await lottery.requestRandomNumberId();
       const randomNumber = generateRandomNumber();
       await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [randomNumber]);
+      await lottery.setRandomSalt();
     }
 
     beforeEach(async function () {
@@ -307,6 +312,10 @@ describe("Lottery", async () => {
 
     it("Can't call runLottery twice", async function () {
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery already run");
+    });
+
+    it("Can't call setRandomSalt twice", async function () {
+      await expect(lottery.setRandomSalt()).to.be.revertedWith("Random salt is already setted or lottery is not  run");
     });
 
     it("Can't reward winners twice", async function () {
@@ -409,7 +418,7 @@ describe("Lottery", async () => {
       await expect(lottery.setupLottery(user1.address, randomGetter.address, [], [])).to.be.revertedWith("Reward token is not a contract");
     });
 
-    it.only("Should prevents setup if randomGetter doesn't have IRandomGetter interface", async function () {
+    it("Should prevents setup if randomGetter doesn't have IRandomGetter interface", async function () {
       await expect(lottery.setupLottery(rewardToken.address, ticketMinter.address, [], [])).to.be.revertedWith("InterfaceNotSupported");
     });
 

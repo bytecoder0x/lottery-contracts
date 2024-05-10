@@ -43,6 +43,7 @@ describe("Randomizer", async () => {
         const lastRequestId = await lottery.requestRandomNumberId();
         const randomNumber = generateRandomNumber();
         await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [randomNumber]);
+        lottery.setRandomSalt();
     }
 
     beforeEach("Init test environment", async () => {
