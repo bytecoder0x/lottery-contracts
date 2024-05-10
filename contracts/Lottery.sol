@@ -128,8 +128,12 @@ contract Lottery is AccessControl, ILottery {
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
         }
-        if (Address.isContract(_randomGetter) == false) {
-            revert IncorrectValue("RandomGetter is not a contract");
+        if (
+            !IRandomGetter(_randomGetter).supportsInterface(
+                type(IRandomGetter).interfaceId
+            )
+        ) {
+            revert InterfaceNotSupported();
         }
         if (_organizationSharesForFixedTiers.length != organizations.length) {
             revert IncorrectValue("Incorrect organization shares count");
