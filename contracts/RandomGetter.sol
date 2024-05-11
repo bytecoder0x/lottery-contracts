@@ -61,12 +61,11 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         return requestId;
     }
 
-    function getRandomNumber(uint256 requestId) external onlyLottery returns (uint256) {
+    function getRandomNumber(uint256 requestId) external onlyLottery returns (uint256 random) {
         if (randomNumbersById[requestId] != 0) {
-            randomNumbersByAddress[msg.sender] = randomNumbersById[requestId] ;
-            return randomNumbersById[requestId] ;
+            random = randomNumbersById[requestId];
+            randomNumbersByAddress[msg.sender] = random;
         }
-        return 0;
     }
 
     function withdrawLink(uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
