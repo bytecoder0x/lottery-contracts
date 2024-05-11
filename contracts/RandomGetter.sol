@@ -15,14 +15,8 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
 
     IKarrotFactory factory;
 
-    struct RequestStatus {
-        uint256 paid;
-        uint256 randomWord;
-        bool fulfilled;
-    }
-
-    mapping(uint256 => RequestStatus) public s_requests;
-    mapping(address => uint256) public randomNumbers;
+    mapping(uint256 => uint256) public randomNumbersById;
+    mapping(address => uint256) public randomNumbersByAddress;
 
     modifier onlyLottery() {
         if (!factory.isLottery(msg.sender)) {
@@ -51,7 +45,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     function requestRandomNumber() external onlyLottery returns (uint256) {
-        if (randomNumbers[msg.sender] != 0) {
+        if (randomNumbersByAddress[msg.sender] != 0) {
             revert IncorrectCondition("Lottery already has random number");
         }
 
@@ -61,20 +55,16 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
             numWords
         );
 
-        s_requests[requestId] = RequestStatus({
-            paid: VRF_V2_WRAPPER.calculateRequestPrice(callbackGasLimit),
-            randomWord: 0,
-            fulfilled: false
-        });
+        randomNumbersById[requestId] = 0;
 
         emit RequestSent(requestId, numWords);
         return requestId;
     }
 
     function getRandomNumber(uint256 requestId) external onlyLottery returns (uint256) {
-        if (s_requests[requestId].fulfilled) {
-            randomNumbers[msg.sender] = s_requests[requestId].randomWord;
-            return s_requests[requestId].randomWord;
+        if (randomNumbersById[requestId] != 0) {
+            randomNumbersByAddress[msg.sender] = randomNumbersById[requestId] ;
+            return randomNumbersById[requestId] ;
         }
         return 0;
     }
@@ -103,8 +93,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         uint256 _requestId,
         uint256[] memory randomWords
     ) internal override {
-        s_requests[_requestId].fulfilled = true;
-        s_requests[_requestId].randomWord = randomWords[0] == 0 ? 1 : randomWords[0];
+        randomNumbersById[_requestId] = randomWords[0] == 0 ? 1 : randomWords[0];
 
         emit RequestFulfilled(_requestId, randomWords[0]);
     }

@@ -6,7 +6,7 @@ import { VRFCoordinatorV2Mock, VRFV2Wrapper, MockLinkToken, Lottery, KarrotFacto
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 
-describe("Randomizer", async () => {
+describe("RandomGetter", async () => {
     let karrotFactory: KarrotFactory;
     let lottery: Lottery;
     let coordinator: VRFCoordinatorV2Mock;
@@ -43,7 +43,7 @@ describe("Randomizer", async () => {
         const lastRequestId = await lottery.requestRandomNumberId();
         const randomNumber = generateRandomNumber();
         await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [randomNumber]);
-        lottery.setRandomSalt();
+        await lottery.setRandomSalt();
     }
 
     beforeEach("Init test environment", async () => {
@@ -72,12 +72,9 @@ describe("Randomizer", async () => {
         await fulfillRandomWord();
         await lottery.rewardWinners(0);
         const lastRequestId = await lottery.requestRandomNumberId();
-        const { paid, fulfilled, randomWord } = await randomGetter.s_requests(lastRequestId);
+        const randomWord= await randomGetter.randomNumbersById(lastRequestId);
         const randomSalt = await lottery.randomSalt();
-        const oneHundredLink = ethers.utils.parseEther("100");
 
-        expect(paid.add(await link.balanceOf(randomGetter.address))).to.be.eq(oneHundredLink);
-        expect(fulfilled).to.be.true;
         expect(randomSalt).to.be.eq(randomWord);
     });
 
@@ -88,11 +85,11 @@ describe("Randomizer", async () => {
         await lottery.runLottery();
         const lastRequestId = await lottery.requestRandomNumberId();
         await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [0]);
+        await lottery.setRandomSalt();
         await lottery.rewardWinners(0);
-        const { fulfilled, randomWord } = await randomGetter.s_requests(lastRequestId);
+        const randomWord = await randomGetter.randomNumbersById(lastRequestId);
         const randomSalt = await lottery.randomSalt();
 
-        expect(fulfilled).to.be.true;
         expect(randomWord).to.be.eq(1);
         expect(randomSalt).to.be.eq(1);
     });
