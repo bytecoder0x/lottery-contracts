@@ -70,9 +70,6 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     function withdrawLink(uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_amount > LINK.balanceOf(address(this))) {
-            revert IncorrectCondition("Not enough funds");
-        }
         LINK.transfer(msg.sender, _amount);
     }
 

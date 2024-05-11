@@ -119,12 +119,6 @@ describe("RandomGetter", async () => {
             "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
         );
     });
-
-    it("Should prevents withdraw link if not enough funds", async function () {
-        const oneHundredLink = ethers.utils.parseEther("100");
-        await expect(randomGetter.withdrawLink(oneHundredLink.add(1))).to.be.revertedWith("Not enough funds");
-    });
-
     
     it("Should correct withdraw link from contract", async function () {
         const oldOwnerBalance = await link.balanceOf(owner.address);
