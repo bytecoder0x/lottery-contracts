@@ -5,8 +5,8 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IRandomGetter} from "../interface/IRandomGetter.sol";
 
 contract LotteryMock is AccessControl {
-    uint256 requestRandomNumberId;
-    uint256 randomSalt;
+    uint256 public requestRandomNumberId;
+    uint256 public randomSalt;
 
     address randomGetter;
 

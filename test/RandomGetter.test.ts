@@ -94,6 +94,18 @@ describe("RandomGetter", async () => {
         expect(randomSalt).to.be.eq(1);
     });
 
+    it("Should prevents if no random number found for current id and returned 0", async function () {
+        const karrotFactoryMock = await (await ethers.getContractFactory("KarrotFactoryMock")).deploy();
+        const lotteryMock = await (await ethers.getContractFactory("LotteryMock")).deploy() as LotteryMock;
+        const { randomGetter } = await deployRandomGetter(karrotFactoryMock as unknown as KarrotFactory, owner);
+
+        await karrotFactoryMock.addToLottery(lotteryMock.address);
+        await lotteryMock.setupLottery(randomGetter.address);
+        await lotteryMock.rewardWinners();
+
+        expect(await lotteryMock.randomSalt()).to.be.eq(0);
+    });
+
     it("Should prevents call requestRandomNumber if lottery already has random number", async function () {
         const karrotFactoryMock = await (await ethers.getContractFactory("KarrotFactoryMock")).deploy();
         const lotteryMock = await (await ethers.getContractFactory("LotteryMock")).deploy() as LotteryMock;
