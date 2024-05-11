@@ -14,7 +14,6 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     uint16 constant requestConfirmations = 3; // cannot be lower
 
     IKarrotFactory factory;
-    address linkAddress;
 
     struct RequestStatus {
         uint256 paid;
@@ -46,7 +45,6 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
             revert InterfaceNotSupported();
         }
 
-        linkAddress = _link;
         factory = IKarrotFactory(_factory);
 
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
@@ -82,12 +80,10 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     function withdrawLink(uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        LinkTokenInterface link = LinkTokenInterface(linkAddress);
-
-        if (_amount > link.balanceOf(address(this))) {
+        if (_amount > LINK.balanceOf(address(this))) {
             revert IncorrectCondition("Not enough funds");
         }
-        link.transfer(msg.sender, _amount);
+        LINK.transfer(msg.sender, _amount);
     }
 
     function supportsInterface(
