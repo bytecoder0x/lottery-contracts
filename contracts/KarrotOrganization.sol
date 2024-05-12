@@ -19,6 +19,13 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     constructor(address _defaultAdmin, address _minter, string memory _name) 
         KarrotErc7401Base(_defaultAdmin, _minter, _name) { }
 
+    /**
+     * @notice Mints a new organization token to the specified address.
+     * @param to The address to mint the token to.
+     * @param data Additional data to include in the minted token.
+     * @return The ID of the newly minted token.
+     * @dev Reverts if the recipient already owns an organization token.
+     */
     function mintTo(
         address to,
         bytes memory data
@@ -36,10 +43,20 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
         return _lastTokenId;
     }
 
+    /**
+     * @notice Retrieves the owner of the specified token ID.
+     * @param tokenId The ID of the token to query.
+     * @return The address of the owner of the token.
+     */
     function ownerOf(uint256 tokenId) public view override(RMRKNestable, IERC7401) returns (address) {
         return super.ownerOf(tokenId);
     }
 
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @param interfaceId The interface identifier.
+     * @return A boolean indicating whether the contract supports the interface.
+     */
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {
@@ -47,6 +64,11 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
             super.supportsInterface(interfaceId);
     }
 
+    /**
+     * @notice Performs operations before accepting a child contract.
+     * @param childAddress The address of the child contract.
+     * @dev Throws an error if the child contract does not support the IKarrotCampaign interface.
+     */
     function _beforeAcceptChild(
         uint256,
         uint256,
