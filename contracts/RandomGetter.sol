@@ -55,8 +55,6 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
             numWords
         );
 
-        randomNumbersById[requestId] = 0;
-
         emit RequestSent(requestId, numWords);
         return requestId;
     }
