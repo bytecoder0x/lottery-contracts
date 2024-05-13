@@ -62,9 +62,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     function getRandomNumber(uint256 requestId) external view returns (uint256 random) {
-        if (randomNumbersByRequestId[requestId] != 0) {
             random = randomNumbersByRequestId[requestId];
-        }
     }
 
     function withdrawLink(uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {

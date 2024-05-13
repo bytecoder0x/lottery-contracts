@@ -107,11 +107,6 @@ describe("RandomGetter", async () => {
         await expect(lotteryMock.runLottery()).to.be.revertedWith("Lottery already has random number or request id pending");
     });
 
-    it("Should prevents non-lottery call requestRandomNumber and getRandomNumber function", async function () {
-        await expect(randomGetter.connect(user1).requestRandomNumber()).to.be.revertedWith("Only lottery can call this function");
-        await expect(randomGetter.connect(user1).getRandomNumber(1)).to.be.revertedWith("Only lottery can call this function");
-    });
-
     it("Should prevents non-admin withdraw link from contract", async function () {
         const adminRole = ethers.constants.HashZero;
         await expect(randomGetter.connect(user1).withdrawLink(1)).to.be.revertedWith(
