@@ -33,6 +33,13 @@ contract TicketMinter is
         factory = IKarrotFactory(_factory);
     }
 
+    /**
+     * @notice Mints tickets for multiple end owners in batches.
+     * @param endOwners An array of end owners to whom tickets will be minted.
+     * @param campaign The address of the campaign for which tickets are being minted.
+     * @param ticketsCounts An array specifying the number of tickets to mint for each end owner.
+     * @return ticketsTokenIds An array of arrays containing the token IDs of the minted tickets for each end owner.
+     */
     function mintTicketsBatch(
         address[] memory endOwners,
         address campaign,
@@ -51,6 +58,13 @@ contract TicketMinter is
         }
     }
 
+    /**
+     * @notice Mints tickets for a specific end owner in a campaign.
+     * @param endOwner The address of the end owner who will receive the tickets.
+     * @param campaign The address of the campaign for which tickets are being minted.
+     * @param ticketsCount The number of tickets to mint.
+     * @return ticketsTokenIds An array containing the token IDs of the minted tickets.
+     */
     function mintTickets(
         address endOwner,
         address campaign,
@@ -97,6 +111,12 @@ contract TicketMinter is
         );
     }
 
+    /**
+     * @notice Retrieves the organization address associated with a campaign from the factory contract.
+     * @param campaign The address of the campaign.
+     * @return organization The address of the organization associated with the campaign.
+     * @dev Reverts if no organization is found for the provided campaign.
+     */
     function _getOrganizationFromFactory(
         address campaign
     ) private view returns (address) {
@@ -107,6 +127,11 @@ contract TicketMinter is
         return organization;
     }
 
+    /**
+     * @notice Retrieves the ticket contract address associated with a campaign.
+     * @param campaign The address of the campaign.
+     * @return ticket The address of the ticket contract associated with the campaign.
+     */
     function _getTicketFromCampaign(
         address campaign
     ) private view returns (address) {
@@ -115,6 +140,12 @@ contract TicketMinter is
         return ticket;
     }
 
+    /**
+     * @notice Finds the token ID a campaign.
+     * @param organizationChildren The list of children tokens owned by the organization.
+     * @param campaign The address of the campaign.
+     * @return campaignTokenId The token ID associated with the campaign, or 0 if not found.
+     */
     function _getCampaignTokenId(
         IERC7401.Child[] memory organizationChildren,
         address campaign
@@ -133,6 +164,13 @@ contract TicketMinter is
         return campaignTokenId;
     }
 
+    /**
+     * @notice Mints the campaign token to the organization and accepts it as a child.
+     * @param campaign The address of the campaign contract.
+     * @param organization The address of the organization contract.
+     * @param organizationTokenId The ID of the organization token.
+     * @return campaignTokenId The token ID associated with the minted campaign.
+     */
     function _mintCampaignToOrganizationAndAccept(
         address campaign,
         address organization,
@@ -154,6 +192,14 @@ contract TicketMinter is
         );
     }
 
+    /**
+     * @notice Mints tickets to the campaign and accepts them as children.
+     * @param ticket The address of the ticket contract.
+     * @param campaign The address of the campaign contract.
+     * @param ticketsCount The number of tickets to mint.
+     * @param campaignTokenId The ID of the campaign token.
+     * @return ticketsTokenIds An array containing the IDs of the minted tickets.
+     */
     function _mintTicketToCampaignAndAccept(
         address ticket,
         address campaign,
@@ -182,6 +228,11 @@ contract TicketMinter is
         return ticketsTokenIds;
     }
 
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @param interfaceId The interface identifier.
+     * @return A boolean indicating whether the contract supports the interface.
+     */
     function supportsInterface(
         bytes4 interfaceId
     )
