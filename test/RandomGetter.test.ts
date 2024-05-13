@@ -43,7 +43,6 @@ describe("RandomGetter", async () => {
         const lastRequestId = await lottery.requestRandomNumberId();
         const randomNumber = generateRandomNumber();
         await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [randomNumber]);
-        await lottery.setRandomSalt();
     }
 
     beforeEach("Init test environment", async () => {
@@ -85,25 +84,12 @@ describe("RandomGetter", async () => {
         await lottery.runLottery();
         const lastRequestId = await lottery.requestRandomNumberId();
         await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [0]);
-        await lottery.setRandomSalt();
         await lottery.rewardWinners(0);
         const randomWord = await randomGetter.randomNumbersById(lastRequestId);
         const randomSalt = await lottery.randomSalt();
 
         expect(randomWord).to.be.eq(1);
         expect(randomSalt).to.be.eq(1);
-    });
-
-    it("Should prevents if no random number found for current id and returned 0", async function () {
-        const karrotFactoryMock = await (await ethers.getContractFactory("KarrotFactoryMock")).deploy();
-        const lotteryMock = await (await ethers.getContractFactory("LotteryMock")).deploy() as LotteryMock;
-        const { randomGetter } = await deployRandomGetter(karrotFactoryMock as unknown as KarrotFactory, owner);
-
-        await karrotFactoryMock.addToLottery(lotteryMock.address);
-        await lotteryMock.setupLottery(randomGetter.address);
-        await lotteryMock.rewardWinners();
-
-        expect(await lotteryMock.randomSalt()).to.be.eq(0);
     });
 
     it("Should prevents call requestRandomNumber if lottery already has random number", async function () {
