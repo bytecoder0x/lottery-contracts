@@ -15,8 +15,8 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
 
     IKarrotFactory factory;
 
-    mapping(uint256 => uint256) public randomNumbersById;
-    mapping(address => uint256) public randomNumbersByAddress;
+    mapping(address => uint) public requestIds;
+    mapping(uint256 => uint256) public randomNumbersByRequestId;
 
     modifier onlyLottery() {
         if (!factory.isLottery(msg.sender)) {
@@ -45,8 +45,8 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     function requestRandomNumber() external onlyLottery returns (uint256) {
-        if (randomNumbersByAddress[msg.sender] != 0) {
-            revert IncorrectCondition("Lottery already has random number");
+        if (requestIds[msg.sender] != 0) {
+            revert IncorrectCondition("Lottery already has random number or request id pending");
         }
 
         uint256 requestId = requestRandomness(
@@ -55,14 +55,15 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
             numWords
         );
 
+        requestIds[msg.sender] = requestId;
+
         emit RequestSent(requestId, numWords);
         return requestId;
     }
 
-    function getRandomNumber(uint256 requestId) external onlyLottery returns (uint256 random) {
-        if (randomNumbersById[requestId] != 0) {
-            random = randomNumbersById[requestId];
-            randomNumbersByAddress[msg.sender] = random;
+    function getRandomNumber(uint256 requestId) external view onlyLottery returns (uint256 random) {
+        if (randomNumbersByRequestId[requestId] != 0) {
+            random = randomNumbersByRequestId[requestId];
         }
     }
 
@@ -87,7 +88,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         uint256 _requestId,
         uint256[] memory randomWords
     ) internal override {
-        randomNumbersById[_requestId] = randomWords[0] == 0 ? 1 : randomWords[0];
+        randomNumbersByRequestId[_requestId] = randomWords[0] == 0 ? 1 : randomWords[0];
 
         emit RequestFulfilled(_requestId, randomWords[0]);
     }

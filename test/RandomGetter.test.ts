@@ -71,7 +71,7 @@ describe("RandomGetter", async () => {
         await fulfillRandomWord();
         await lottery.rewardWinners(0);
         const lastRequestId = await lottery.requestRandomNumberId();
-        const randomWord= await randomGetter.randomNumbersById(lastRequestId);
+        const randomWord= await randomGetter.randomNumbersByRequestId(lastRequestId);
         const randomSalt = await lottery.randomSalt();
 
         expect(randomSalt).to.be.eq(randomWord);
@@ -85,14 +85,14 @@ describe("RandomGetter", async () => {
         const lastRequestId = await lottery.requestRandomNumberId();
         await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [0]);
         await lottery.rewardWinners(0);
-        const randomWord = await randomGetter.randomNumbersById(lastRequestId);
+        const randomWord = await randomGetter.randomNumbersByRequestId(lastRequestId);
         const randomSalt = await lottery.randomSalt();
 
         expect(randomWord).to.be.eq(1);
         expect(randomSalt).to.be.eq(1);
     });
 
-    it("Should prevents call requestRandomNumber if lottery already has random number", async function () {
+    it("Should prevents call requestRandomNumber if lottery already has random number or request id pending", async function () {
         const karrotFactoryMock = await (await ethers.getContractFactory("KarrotFactoryMock")).deploy();
         const lotteryMock = await (await ethers.getContractFactory("LotteryMock")).deploy() as LotteryMock;
         const { coordinator, wrapper, randomGetter } = await deployRandomGetter(karrotFactoryMock as unknown as KarrotFactory, owner);
@@ -100,10 +100,11 @@ describe("RandomGetter", async () => {
         await karrotFactoryMock.addToLottery(lotteryMock.address);
         await lotteryMock.setupLottery(randomGetter.address);
         await lotteryMock.runLottery();
+        await expect(lotteryMock.runLottery()).to.be.revertedWith("Lottery already has random number or request id pending");
+
         await coordinator.fulfillRandomWordsWithOverride(1, wrapper.address, [1]);
         await lotteryMock.rewardWinners();
-
-        await expect(lotteryMock.runLottery()).to.be.revertedWith("Lottery already has random number");
+        await expect(lotteryMock.runLottery()).to.be.revertedWith("Lottery already has random number or request id pending");
     });
 
     it("Should prevents non-lottery call requestRandomNumber and getRandomNumber function", async function () {

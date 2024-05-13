@@ -10,7 +10,7 @@ interface IRandomGetter is IERC165, IKarrotErrors {
 
     function requestRandomNumber() external returns (uint256);
 
-    function getRandomNumber(uint256 requestId) external returns (uint256);
+    function getRandomNumber(uint256 requestId) external view returns (uint256);
 
     function withdrawLink(uint256 amount) external;
 }
