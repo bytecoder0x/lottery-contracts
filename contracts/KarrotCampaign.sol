@@ -51,6 +51,13 @@ contract KarrotCampaign is
         _setupRole(LOWER_ADMIN_ROLE, _lowerAdmin);
     }
 
+    /**
+     * @notice Mints a new campaign token to the specified organization.
+     * @param parentId The ID of the parent organization.
+     * @param data Additional data to include in the minted token.
+     * @return mintedTokenId The ID of the newly minted token.
+     * @dev Reverts if the parent organization already has the campaign.
+     */
     function mintToOrganization(
         uint256 parentId,
         bytes memory data
@@ -67,6 +74,12 @@ contract KarrotCampaign is
         emit CampaignTokenMintedToOrganization(mintedTokenId, msg.sender, parentId);
     }
 
+    /**
+     * @notice Sets the ticket contract address.
+     * @param _ticketsContract The address of the ticket contract to set.
+     * @dev Reverts if the sender does not have the required admin role.
+     * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
+     */
     function setTicketContract(
         address _ticketsContract
     ) public {
@@ -85,25 +98,45 @@ contract KarrotCampaign is
         ticketsContract = _ticketsContract;
     }
 
+    /**
+     * @notice Burns the user's ticket for the current campaign.
+     * @dev Retrieves the campaign ID for the user and calls _burnTicket.
+     */
     function burnTicket() external {
         uint campaignId = _getUserCampaignId();
         _burnTicket(campaignId);
     }
 
+    /**
+     * @notice Burns a batch of tickets for the current campaign.
+     * @param amountOfTicketsToBurn The number of tickets to burn.
+     * @dev Retrieves the campaign ID for the user and calls burnTicketBatch with the campaign ID and specified amount.
+     */
     function burnTicketBatch(uint256 amountOfTicketsToBurn) public {
         uint campaignId = _getUserCampaignId();
         burnTicketBatch(campaignId, amountOfTicketsToBurn);
     }
 
+    /**
+     * @notice Burns the user's ticket for the specified campaign.
+     * @param campaignId The ID of the campaign to burn the ticket for.
+     * @dev Calls _burnTicket with the specified campaign ID.
+     */
     function burnTicket(uint campaignId) public {
         _burnTicket(campaignId);
     }
 
+    /**
+     * @notice Burns a batch of tickets for the specified campaign.
+     * @param campaignId The ID of the campaign to burn tickets for.
+     * @param amountOfTicketsToBurn The number of tickets to burn.
+     * @dev Reverts if the specified amount exceeds the available tickets for the campaign.
+     * @dev Burns the specified number of tickets for the campaign.
+     * @dev Note: This check doesn't guarantee 100% that the user is trying to burn the correct amount of tickets,
+     * as _activeChildren may contain non-ticket items in case of manual child acceptance.
+     * In such cases, the contract reverts with panic code 0x11, which is the desired behavior.
+     */
     function burnTicketBatch(uint campaignId, uint256 amountOfTicketsToBurn) public {
-        //this check doesn't give 100% guarantee that the user is trying to burn the correct amount of tickets
-        //as _activeChildren may have not only tickets in case of manual child accepting.
-        //If this scenario happens the contract will revert with panic code 0x11 
-        //that is also a desired behaviour
         if (amountOfTicketsToBurn > _activeChildren[campaignId].length) {
             revert IncorrectValue("Not enough tickets to burn");
         }
@@ -112,16 +145,30 @@ contract KarrotCampaign is
         }
     }
 
+    /**
+     * @notice Gets the owner of the specified token ID.
+     * @param tokenId The ID of the token.
+     * @return The address of the owner of the token.
+     */
     function ownerOf(
         uint256 tokenId
     ) public view override(RMRKNestable, IERC7401) returns (address) {
         return super.ownerOf(tokenId);
     }
 
+    /**
+     * @notice Retrieves the address of the lottery contract.
+     * @return The address of the lottery contract.
+     */
     function getLotteryContract() public view override returns (address) {
         return lottery;
     }
 
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @param interfaceId The interface identifier.
+     * @return A boolean indicating whether the contract supports the interface.
+     */
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {
@@ -129,6 +176,11 @@ contract KarrotCampaign is
             super.supportsInterface(interfaceId);
     }
 
+    /**
+     * @notice Performs checks before accepting a child contract.
+     * @param childAddress The address of the child contract.
+     * @dev Ensures that only the ticket contract can be accepted as a child of the campaign.
+     */
     function _beforeAcceptChild(
         uint256,
         uint256,
@@ -139,6 +191,14 @@ contract KarrotCampaign is
             revert IncorrectCondition("Only ticket can be child of campaign");
     }
 
+    /**
+     * @notice Burns a ticket associated with the given campaign ID.
+     * @param campaignId The ID of the campaign owning the ticket to be burned.
+     * @dev Reverts if the caller is not approved or the owner of the ticket.
+     * @dev Transfers the burning ticket to the owner of the last ticket ID.
+     * @dev Transfers the last ticket ID to the burning campaign.
+     * @dev Burns the last ticket ID.
+     */
     function _burnTicket(uint256 campaignId) internal {
         if(!_isApprovedOrOwner(msg.sender, campaignId)) {
             revert IncorrectCondition("User is not aprroved or owner");
@@ -158,7 +218,6 @@ contract KarrotCampaign is
         uint256 lastTiketIndexInChildren = 
             _findTiketIndex(lastTiketId, _activeChildren[lastTiketOwnerId]);
 
-        //transfer the burning ticket from children of the burning campaign to the owner of the last ticket id
         _transferChild(
             campaignId,
             address(this),
@@ -176,7 +235,6 @@ contract KarrotCampaign is
             ticketIdToBurn
         );
 
-        //transfer the last ticket id from the owner of the last ticket id to the burning campaign
         _transferChild(
             lastTiketOwnerId,
             address(this),
@@ -193,12 +251,23 @@ contract KarrotCampaign is
         IKarrotTicket(ticketsContract).burnLastTicket();
     }
 
+    /**
+     * @notice Retrieves the campaign ID of the caller's organization.
+     * @return The ID of the campaign owned by the caller's organization.
+     * @dev Reverts if the caller is not the owner of any organization.
+     */
     function _getUserCampaignId() private view returns (uint256) {
         uint organizationId = IKarrotOrganization(organization).ownerToken(msg.sender);
         if (organizationId == 0) revert IncorrectValue("User is not an owner of any organization");
         return ownerToken[organizationId];
     }
 
+    /**
+     * @notice Finds the index of a ticket in the provided list of children.
+     * @param ticketId The ID of the ticket to find.
+     * @param tickets The list of children containing tickets.
+     * @return The index of the ticket in the list.
+     */
     function _findTiketIndex(uint256 ticketId, Child[] memory tickets) private view returns (uint256) {
         for (uint256 i = 0; i < tickets.length; i++) {
             if (tickets[i].tokenId == ticketId && tickets[i].contractAddress == ticketsContract) {
