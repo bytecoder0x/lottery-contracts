@@ -38,6 +38,11 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
 
+    /**
+     * @notice Sets the reward token contract address.
+     * @param _rewardToken The address of the reward token contract.
+     * @dev Only accessible by the default admin role.
+     */
     function setRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE)  {
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
@@ -46,6 +51,13 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         rewardToken = IERC20(_rewardToken);
     }
 
+    /**
+     * @notice Redeems tickets for rewards.
+     * @param ticketContract The ticket contract address.
+     * @param amountOfTicketsToBurn The number of tickets to redeem.
+     * @dev Only callable if burn period hasn't ended, redemption price is set, redemption cap
+     * isn't reached, user owns an organization and the ticket is registered in the lottery.
+     */
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
         address campaignAddress = IKarrotTicket(ticketContract).campaign();
         address organizationAddress = IKarrotCampaign(campaignAddress).organization();
@@ -77,6 +89,12 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         emit TicketRedeemed(msg.sender, ticketContract, amountOfTicketsToBurn, redemptionAmount);
     }
 
+    /**
+     * @dev Sets the redemption price.
+     * @param _redemptionPrice The new redemption price.
+     * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Reverts if the caller is not an administrator or if the redemption price is set to 0.
+     */
     function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_redemptionPrice == 0) {
             revert IncorrectValue("Redemption price can't be 0");
@@ -85,12 +103,23 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         emit SetRedemptionPrice(_redemptionPrice);
     }
 
+    /**
+     * @notice Sets the redemption cap.
+     * @param _redemptionCap The new redemption cap. A value of 0 indicates no cap.
+     * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Note: redemptionCap can be 0, meaning no cap
+     */
     function setRedemptionCap(uint _redemptionCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         //redemptionCap can be 0, meaning no cap
         redemptionCap = _redemptionCap;
         emit SetRedemptionCap(_redemptionCap);
     }
 
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @param interfaceId The interface identifier.
+     * @return A boolean indicating whether the contract supports the interface.
+     */
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {
