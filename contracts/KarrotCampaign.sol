@@ -141,11 +141,12 @@ contract KarrotCampaign is
      * @param amountOfTicketsToBurn The number of tickets to burn.
      * @dev Reverts if the specified amount exceeds the available tickets for the campaign.
      * @dev Burns the specified number of tickets for the campaign.
-     * @dev Note: This check doesn't guarantee 100% that the user is trying to burn the correct amount of tickets,
-     * as _activeChildren may contain non-ticket items in case of manual child acceptance.
-     * In such cases, the contract reverts with panic code 0x11, which is the desired behavior.
      */
     function burnTicketBatch(uint campaignId, uint256 amountOfTicketsToBurn) public {
+        //this check doesn't give 100% guarantee that the user is trying to burn the correct amount of tickets
+        //as _activeChildren may have not only tickets in case of manual child accepting.
+        //If this scenario happens the contract will revert with panic code 0x11 
+        //that is also a desired behaviour
         if (amountOfTicketsToBurn > _activeChildren[campaignId].length) {
             revert IncorrectValue("Not enough tickets to burn");
         }
@@ -227,6 +228,7 @@ contract KarrotCampaign is
         uint256 lastTiketIndexInChildren = 
             _findTiketIndex(lastTiketId, _activeChildren[lastTiketOwnerId]);
 
+        //transfer the burning ticket from children of the burning campaign to the owner of the last ticket id
         _transferChild(
             campaignId,
             address(this),
@@ -244,6 +246,7 @@ contract KarrotCampaign is
             ticketIdToBurn
         );
 
+        //transfer the last ticket id from the owner of the last ticket id to the burning campaign
         _transferChild(
             lastTiketOwnerId,
             address(this),
