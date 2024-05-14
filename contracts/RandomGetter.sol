@@ -66,7 +66,12 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     function getRandomNumber(uint256 requestId) external view returns (uint256 random) {
-            random = randomNumbersByRequestId[requestId];
+        random = randomNumbersByRequestId[requestId];
+    }
+
+    function getRandomNumber(address lottery) external view returns (uint256 random) {
+        uint256 requestId = requestIds[lottery];
+        random = randomNumbersByRequestId[requestId];
     }
 
     function withdraw(address _token, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {

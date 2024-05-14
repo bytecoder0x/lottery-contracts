@@ -73,7 +73,10 @@ describe("RandomGetter", async () => {
         const lastRequestId = await lottery.requestRandomNumberId();
         const randomWord= await randomGetter.randomNumbersByRequestId(lastRequestId);
         const randomSalt = await lottery.randomSalt();
+        const randomFromLottery = await randomGetter["getRandomNumber(address)"](lottery.address);
+        const randomFromId = await randomGetter["getRandomNumber(uint256)"](lastRequestId);
 
+        expect(randomFromLottery).to.be.eq(randomFromId);
         expect(randomSalt).to.be.eq(randomWord);
     });
 
@@ -149,6 +152,7 @@ describe("RandomGetter", async () => {
         let functionSignatureRedemption = [
             'requestRandomNumber()',
             'getRandomNumber(uint256)',
+            'getRandomNumber(address)',
             'withdraw(address,uint256)'
         ];
         let interfaceIDRedemption = BigInt(0);
