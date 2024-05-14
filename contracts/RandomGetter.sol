@@ -61,7 +61,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
      * @notice Requests a random number for the calling lottery contract.
      * @dev Only callable by the lottery contract itself.
      * @return requestId The unique identifier for the random number request.
-     * @dev Reverts if the lottery contract already has a pending random number request.
+     * @dev Reverts if the lottery contract already has random number request is pending.
      */
     function requestRandomNumber() external onlyLottery returns (uint256) {
         if (requestIds[msg.sender] != 0) {

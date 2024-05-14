@@ -110,6 +110,8 @@ contract KarrotCampaign is
     /**
      * @notice Burns the user's ticket for the current campaign.
      * @dev Retrieves the campaign ID for the user and calls _burnTicket.
+     * @dev The owner of the last ticket loses it, but received the burning ticket.
+     * @dev We swap the ticket to be burned with the last ticket, then burn the last one.
      */
     function burnTicket() external {
         uint campaignId = _getUserCampaignId();
@@ -129,7 +131,6 @@ contract KarrotCampaign is
     /**
      * @notice Burns the user's ticket for the specified campaign.
      * @param campaignId The ID of the campaign to burn the ticket for.
-     * @dev Calls _burnTicket with the specified campaign ID.
      */
     function burnTicket(uint campaignId) public {
         _burnTicket(campaignId);
@@ -139,8 +140,7 @@ contract KarrotCampaign is
      * @notice Burns a batch of tickets for the specified campaign.
      * @param campaignId The ID of the campaign to burn tickets for.
      * @param amountOfTicketsToBurn The number of tickets to burn.
-     * @dev Reverts if the specified amount exceeds the available tickets for the campaign.
-     * @dev Burns the specified number of tickets for the campaign.
+     * @dev Reverts if the specified amount exceeds the available campaign tickets.
      */
     function burnTicketBatch(uint campaignId, uint256 amountOfTicketsToBurn) public {
         //this check doesn't give 100% guarantee that the user is trying to burn the correct amount of tickets

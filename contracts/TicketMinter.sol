@@ -47,6 +47,7 @@ contract TicketMinter is
      * @param campaign The address of the campaign for which tickets are being minted.
      * @param ticketsCounts An array specifying the number of tickets to mint for each end owner.
      * @return ticketsTokenIds An array of arrays containing the token IDs of the minted tickets for each end owner.
+     * @dev Reverts if the length of `endOwners` does not match the length of `ticketsCounts`.
      */
     function mintTicketsBatch(
         address[] memory endOwners,
@@ -72,6 +73,8 @@ contract TicketMinter is
      * @param campaign The address of the campaign for which tickets are being minted.
      * @param ticketsCount The number of tickets to mint.
      * @return ticketsTokenIds An array containing the token IDs of the minted tickets.
+     * @dev If no organization is found for the endOwner, we will mint it for him
+     * @dev If no campaign is found for the endOwner, we will mint it for him
      */
     function mintTickets(
         address endOwner,

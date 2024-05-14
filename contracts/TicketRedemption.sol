@@ -48,6 +48,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
      * @notice Sets the reward token contract address.
      * @param _rewardToken The address of the reward token contract.
      * @dev Only accessible by the default admin role.
+     * @dev Reverts if reward token is not a contract.
      */
     function setRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE)  {
         if (Address.isContract(_rewardToken) == false) {
@@ -61,6 +62,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
      * @notice Redeems tickets for rewards.
      * @param ticketContract The ticket contract address.
      * @param amountOfTicketsToBurn The number of tickets to redeem.
+     * @dev It is possible to redeem if the TicketRedemption has been approved from KarrotCampaing contract.
      * @dev Only callable if burn period hasn't ended, redemption price is set, redemption cap
      * isn't reached, user owns an organization and the ticket is registered in the lottery.
      */

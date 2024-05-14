@@ -76,6 +76,7 @@ contract Lottery is AccessControl, ILottery {
      * @notice Registers a ticket contract for the lottery.
      * @param _ticketContract The address of the ticket contract to register.
      * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
+     * @dev Add the organization of the ticket to all organizations
      */
     function registerTicketContract(address _ticketContract) external onlyRole(REGISTRAR_ROLE) {
         if (IERC165(_ticketContract).supportsInterface(type(IKarrotTicket).interfaceId) == false) {
@@ -95,6 +96,11 @@ contract Lottery is AccessControl, ILottery {
      * @notice Initializes the lottery by assigning ticket ranges to each organization's tickets.
      * @param organizationsCount The number of organizations to initialize in the lottery.
      * @dev Reverts if the burn period has not finished yet or if the lottery is already initialized.
+     * @dev Calculates the number of winners for each random tier based on the total supply of lottery tickets.
+     * @dev If `organizationsCount` is 0 or exceeds the remaining number of organizations to initialize,
+     * it automatically sets `organizationsCount` to the remaining number of organizations.
+     * @dev Initializes the lottery by populating the `allCampaignTickets` array with each organization's
+     * ticket range and updates the total supply of lottery tickets.
      */
     function initializeLottery(uint organizationsCount) external {
         if (block.timestamp < burnDeadline) {
@@ -221,6 +227,7 @@ contract Lottery is AccessControl, ILottery {
      * @dev Reverts if the current block timestamp is before the specified lottery time.
      * @dev Reverts if a random number request is already pending.
      * @dev Reverts if the lottery is not fully initialized with all organizations.
+     * @dev Initiates a request for a random number using the `requestRandomNumber`.
      */
     function runLottery() external {
         if (block.timestamp < lotteryTime) {
@@ -241,7 +248,10 @@ contract Lottery is AccessControl, ILottery {
      * @dev If `randomSalt` is not set, it fetches a random number from the random getter contract.
      * @dev Reverts if a random number is still pending or if the lottery is not yet run.
      * @dev Reverts if the lottery has already been processed.
-     */
+     * @dev Processes each tier sequentially, rewarding the winners based on their lottery tickets.
+     * @dev If the tier is of type `Random`, it distributes rewards among the winners based on the random number.
+     * @dev If the tier is of type `Fixed`, it distributes rewards among the winners based on their organization's shares.
+    */
     function rewardWinners(uint tiersCount) external {
         if (randomSalt == 0) randomSalt = randomGetter.getRandomNumber(requestRandomNumberId);
 
@@ -282,6 +292,7 @@ contract Lottery is AccessControl, ILottery {
      * @notice Retrieves the underlying ticket information for a given lottery ticket ID.
      * @param lotteryTicketId The ID of the lottery ticket.
      * @return The address of the ticket contract and the corresponding ticket ID within that contract.
+     * @dev Uses a binary search algorithm to efficiently locate the corresponding campaign ticket contract.
      */
     function getUnderlyingTicket(uint lotteryTicketId) public view returns (address, uint256) {
         uint256 lower = 0;
@@ -358,7 +369,7 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /**
-     * @dev Recursively checks if the ticket with the given ID is not a winner.
+     * @notice Recursively checks if the ticket with the given ID is not a winner.
      * @param lotteryTicketId The ID of the lottery ticket to check.
      * @return The ID of the first non-winning ticket found after the provided ID.
      */
@@ -375,12 +386,15 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /**
-     * @dev Rewards the winners for the specified tier.
+     * @notice Rewards the winners for the specified tier.
      * @param startTicketId The starting ID of the lottery tickets range.
      * @param endTicketId The ending ID of the lottery tickets range.
      * @param tierIndex The index of the tier.
      * @param tier The details of the tier.
      * @return tierTotalRewardAmount The total amount rewarded for the tier.
+     * @dev This function calculates the rewards for winners in the specified tier.
+     * @dev It selects winners randomly within the given range of lottery tickets.
+     * @dev The reward amount is transferred to the winners.
      */
     function _rewardWinnersForTier(
         uint startTicketId,
