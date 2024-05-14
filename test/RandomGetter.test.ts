@@ -65,7 +65,7 @@ describe("RandomGetter", async () => {
     });
 
     it("Should successfully receive a random number", async function () {
-        await ethers.provider.send("evm_increaseTime", [3001]);
+        await ethers.provider.send("evm_increaseTime", [4001]);
         await lottery.initializeLottery(0);
         await lottery.runLottery();
         await fulfillRandomWord();
@@ -79,7 +79,7 @@ describe("RandomGetter", async () => {
 
     
     it("Should successfully receive 1 if random number equal 0", async function () {
-        await ethers.provider.send("evm_increaseTime", [3001]);
+        await ethers.provider.send("evm_increaseTime", [4001]);
         await lottery.initializeLottery(0);
         await lottery.runLottery();
         const lastRequestId = await lottery.requestRandomNumberId();
@@ -107,23 +107,28 @@ describe("RandomGetter", async () => {
         await expect(lotteryMock.runLottery()).to.be.revertedWith("Lottery already has random number or request id pending");
     });
 
-    it("Should prevents non-admin withdraw link from contract", async function () {
+    it("Should prevents non-lottery call requestRandomNumber function", async function () {
+        await expect(randomGetter.connect(user1).requestRandomNumber()).to.be.revertedWith("Only lottery can call this function");
+    });
+
+    it("Should prevents non-admin withdraw from contract", async function () {
         const adminRole = ethers.constants.HashZero;
-        await expect(randomGetter.connect(user1).withdrawLink(1)).to.be.revertedWith(
+
+        await expect(randomGetter.connect(user1).withdraw(link.address, 1)).to.be.revertedWith(
             "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
         );
     });
     
-    it("Should correct withdraw link from contract", async function () {
+    it("Should correct withdraw specified token from contract", async function () {
         const oldOwnerBalance = await link.balanceOf(owner.address);
         const oneHundredLink = ethers.utils.parseEther("100");
-        await randomGetter.withdrawLink(oneHundredLink);
+        await randomGetter.withdraw(link.address, oneHundredLink);
 
         expect(oldOwnerBalance.add(oneHundredLink)).to.be.eq(await link.balanceOf(owner.address));
         expect(await link.balanceOf(randomGetter.address)).to.be.eq(0);
     });
 
-    it("Should support AccessControl and IRandomizer interfaces", async function () {
+    it("Should support AccessControl and IRandomGetter interfaces", async function () {
         let functionSignature = [
             "hasRole(bytes32,address)",
             "getRoleAdmin(bytes32)",
@@ -144,7 +149,7 @@ describe("RandomGetter", async () => {
         let functionSignatureRedemption = [
             'requestRandomNumber()',
             'getRandomNumber(uint256)',
-            'withdrawLink(uint256)'
+            'withdraw(address,uint256)'
         ];
         let interfaceIDRedemption = BigInt(0);
     

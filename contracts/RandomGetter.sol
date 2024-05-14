@@ -3,12 +3,16 @@ pragma solidity 0.8.21;
 
 import {VRFV2WrapperConsumerBase} from "@chainlink/contracts/src/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {IRandomGetter} from "./interface/IRandomGetter.sol";
 
 contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter {
+    using SafeERC20 for IERC20;
+
     uint32 constant callbackGasLimit = 100000;
     uint32 constant numWords = 1;
     uint16 constant requestConfirmations = 3; // cannot be lower
@@ -65,8 +69,8 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
             random = randomNumbersByRequestId[requestId];
     }
 
-    function withdrawLink(uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        LINK.transfer(msg.sender, _amount);
+    function withdraw(address _token, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        IERC20(_token).transfer(msg.sender, _amount);
     }
 
     function supportsInterface(
