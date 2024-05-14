@@ -63,6 +63,11 @@ contract Lottery is AccessControl, ILottery {
         _setupRole(REGISTRAR_ROLE, _registrar); //expected to be factory contract
     }
 
+    /**
+     * @notice Registers a ticket contract for the lottery.
+     * @param _ticketContract The address of the ticket contract to register.
+     * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
+     */
     function registerTicketContract(address _ticketContract) external onlyRole(REGISTRAR_ROLE) {
         if (IERC165(_ticketContract).supportsInterface(type(IKarrotTicket).interfaceId) == false) {
             revert InterfaceNotSupported();
@@ -77,6 +82,11 @@ contract Lottery is AccessControl, ILottery {
         emit RegisterTicketContract(organization, _ticketContract);
     }
 
+    /**
+     * @notice Initializes the lottery by assigning ticket ranges to each organization's tickets.
+     * @param organizationsCount The number of organizations to initialize in the lottery.
+     * @dev Reverts if the burn period has not finished yet or if the lottery is already initialized.
+     */
     function initializeLottery(uint organizationsCount) external {
         if (block.timestamp < burnDeadline) {
             revert IncorrectCondition("Burn period not finished yet");
@@ -116,6 +126,17 @@ contract Lottery is AccessControl, ILottery {
         emit LotteryInitialized(organizations.length);
     }
 
+    /**
+     * @notice Sets up the lottery with specified parameters.
+     * @param _rewardToken The address of the token used as rewards.
+     * @param _randomGetter The address of the contract providing random numbers.
+     * @param _tiers An array containing the configuration of lottery tiers.
+     * @param _organizationSharesForFixedTiers An array containing the percentage shares of organizations for fixed tiers.
+     * @dev Reverts if the current block timestamp is after the specified lottery time.
+     * @dev Reverts if the reward token is not a contract or if the random getter contract does not support the required interface.
+     * @dev Reverts if the number of organization shares for fixed tiers does not match the number of organizations.
+     * @dev Reverts if there are any incorrect tier configurations or if the total organization shares do not sum up to 100%.
+     */
     function setupLottery(
         address _rewardToken,
         address _randomGetter,
@@ -186,6 +207,12 @@ contract Lottery is AccessControl, ILottery {
         emit LotterySetup(_rewardToken, tiers, organizationSharesForFixedTiers);
     }
 
+    /**
+     * @notice Initiates the lottery process.
+     * @dev Reverts if the current block timestamp is before the specified lottery time.
+     * @dev Reverts if a random number request is already pending.
+     * @dev Reverts if the lottery is not fully initialized with all organizations.
+     */
     function runLottery() external {
         if (block.timestamp < lotteryTime) {
             revert IncorrectCondition("Lottery time not reached yet");
@@ -199,6 +226,13 @@ contract Lottery is AccessControl, ILottery {
         requestRandomNumberId = randomGetter.requestRandomNumber();
     }
 
+    /**
+     * @notice Rewards the winners of the lottery tiers.
+     * @param tiersCount The number of tiers to process.
+     * @dev If `randomSalt` is not set, it fetches a random number from the random getter contract.
+     * @dev Reverts if a random number is still pending or if the lottery is not yet run.
+     * @dev Reverts if the lottery has already been processed.
+     */
     function rewardWinners(uint tiersCount) external {
         if (randomSalt == 0) randomSalt = randomGetter.getRandomNumber(requestRandomNumberId);
 
@@ -235,6 +269,11 @@ contract Lottery is AccessControl, ILottery {
         }
     }
 
+    /**
+     * @notice Retrieves the underlying ticket information for a given lottery ticket ID.
+     * @param lotteryTicketId The ID of the lottery ticket.
+     * @return The address of the ticket contract and the corresponding ticket ID within that contract.
+     */
     function getUnderlyingTicket(uint lotteryTicketId) public view returns (address, uint256) {
         uint256 lower = 0;
         uint256 upper = allCampaignTickets.length - 1;
@@ -259,30 +298,61 @@ contract Lottery is AccessControl, ILottery {
         //TODO: refactor
     }
 
+    /**
+     * @notice Retrieves information about a specific tier in the lottery.
+     * @param tierIndex The index of the tier to retrieve.
+     * @return Tier information including tier type, winners count, reward amount, etc.
+     */
     function getTier(uint tierIndex) public view returns (Tier memory) {
         return tiers[tierIndex];
     }
 
+    /**
+     * @notice Retrieves information about all tiers in the lottery.
+     * @return An array containing information about all tiers including tier type, winners count, reward amount, etc.
+     */
     function getAllTiers() public view returns (Tier[] memory) {
         return tiers;
     }
 
+    /**
+     * @notice Retrieves the addresses of all organizations participating in the lottery.
+     * @return An array containing the addresses of all participating organizations.
+     */
     function getAllOrganizations() public view returns (address[] memory) {
         return organizations;
     }
 
+    /**
+     * @notice Retrieves the addresses of all ticket contracts associated with a specific organization.
+     * @param organization The address of the organization.
+     * @return An array containing the addresses of ticket contracts associated with the organization.
+     */
     function getOrganizationTicketsContracts(address organization) public view returns (address[] memory) {
         return organizationTicketsContracts[organization];
     }
 
+    /**
+     * @notice Retrieves the shares assigned to each organization for fixed tiers.
+     * @return An array containing the shares assigned to each organization for fixed tiers.
+     */
     function getOrganizationSharesForFixedTiers() public view returns (uint[] memory) {
         return organizationSharesForFixedTiers;
     }
 
+    /**
+     * @notice Retrieves all campaign tickets stored in the lottery.
+     * @return An array containing all campaign tickets stored in the lottery.
+     */
     function getAllCampaignTickets() public view returns (CampaignTickets[] memory) {
         return allCampaignTickets;
     }
 
+    /**
+     * @dev Recursively checks if the ticket with the given ID is not a winner.
+     * @param lotteryTicketId The ID of the lottery ticket to check.
+     * @return The ID of the first non-winning ticket found after the provided ID.
+     */
     function _checkTickedIsNotWinner(uint lotteryTicketId) internal view returns (uint) {
         if (winnerAmount[lotteryTicketId] > 0) {
             uint newId = lotteryTicketId + 1;
@@ -295,6 +365,14 @@ contract Lottery is AccessControl, ILottery {
         }
     }
 
+    /**
+     * @dev Rewards the winners for the specified tier.
+     * @param startTicketId The starting ID of the lottery tickets range.
+     * @param endTicketId The ending ID of the lottery tickets range.
+     * @param tierIndex The index of the tier.
+     * @param tier The details of the tier.
+     * @return tierTotalRewardAmount The total amount rewarded for the tier.
+     */
     function _rewardWinnersForTier(
         uint startTicketId,
         uint endTicketId,
@@ -315,6 +393,11 @@ contract Lottery is AccessControl, ILottery {
         }
     }
 
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @param interfaceId The interface identifier.
+     * @return A boolean indicating whether the contract supports the interface.
+     */
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {
