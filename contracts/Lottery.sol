@@ -75,6 +75,7 @@ contract Lottery is AccessControl, ILottery {
     /**
      * @notice Registers a ticket contract for the lottery.
      * @param _ticketContract The address of the ticket contract to register.
+     * @dev Only accessible by accounts with the REGISTRAR_ROLE
      * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
      * @dev Add the organization of the ticket to all organizations
      */
@@ -99,8 +100,6 @@ contract Lottery is AccessControl, ILottery {
      * @dev Calculates the number of winners for each random tier based on the total supply of lottery tickets.
      * @dev If `organizationsCount` is 0 or exceeds the remaining number of organizations to initialize,
      * it automatically sets `organizationsCount` to the remaining number of organizations.
-     * @dev Initializes the lottery by populating the `allCampaignTickets` array with each organization's
-     * ticket range and updates the total supply of lottery tickets.
      */
     function initializeLottery(uint organizationsCount) external {
         if (block.timestamp < burnDeadline) {
@@ -248,9 +247,13 @@ contract Lottery is AccessControl, ILottery {
      * @dev If `randomSalt` is not set, it fetches a random number from the random getter contract.
      * @dev Reverts if a random number is still pending or if the lottery is not yet run.
      * @dev Reverts if the lottery has already been processed.
-     * @dev Processes each tier sequentially, rewarding the winners based on their lottery tickets.
+     * @dev This function calculates the rewards for winners in the specified tier.
+     * @dev It selects winners randomly within the given range of lottery tickets.
+     * @dev The reward amount is transferred to the winners.
      * @dev If the tier is of type `Random`, it distributes rewards among the winners based on the random number.
      * @dev If the tier is of type `Fixed`, it distributes rewards among the winners based on their organization's shares.
+     * @dev If `tiersCount` is 0 or exceeds the remaining amount of tiers to initialize,
+     * it automatically sets `tiersCount` to the remaining amount of tiers.
     */
     function rewardWinners(uint tiersCount) external {
         if (randomSalt == 0) randomSalt = randomGetter.getRandomNumber(requestRandomNumberId);
