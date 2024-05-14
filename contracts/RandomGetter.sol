@@ -118,7 +118,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     /**
-     * @dev Fulfills the requested random words.
+     * @notice Fulfills the requested random words.
      * @param _requestId The ID of the request.
      * @param randomWords The array of random words to fulfill.
      * @dev Overrides the internal function in the VRFConsumerBase contract.
