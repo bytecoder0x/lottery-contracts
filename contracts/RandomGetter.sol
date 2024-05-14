@@ -75,7 +75,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     function withdraw(address _token, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        IERC20(_token).transfer(msg.sender, _amount);
+        IERC20(_token).safeTransfer(msg.sender, _amount);
     }
 
     function supportsInterface(
