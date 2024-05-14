@@ -48,6 +48,12 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
 
+    /**
+     * @notice Requests a random number for the calling lottery contract.
+     * @dev Only callable by the lottery contract itself.
+     * @return requestId The unique identifier for the random number request.
+     * @dev Reverts if the lottery contract already has a pending random number request.
+     */
     function requestRandomNumber() external onlyLottery returns (uint256) {
         if (requestIds[msg.sender] != 0) {
             revert IncorrectCondition("Lottery already has random number or request id pending");
@@ -65,19 +71,39 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         return requestId;
     }
 
+    /**
+     * @notice Retrieves the random number associated with the given request ID.
+     * @param requestId The unique identifier for the random number request.
+     * @return random The generated random number.
+     */
     function getRandomNumber(uint256 requestId) external view returns (uint256 random) {
         random = randomNumbersByRequestId[requestId];
     }
 
+    /**
+     * @notice Retrieves the random number associated with the given lottery contract address.
+     * @param lottery The address of the lottery contract.
+     * @return random The generated random number.
+     */
     function getRandomNumber(address lottery) external view returns (uint256 random) {
         uint256 requestId = requestIds[lottery];
         random = randomNumbersByRequestId[requestId];
     }
 
+    /**
+     * @notice Allows the DEFAULT_ADMIN_ROLE to withdraw tokens from the contract.
+     * @param _token The address of the token to withdraw.
+     * @param _amount The amount of tokens to withdraw.
+     */
     function withdraw(address _token, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         IERC20(_token).safeTransfer(msg.sender, _amount);
     }
 
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @param interfaceId The interface identifier.
+     * @return A boolean indicating whether the contract supports the interface.
+     */
     function supportsInterface(
         bytes4 interfaceId
     )
@@ -91,6 +117,12 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
             super.supportsInterface(interfaceId);
     }
 
+    /**
+     * @dev Fulfills the requested random words.
+     * @param _requestId The ID of the request.
+     * @param randomWords The array of random words to fulfill.
+     * @dev Overrides the internal function in the VRFConsumerBase contract.
+     */
     function fulfillRandomWords(
         uint256 _requestId,
         uint256[] memory randomWords
