@@ -45,6 +45,15 @@ contract Lottery is AccessControl, ILottery {
     mapping(uint256 => uint256[]) public tierWinners;
     bool public lotteryProcessed;
     
+    /**
+     * @notice Constructor function to initialize the contract with the default admin, registrar, and time values.
+     * @param _defaultAdmin The address of the default admin role.
+     * @param _registrar The address of the registrar role (expected to be the factory contract).
+     * @param _mintDeadline The timestamp indicating the deadline for minting tickets.
+     * @param _burnDeadline The timestamp indicating the deadline for burning tickets.
+     * @param _lotteryTime The timestamp indicating the time when the lottery will occur.
+     * @dev Reverts if the provided time values are incorrect.
+     */
     constructor(
         address _defaultAdmin,
         address _registrar,

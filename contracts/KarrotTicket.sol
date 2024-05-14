@@ -14,6 +14,14 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     address public campaign;
 
+    /**
+     * @notice Constructor function to initialize the KarrotTicket contract.
+     * @param _defaultAdmin The address of the default admin role.
+     * @param _minter The address of the minter role.
+     * @param _campaign The address of the KarrotCampaign contract.
+     * @param _name The name of the contract.
+     * @dev Reverts if the campaign contract does not support their respective interfaces.
+     */
     constructor(
         address _defaultAdmin,
         address _minter,

@@ -16,6 +16,12 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
 
     event OrganizationTokenMinted(address indexed to, uint256 indexed tokenId);
 
+    /**
+     * @notice Constructor function to initialize the KarrotOrganization contract.
+     * @param _defaultAdmin The address of the default admin role.
+     * @param _minter The address of the minter role.
+     * @param _name The name of the contract.
+     */
     constructor(address _defaultAdmin, address _minter, string memory _name) 
         KarrotErc7401Base(_defaultAdmin, _minter, _name) { }
 

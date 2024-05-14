@@ -47,6 +47,10 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         _;
     }
 
+    /**
+     * @notice Constructor function to initialize the KarrotFactory contract.
+     * @param _deployer The address of the deployer role.
+     */
     constructor(address _deployer) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(DEPLOYER_ROLE, _deployer);

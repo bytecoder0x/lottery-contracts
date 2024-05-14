@@ -24,6 +24,12 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
 
     IERC20 public rewardToken;
 
+    /**
+     * @dev Constructor function to initialize the TicketRedemption contract.
+     * @param _defaultAdmin The address of the default admin role.
+     * @param _lottery The address of the Lottery contract.
+     * @dev Reverts if the lottery contract does not support their respective interfaces.
+     */
     constructor(address _defaultAdmin, address _lottery) {
         if (
             !ILottery(_lottery).supportsInterface(

@@ -19,7 +19,15 @@ contract TicketMinter is
     bytes32 public constant MINTER_ROLE = keccak256("MINTER");
 
     IKarrotFactory public factory;
-    
+
+    /**
+     * @notice Constructor function to initialize the TicketMinter contract.
+     * and factory contract address.
+     * @param _defaultAdmin The address of the default admin role.
+     * @param _minter The address of the minter role.
+     * @param _factory The address of the KarrotFactory contract.
+     * @dev Reverts if the factory contract does not support their respective interfaces.
+     */
     constructor(address _defaultAdmin, address _minter, address _factory) {
         if (
             !IKarrotFactory(_factory).supportsInterface(

@@ -27,7 +27,16 @@ contract KarrotCampaign is
     mapping(uint256 => uint256) public ownerToken;
     mapping(uint256 => uint256) public organizationToCampaign;
 
-
+    /**
+     * @notice Constructor function to initialize the KarrotCampaign contract.
+     * @param _defaultAdmin The address of the default admin role.
+     * @param _lowerAdmin The address of the lower admin role.
+     * @param _minter The address of the minter role.
+     * @param _organization The address of the KarrotOrganization contract.
+     * @param _lottery The address of the Lottery contract.
+     * @param _name The name of the contract.
+     * @dev Reverts if the organization or lottery contracts do not support their respective interfaces.
+     */
     constructor(
         address _defaultAdmin,
         address _lowerAdmin,

@@ -29,6 +29,15 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         _;
     }
 
+    /**
+     * @notice Constructor function to initialize the RandomGetter contract.
+     * factory contract address, and default admin address.
+     * @param _link The address of the LINK token contract.
+     * @param _vrfWrapper The address of the VRF wrapper contract.
+     * @param _factory The address of the KarrotFactory contract.
+     * @param _defaultAdmin The address of the default admin role.
+     * @dev Reverts if the factory contract does not support their respective interfaces.
+     */
     constructor(
         address _link,
         address _vrfWrapper,
