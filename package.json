@@ -102,6 +102,7 @@
     "xdeployer": "^1.1.12"
   },
   "dependencies": {
+    "@chainlink/contracts": "^1.1.0",
     "@poanet/solidity-flattener": "^3.0.9",
     "@rmrk-team/evm-contracts": "^2.5.2",
     "merkletreejs": "^0.3.10"
