@@ -110,6 +110,8 @@ contract KarrotCampaign is
     /**
      * @notice Burns the user's ticket for the current campaign.
      * @dev Retrieves the campaign ID for the user and calls _burnTicket.
+     * @dev Transfers the burning ticket to the owner of the last ticket ID.
+     * @dev Transfers the last ticket ID to the burning campaign.
      * @dev The owner of the last ticket loses it, but received the burning ticket.
      * @dev We swap the ticket to be burned with the last ticket, then burn the last one.
      */
