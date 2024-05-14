@@ -13,7 +13,7 @@ import {IRandomGetter} from "./interface/IRandomGetter.sol";
 contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter {
     using SafeERC20 for IERC20;
 
-    uint32 constant callbackGasLimit = 100000;
+    uint32 constant callbackGasLimit = 100_000;
     uint32 constant numWords = 1;
     uint16 constant requestConfirmations = 3; // cannot be lower
 
