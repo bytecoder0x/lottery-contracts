@@ -118,6 +118,8 @@ contract KarrotCampaign is
      * @dev Transfers the last ticket ID to the burning campaign.
      * @dev The owner of the last ticket loses it, but received the burning ticket.
      * @dev We swap the ticket to be burned with the last ticket, then burn the last one.
+     * Due this swap approach user's ticket ID(s) may change and it's expected behaviour,
+     * since it does not change the chance of winning lottery
      */
     function burnTicket() external {
         uint campaignId = _getUserCampaignId();
@@ -192,7 +194,7 @@ contract KarrotCampaign is
     }
 
     /**
-     * @notice Performs checks before accepting a child contract.
+     * @notice Performs checks whether the child is a ticket before accepting it
      * @param childAddress The address of the child contract.
      * @dev Ensures that only the ticket contract can be accepted as a child of the campaign.
      */
@@ -211,8 +213,8 @@ contract KarrotCampaign is
      * @param campaignId The ID of the campaign owning the ticket to be burned.
      * @dev Reverts if the caller is not approved or the owner of the ticket.
      * @dev Transfers the burning ticket to the owner of the last ticket ID.
-     * @dev Transfers the last ticket ID to the burning campaign.
-     * @dev Burns the last ticket ID.
+     * Transfers the last ticket ID to the burning campaign.
+     * Burns the last ticket ID.
      */
     function _burnTicket(uint256 campaignId) internal {
         if(!_isApprovedOrOwner(msg.sender, campaignId)) {
