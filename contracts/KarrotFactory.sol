@@ -23,6 +23,11 @@ import {OrganizationDeployerLibrary} from "./libraries/OrganizationDeployerLibra
 import {CampaignDeployerLibrary} from "./libraries/CampaignDeployerLibrary.sol";
 import {TicketDeployerLibrary} from "./libraries/TicketDeployerLibrary.sol";
 
+/**
+ * @title KarrotFactory contract
+ * @dev This contract serves as a factory for deploying and managing Karrot ecosystem contracts such as
+ * lotteries, redemptions, organizations, campaigns, and tickets.
+*/
 contract KarrotFactory is AccessControl, IKarrotFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
 

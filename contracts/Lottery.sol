@@ -12,6 +12,10 @@ import {ILottery} from "./interface/ILottery.sol";
 import {IRandomGetter} from "./interface/IRandomGetter.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 
+/**
+ * @title Lottery contract
+ * @dev Manages lottery functionality including ticket registration, initialization, running, and rewarding winners.
+ */
 contract Lottery is AccessControl, ILottery {
     using SafeERC20 for IERC20;
 

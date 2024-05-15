@@ -12,6 +12,10 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ITicketMinter} from "./interface/ITicketMinter.sol";
 
+/**
+ * @title TicketMinter contract
+ * @dev Manages the minting of tickets for campaigns and end owners.
+ */
 contract TicketMinter is
     ITicketMinter,
     AccessControl

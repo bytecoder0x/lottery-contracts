@@ -11,6 +11,10 @@ import {KarrotCheckMintTime} from "./base/KarrotCheckMintTime.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 
+/**
+ * @title KarrotTicket
+ * @dev Manages ticket-related functionality including minting and burning tickets.
+ */
 contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     address public campaign;
 

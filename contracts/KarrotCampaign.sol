@@ -13,6 +13,10 @@ import {ILottery} from "./interface/ILottery.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 
+/**
+ * @title KarrotCampaign contract
+ * @dev Manages campaign-related functionality including minting campaign tokens and burning tickets.
+ */
 contract KarrotCampaign is 
     KarrotErc7401Base,
     KarrotCheckMintTime,

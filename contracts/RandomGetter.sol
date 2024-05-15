@@ -10,6 +10,10 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {IRandomGetter} from "./interface/IRandomGetter.sol";
 
+/**
+ * @title RandomGetter contract
+ * @dev Manages the retrieval of random numbers for lottery contracts.
+ */
 contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter {
     using SafeERC20 for IERC20;
 

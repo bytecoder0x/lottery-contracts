@@ -10,6 +10,10 @@ import {KarrotErc7401Base} from "./base/KarrotErc7401Base.sol";
 import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 
+/**
+ * @title KarrotOrganization contract
+ * @dev Manages organization-related functionality including minting organization tokens.
+ */
 contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     
     mapping(address => uint256) public ownerToken;

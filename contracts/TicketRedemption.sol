@@ -13,6 +13,10 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {ILottery} from "./interface/ILottery.sol";
 import {ITicketRedemption} from "./interface/ITicketRedemption.sol";
 
+/**
+ * @title TicketRedemption contract
+ * @dev Manages the redemption of tickets for rewards.
+ */
 contract TicketRedemption is ITicketRedemption, AccessControl {
     using SafeERC20 for IERC20;
 
