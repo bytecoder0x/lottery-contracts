@@ -63,7 +63,8 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
      * @param ticketContract The ticket contract address.
      * @param amountOfTicketsToBurn The number of tickets to redeem.
      * @dev It is possible to redeem if the TicketRedemption has been approved from KarrotCampaing contract.
-     * @dev Only callable if burn period hasn't ended, redemption price is set, redemption cap
+     * @dev After burn, user receives a reward in tokens.
+     * @dev Only callable if burn period hasn't ended, redemption price is set, redemption cap.
      * isn't reached, user owns an organization and the ticket is registered in the lottery.
      */
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
