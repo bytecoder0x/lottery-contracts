@@ -57,7 +57,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     }
 
     /**
-     * @notice Enables an organization to participate in the lottery.
+     * @notice Enables an organization if they are returned in the project.
      * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
      * @param _organization The address of the organization to be enabled.
      * @dev If the organization is already enabled, reverts with an error message.
@@ -72,7 +72,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     }
 
     /**
-     * @notice Disables an organization from participating in the lottery.
+     * @notice Disables an organization if they leave the project.
      * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
      * @param _organization The address of the organization to be disabled.
      * @dev If the organization is Non Karrot or already disabled, reverts with an error message.

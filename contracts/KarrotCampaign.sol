@@ -123,7 +123,6 @@ contract KarrotCampaign is
     /**
      * @notice Burns a batch of tickets for the current campaign.
      * @param amountOfTicketsToBurn The number of tickets to burn.
-     * @dev Retrieves the campaign ID for the user and calls burnTicketBatch with the campaign ID and specified amount.
      */
     function burnTicketBatch(uint256 amountOfTicketsToBurn) public {
         uint campaignId = _getUserCampaignId();
