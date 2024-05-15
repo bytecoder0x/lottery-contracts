@@ -26,41 +26,43 @@ import {TicketDeployerLibrary} from "./libraries/TicketDeployerLibrary.sol";
 /**
  * @title KarrotFactory contract
  * @notice The KarrotFactory contract serves as a factory for various contracts 
- * related to the Karrot platform, such as organizations, campaigns, lotteries, redemption and tickets.
+ * such as organizations, campaigns, lotteries, redemption and tickets.
  * @dev KarrotFactory manages the deployment process and keeps track of deployed contracts.
 */
 contract KarrotFactory is AccessControl, IKarrotFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    /// @dev Сonstant that contains the LOWER_ADMIN role. Owner of this role can deploy contracts.
+    /// @notice  Сonstant that contains the LOWER_ADMIN role. Owner of this role can deploy contracts.
     bytes32 public constant DEPLOYER_ROLE = keccak256("DEPLOYER");
-    /// @dev Address of the minterContract that can mint organization, campaigns and tickets. Expected to be the TicketMinter contract.
+    /// @notice  Address of the minterContract that can mint organization, campaigns and tickets. Expected to be the TicketMinter contract.
     address public minterContract;
 
-    /// @dev Stores addresses of active organizations.
+    /// @notice  Stores addresses of active organizations.
     EnumerableSet.AddressSet private activeOrganizations;
 
-    /// @dev Stores addresses of deployed lottery contracts.
+    /// @notice Stores addresses of deployed lottery contracts.
     address[] public lotteries;
-    /// @dev Stores addresses of deployed redemption contracts.
+    /// @notice Stores addresses of deployed redemption contracts.
     address[] public redemptions;
-    /// @dev Stores addresses of deployed organization contracts.
+    /// @notice Stores addresses of deployed organization contracts.
     address[] public organizations;
-    /// @dev Stores addresses of deployed campaign contracts.
+    /// @notice  Stores addresses of deployed campaign contracts.
     address[] public campaigns;
-    /// @dev Stores addresses of deployed ticket contracts.
+    /// @notice Stores addresses of deployed ticket contracts.
     address[] public tickets;
 
-    /// @dev Mapping that contains added addresses of organizations
+    /// @notice Mapping that contains added addresses of organizations.
     mapping(address => bool) public isOrganization;
-    /// @dev Mapping that contains added addresses of lotteries.
+    /// @notice Mapping that contains added addresses of lotteries.
     mapping(address => bool) public isLottery;
-    /// @dev Mapping from parent organization address => campaign address.
+    /// @notice Mapping from campaign address to it's associated organization address.
     mapping(address => address) public campaignOrganization;
-    /// @dev Mapping from parent campaign address => ticket address.
+    /// @notice Mapping from ticket address to it's associated campaign address.
     mapping(address => address) public ticketsCampaign;
-   
-    /// @dev Revert if the minter contract is not set.
+
+    /**
+     * @dev Revert if the minter contract is not set
+     */
     modifier withSetupMinterContract() {
         if (minterContract == address(0)) revert IncorrectCondition("Minter contract not set");
         _;

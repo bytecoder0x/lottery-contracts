@@ -23,20 +23,20 @@ contract KarrotCampaign is
     KarrotCheckMintTime,
     IKarrotCampaign
 {
-    /// @dev Сonstant that contains the LOWER_ADMIN role. Owner of this role can set the contract ticket.
+    /// @notice Сonstant that contains the LOWER_ADMIN role. Owner of this role can set the contract ticket.
     bytes32 public constant LOWER_ADMIN_ROLE = keccak256("LOWER_ADMIN");
 
-    /// @dev Address of the lottery contract in that the campaign participates.
+    /// @notice Address of the lottery contract in that the campaign participates.
     address public lottery;
-    /// @dev Address of the organization contract that is the parent of this campaign.
+    /// @notice Address of the organization contract that is the parent of this campaign.
     address public organization;
-    /// @dev Address of the ticket contract used for this campaign.
+    /// @notice Address of the ticket contract used for this campaign.
     address public ticketsContract;
 
-    /// @dev Mapping from parent organization ID => campaign ID.
+    /// @notice Mapping from organization ID to it's associated campaign ID.
     mapping(uint256 => uint256) public ownerToken;
-    /// @notice Used to prevent duplicate campaign tokens across organizations.
-    /// @dev Mapping from parent organization ID => campaign ID.
+    /// @notice Mapping from organization ID to it's associated campaign ID.
+    /// @dev Used to prevent duplicate campaign tokens within organizations.
     mapping(uint256 => uint256) public organizationToCampaign;
 
     /**
