@@ -130,6 +130,24 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     }
 
     /**
+     * @notice Retrieves the ticket IDs owned by a specific user.
+     * @param _owner The address of the user whose ticket IDs are to be retrieved.
+     * @return tiketIds An array containing the IDs of the tickets owned by the specified user.
+     */
+    function getUserTicketIds(address _owner) view external returns (uint256[] memory){
+        uint256 campaignId = IKarrotCampaign(campaign).getUserCampaignId(_owner);
+        Child[] memory tickets = IKarrotCampaign(campaign).childrenOf(campaignId);
+
+        uint256[] memory tiketIds = new uint256[](tickets.length);
+
+        for (uint256 i; i < tickets.length; i++) {
+            tiketIds[i] = tickets[i].tokenId;
+        }
+
+        return tiketIds;
+    }
+
+    /**
      * @notice Checks if the contract supports a given interface.
      * @param interfaceId The interface identifier.
      * @return A boolean indicating whether the contract supports the interface.

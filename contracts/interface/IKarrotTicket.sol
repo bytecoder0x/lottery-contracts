@@ -17,6 +17,7 @@ interface IKarrotTicket is IERC7401, IKarrotErc7401Base {
         bytes memory data
     ) external returns (uint256[] memory);
 
+    function getUserTicketIds(address _owner) external view returns (uint256[] memory);
     function getOrganisation() external view returns (address);
     function campaign() external view returns (address);
     function burnLastTicket() external;
