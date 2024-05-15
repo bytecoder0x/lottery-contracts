@@ -41,7 +41,7 @@ describe("KarrotCampaign", async () => {
         await organization.connect(minter).mintTo(user1.address, []);
         const organizationId = await organization.ownerToken(user1.address);
         await campaign.connect(minter).mintToOrganization(organizationId, []);
-        const mintedTokenCampaignId = 1;
+        const mintedTokenCampaignId = await campaign.getUserCampaignId(user1.address);
 
         expect(await campaign.balanceOf(organization.address)).to.be.eq(1);
         const directOwner = await campaign.directOwnerOf(mintedTokenCampaignId);

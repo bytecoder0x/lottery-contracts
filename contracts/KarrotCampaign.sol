@@ -182,6 +182,16 @@ contract KarrotCampaign is
     }
 
     /**
+     * @notice Retrieves the campaign ID associated with a specific user.
+     * @param _owner The address of the user whose campaign ID is to be retrieved.
+     * @return The campaign ID associated with the specified user.
+     */
+    function getUserCampaignId(address _owner) external view returns (uint256) {
+        uint organizationId = IKarrotOrganization(organization).ownerToken(_owner);
+        return ownerToken[organizationId];
+    }
+
+    /**
      * @notice Checks if the contract supports a given interface.
      * @param interfaceId The interface identifier.
      * @return A boolean indicating whether the contract supports the interface.
