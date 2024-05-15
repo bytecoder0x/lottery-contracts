@@ -73,8 +73,8 @@ contract TicketMinter is
      * @param campaign The address of the campaign for which tickets are being minted.
      * @param ticketsCount The number of tickets to mint.
      * @return ticketsTokenIds An array containing the token IDs of the minted tickets.
-     * @dev If no organization is found for the endOwner, we will mint it for him
-     * @dev If no campaign is found for the endOwner, we will mint it for him
+     * @dev If no organization is found for the endOwner, we will mint it for him.
+     * @dev If no campaign is found for the endOwner, we will mint it for him.
      */
     function mintTickets(
         address endOwner,
