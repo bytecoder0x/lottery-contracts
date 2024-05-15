@@ -15,6 +15,7 @@ import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 
 /**
  * @title KarrotCampaign contract
+ * @notice The KarrotCampaign contract manages the creation and ownership of campaign tokens within the Karrot platform.
  * @dev Manages campaign-related functionality including minting campaign tokens and burning tickets.
  */
 contract KarrotCampaign is 
@@ -22,21 +23,28 @@ contract KarrotCampaign is
     KarrotCheckMintTime,
     IKarrotCampaign
 {
+    /// @dev Сonstant that contains the LOWER_ADMIN role. Owner of this role can set the contract ticket.
     bytes32 public constant LOWER_ADMIN_ROLE = keccak256("LOWER_ADMIN");
 
+    /// @dev Address of the lottery contract in that the campaign participates.
     address public lottery;
+    /// @dev Address of the organization contract that is the parent of this campaign.
     address public organization;
+    /// @dev Address of the ticket contract used for this campaign.
     address public ticketsContract;
 
+    /// @dev Mapping from parent organization ID => campaign ID.
     mapping(uint256 => uint256) public ownerToken;
+    /// @notice Used to prevent duplicate campaign tokens across organizations.
+    /// @dev Mapping from parent organization ID => campaign ID.
     mapping(uint256 => uint256) public organizationToCampaign;
 
     /**
      * @notice Constructor function to initialize the KarrotCampaign contract.
      * @param _defaultAdmin The address of the default admin role.
-     * @param _lowerAdmin The address of the lower admin role.
-     * @param _minter The address of the minter role.
-     * @param _organization The address of the KarrotOrganization contract.
+     * @param _lowerAdmin The address of the lower admin role that can set the contract ticket. Expected to be the KarrotFacotry contract.
+     * @param _minter The address of the minter role that can mint campaign to the organization.
+     * @param _organization The address of the KarrotOrganization contract that is the parent of this KarrotCampaign.
      * @param _lottery The address of the Lottery contract.
      * @param _name The name of the contract.
      * @dev Reverts if the organization or lottery contracts do not support their respective interfaces.
@@ -69,7 +77,7 @@ contract KarrotCampaign is
      * @param parentId The ID of the parent organization.
      * @param data Additional data to include in the minted token.
      * @return mintedTokenId The ID of the newly minted token.
-     * @dev Reverts if the parent organization already has the campaign.
+     * @dev Reverts if the parent organization already has the campaign token.
      */
     function mintToOrganization(
         uint256 parentId,
@@ -223,7 +231,7 @@ contract KarrotCampaign is
      * @param campaignId The ID of the campaign owning the ticket to be burned.
      * @dev Reverts if the caller is not approved or the owner of the ticket.
      * @dev Transfers the burning ticket to the owner of the last ticket ID.
-     * Transfers the last ticket ID to the burning campaign.
+     * Transfers the last ticket ID to the burning campaign parent id.
      * Burns the last ticket ID.
      */
     function _burnTicket(uint256 campaignId) internal {
