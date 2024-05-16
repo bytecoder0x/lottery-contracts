@@ -28,7 +28,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     uint16 constant requestConfirmations = 3; // cannot be lower
 
     /// @notice Address of the KarrotFactory contract.
-    IKarrotFactory factory;
+    IKarrotFactory public factory;
 
     /// @notice Mapping from lottery address to its associated request ID.
     mapping(address => uint) public requestIds;
