@@ -4,7 +4,10 @@ pragma solidity ^0.8.21;
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotErrors} from "./IKarrotErrors.sol";
 
-
+/**
+ * @title Lottery contract
+ * @notice Manages lottery functionality including ticket registration, initialization, running, and rewarding winners.
+ */
 interface ILottery is IERC165, IKarrotErrors {
     
     /**
