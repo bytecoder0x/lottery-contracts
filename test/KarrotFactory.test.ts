@@ -5,7 +5,7 @@ import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
 
-describe("KarrotFactory", async () => {
+describe.only("KarrotFactory", async () => {
     let hardhatSnapshotId: string;
     let karrotFactory: KarrotFactory
     let ticketMinter: TicketMinter;
@@ -37,6 +37,8 @@ describe("KarrotFactory", async () => {
         await karrotFactory.connect(owner).deployOrganizationContract(owner.address, "Test Organization");
         expect((await (karrotFactory.getAllOrganizations())).length).to.be.eq(2);
         expect((await karrotFactory.getAllLotteries()).length).to.be.eq(1);
+        expect((await karrotFactory.getOrganizationsCount())).to.be.eq(2);
+        expect((await karrotFactory.getLotteriesCount())).to.be.eq(1);
     });
 
     it("Should deploy Campaign And Ticket Contracts", async function () {
@@ -49,7 +51,8 @@ describe("KarrotFactory", async () => {
 
         expect(newValueofAllCampaigns.length).to.be.eq(allCampaigns.length + 1);
         expect(newValueofAllTickets.length).to.be.eq(allTickets.length + 1);
-
+        expect((await karrotFactory.getCampaignsCount())).to.be.eq(allCampaigns.length + 1);
+        expect((await karrotFactory.getTicketsCount())).to.be.eq(allTickets.length + 1);
     });
 
     it("Should deploy Lottery And Redemption Contracts", async function () {
@@ -65,7 +68,7 @@ describe("KarrotFactory", async () => {
 
         expect(newValueofAllLotteries.length).to.be.eq(allLotteries.length + 1);
         expect(newValueofAllRedemptions.length).to.be.eq(allRedemptions.length + 1);
-
+        expect((await karrotFactory.getRedemptionsCount())).to.be.eq(allRedemptions.length + 1);
     });
 
     it("Should not allow disable the same organization twice", async function () {

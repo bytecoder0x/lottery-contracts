@@ -282,6 +282,46 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return tickets;
     }
 
+        /**
+     * @notice Returns the amount of deployed lottery contracts.
+     * @return The amount of deployed lottery contracts.
+     */
+    function getLotteriesCount() external view returns (uint256) {
+        return lotteries.length;
+    }
+
+    /**
+     * @notice Returns the amount of deployed redemption contracts.
+     * @return The amount of deployed redemption contracts.
+     */
+    function getRedemptionsCount() external view returns (uint256) {
+        return redemptions.length;
+    }
+
+    /**
+     * @notice Returns the amount of deployed organization contracts.
+     * @return The amount of deployed organization contracts.
+     */
+    function getOrganizationsCount() external view returns (uint256) {
+        return organizations.length;
+    }
+
+    /**
+     * @notice Returns the amount of deployed campaign contracts.
+     * @return The amount of deployed campaign contracts.
+     */
+    function getCampaignsCount() external view returns (uint256) {
+        return campaigns.length;
+    }
+
+    /**
+     * @notice Returns the amount of deployed ticket contracts.
+     * @return The amount of deployed ticket contracts.
+     */
+    function getTicketsCount() external view returns (uint256) {
+        return tickets.length;
+    }
+
     /**
      * @notice Deploys a new organization contract.
      * @param defaultAdmin The address of the admin for the contract.
