@@ -468,6 +468,6 @@ contract Lottery is AccessControl, ILottery {
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {
         return interfaceId == type(ILottery).interfaceId || 
-            AccessControl.supportsInterface(interfaceId);
+            super.supportsInterface(interfaceId);
     }
 }

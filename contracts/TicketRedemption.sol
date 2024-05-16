@@ -143,6 +143,6 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {
         return interfaceId == type(ITicketRedemption).interfaceId || 
-            AccessControl.supportsInterface(interfaceId);
+            super.supportsInterface(interfaceId);
     }
 }
