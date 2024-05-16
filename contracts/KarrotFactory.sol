@@ -78,21 +78,6 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     }
 
     /**
-     * @notice Enables an organization if they are returned in the project.
-     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @param _organization The address of the organization to be enabled.
-     * @dev If the organization is already enabled, reverts with an error message.
-     */
-    function enableOrganization(
-        address _organization
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
-        activeOrganizations.add(_organization);
-
-        emit EnableOrganization(_organization);
-    }
-
-    /**
      * @notice Disables an organization if they leave the project.
      * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
      * @param _organization The address of the organization to be disabled.
@@ -105,6 +90,21 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         activeOrganizations.remove(_organization);
 
         emit DisabledOrganization(_organization);
+    }
+
+    /**
+     * @notice Enables an organization if they are returned in the project.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _organization The address of the organization to be enabled.
+     * @dev If the organization is already enabled, reverts with an error message.
+     */
+    function enableOrganization(
+        address _organization
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
+        activeOrganizations.add(_organization);
+
+        emit EnableOrganization(_organization);
     }
 
     /**
