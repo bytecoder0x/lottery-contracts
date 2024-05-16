@@ -16,7 +16,8 @@ import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 /**
  * @title KarrotCampaign contract
  * @notice The KarrotCampaign contract manages the creation and ownership of campaign tokens within the Karrot platform.
- * @dev Manages campaign-related functionality including minting campaign tokens and burning tickets.
+ * @dev KarrotCampaign allows minting campaign tokens for specific organizations, setting ticket contracts,
+ * burning tickets, and retrieving campaign-related information.
  */
 contract KarrotCampaign is 
     KarrotErc7401Base,
@@ -33,15 +34,15 @@ contract KarrotCampaign is
     /// @notice Address of the ticket contract used for this campaign.
     address public ticketsContract;
 
-    /// @notice Mapping from organization ID to it's associated campaign ID.
+    /// @notice Mapping from organization ID to its associated campaign ID.
     mapping(uint256 => uint256) public ownerToken;
-    /// @notice Mapping from organization ID to it's associated campaign ID.
+    /// @notice Mapping from organization ID to its associated campaign ID.
     /// @dev Used to prevent duplicate campaign tokens within organizations.
     mapping(uint256 => uint256) public organizationToCampaign;
 
     /**
      * @notice Constructor function to initialize the KarrotCampaign contract.
-     * @param _defaultAdmin The address of the default admin role.
+     * @param _defaultAdmin The address of the admin this contract.
      * @param _lowerAdmin The address of the lower admin role that can set the contract ticket. Expected to be the KarrotFacotry contract.
      * @param _minter The address of the minter role that can mint campaign to the organization.
      * @param _organization The address of the KarrotOrganization contract that is the parent of this KarrotCampaign.
@@ -73,7 +74,7 @@ contract KarrotCampaign is
     }
 
     /**
-     * @notice Mints a new campaign token to the specified organization.
+     * @notice Mints a new campaign token to the specified parent organization.
      * @param parentId The ID of the parent organization.
      * @param data Additional data to include in the minted token.
      * @return mintedTokenId The ID of the newly minted token.
@@ -212,7 +213,7 @@ contract KarrotCampaign is
     }
 
     /**
-     * @notice Performs checks whether the child is a ticket before accepting it
+     * @notice Performs check whether the child is a ticket before accepting it
      * @param childAddress The address of the child contract.
      * @dev Ensures that only the ticket contract can be accepted as a child of the campaign.
      */

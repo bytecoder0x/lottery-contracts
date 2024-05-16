@@ -14,20 +14,22 @@ import {ITicketMinter} from "./interface/ITicketMinter.sol";
 
 /**
  * @title TicketMinter contract
- * @dev Manages the minting of tickets for campaigns and end owners.
+ * @notice The TicketMinter contract manages the creation of tickets for campaigns on the Karrot platform by interfacing with the KarrotFactory. 
+ * @dev TicketMinter ensures that tickets are minted for end owners within specified campaigns.
  */
 contract TicketMinter is
     ITicketMinter,
     AccessControl
 {
+    /// @notice Сonstant that contains the MINTER role. Owner of this role can mint organization, campaigns and tickets.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER");
 
+    /// @notice Address of the KarrotFactory contract.
     IKarrotFactory public factory;
 
     /**
      * @notice Constructor function to initialize the TicketMinter contract.
-     * and factory contract address.
-     * @param _defaultAdmin The address of the default admin role.
+     * @param _defaultAdmin The address of the admin this contract.
      * @param _minter The address of the minter role.
      * @param _factory The address of the KarrotFactory contract.
      * @dev Reverts if the factory contract does not support their respective interfaces.
@@ -130,7 +132,7 @@ contract TicketMinter is
      * @notice Retrieves the organization address associated with a campaign from the factory contract.
      * @param campaign The address of the campaign.
      * @return organization The address of the organization associated with the campaign.
-     * @dev Reverts if no organization is found for the provided campaign.
+     * @dev Reverts if any organization is found for the provided campaign.
      */
     function _getOrganizationFromFactory(
         address campaign
@@ -145,7 +147,7 @@ contract TicketMinter is
     /**
      * @notice Retrieves the ticket contract address associated with a campaign.
      * @param campaign The address of the campaign.
-     * @return ticket The address of the ticket contract associated with the campaign.
+     * @return The address of the ticket contract associated with the campaign.
      */
     function _getTicketFromCampaign(
         address campaign

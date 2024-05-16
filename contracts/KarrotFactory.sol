@@ -32,12 +32,12 @@ import {TicketDeployerLibrary} from "./libraries/TicketDeployerLibrary.sol";
 contract KarrotFactory is AccessControl, IKarrotFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    /// @notice  Сonstant that contains the LOWER_ADMIN role. Owner of this role can deploy contracts.
+    /// @notice Сonstant that contains the DEPLOYER role. Owner of this role can deploy contracts.
     bytes32 public constant DEPLOYER_ROLE = keccak256("DEPLOYER");
-    /// @notice  Address of the minterContract that can mint organization, campaigns and tickets. Expected to be the TicketMinter contract.
+    /// @notice Address of the minterContract that can mint organization, campaigns and tickets. Expected to be the TicketMinter contract.
     address public minterContract;
 
-    /// @notice  Stores addresses of active organizations.
+    /// @notice Stores addresses of active organizations.
     EnumerableSet.AddressSet private activeOrganizations;
 
     /// @notice Stores addresses of deployed lottery contracts.
@@ -46,7 +46,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     address[] public redemptions;
     /// @notice Stores addresses of deployed organization contracts.
     address[] public organizations;
-    /// @notice  Stores addresses of deployed campaign contracts.
+    /// @notice Stores addresses of deployed campaign contracts.
     address[] public campaigns;
     /// @notice Stores addresses of deployed ticket contracts.
     address[] public tickets;
@@ -55,13 +55,13 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     mapping(address => bool) public isOrganization;
     /// @notice Mapping that contains added addresses of lotteries.
     mapping(address => bool) public isLottery;
-    /// @notice Mapping from campaign address to it's associated organization address.
+    /// @notice Mapping from campaign address to its associated organization address.
     mapping(address => address) public campaignOrganization;
-    /// @notice Mapping from ticket address to it's associated campaign address.
+    /// @notice Mapping from ticket address to its associated campaign address.
     mapping(address => address) public ticketsCampaign;
 
     /**
-     * @dev Revert if the minter contract is not set
+     * @notice The modifier checks whether the function is without set minter contract.
      */
     modifier withSetupMinterContract() {
         if (minterContract == address(0)) revert IncorrectCondition("Minter contract not set");
@@ -79,7 +79,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Enables an organization if they are returned in the project.
-     * @dev Can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
      * @param _organization The address of the organization to be enabled.
      * @dev If the organization is already enabled, reverts with an error message.
      */
@@ -94,7 +94,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Disables an organization if they leave the project.
-     * @dev Can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
      * @param _organization The address of the organization to be disabled.
      * @dev If the organization is Non Karrot or already disabled, reverts with an error message.
      */
@@ -109,7 +109,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Sets the minter contract address for ticket minting.
-     * @dev Can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
      * @param _minterContract The address of the minter contract to be set.
      * @dev Reverts if the minter contract does not support the required interface.
      */
@@ -130,8 +130,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys a new lottery and redemption contract.
-     * @dev Can be called by accounts with the DEPLOYER_ROLE.
-     * @param _defaultAdmin The address of the default admin for the contracts.
+     * @dev Only can be called by accounts with the DEPLOYER_ROLE.
+     * @param _defaultAdmin The address of the admin for the contracts.
      * @param _mintDeadline The deadline for ticket minting.
      * @param _burnDeadline The deadline for ticket burning.
      * @param _lotteryTime The time when the lottery will be conducted.
@@ -162,8 +162,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys a new organization contract.
-     * @dev Can be called by accounts with the DEPLOYER_ROLE.
-     * @param defaultAdmin The address of the default admin for the contract.
+     * @dev Only can be called by accounts with the DEPLOYER_ROLE.
+     * @param defaultAdmin The address of the admin for the contract.
      * @param organizationName The name of the organization.
      * @return newOrganization The address of the newly deployed organization contract.
      */
@@ -178,8 +178,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys a new campaign and ticket contract.
-     * @dev Can be called by accounts with the DEPLOYER_ROLE.
-     * @param defaultAdmin The address of the default admin for the contracts.
+     * @dev Only can be called by accounts with the DEPLOYER_ROLE.
+     * @param defaultAdmin The address of the admin for the contracts.
      * @param lottery The address of the lottery contract.
      * @param organization The address of the parent organization contract.
      * @param campaignName The name of the campaign.
@@ -200,8 +200,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys an organization contract and multiple campaigns that are linked to the organization and corresponding ticket contracts.
-     * @dev Can be called by accounts with the DEPLOYER_ROLE.
-     * @param _defaultAdmin The address of the default admin for the contracts.
+     * @dev Only can be called by accounts with the DEPLOYER_ROLE.
+     * @param _defaultAdmin The address of the admin for the contracts.
      * @param _lottery The address of the lottery contract.
      * @param _organizationName The name of the organization.
      * @param _campaignNames An array of campaign names to be deployed.
@@ -284,7 +284,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys a new organization contract.
-     * @param defaultAdmin The address of the default admin for the contract.
+     * @param defaultAdmin The address of the admin for the contract.
      * @param _organizationName The name of the organization.
      * @return newOrganization The address of the newly deployed organization contract.
      */
@@ -306,7 +306,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys a new campaign and ticket contract.
-     * @param defaultAdmin The address of the default admin for the contracts.
+     * @param defaultAdmin The address of the admin for the contracts.
      * @param lottery The address of the lottery contract.
      * @param organization The address of organization contract to that tickets belong to.
      * @param campaignName The name of the campaign.
@@ -349,7 +349,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys a new lottery contract.
-     * @param _defaultAdmin The address of the default admin for the contract.
+     * @param _defaultAdmin The address of the admin for the contract.
      * @param _mintDeadline The deadline for ticket minting.
      * @param _burnDeadline The deadline for ticket burning.
      * @param _lotteryTime The time when the lottery will be conducted.
@@ -381,7 +381,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys a new redemption contract.
-     * @param _defaultAdmin The address of the default admin for the contract.
+     * @param _defaultAdmin The address of the admin for the contract.
      * @param _lottery The address of the associated lottery contract.
      * @return newRedemption The address of the newly deployed redemption contract.
      */
@@ -402,7 +402,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /**
      * @notice Deploys a new ticket contract.
-     * @param _defaultAdmin The address of the default admin for the contract.
+     * @param _defaultAdmin The address of the admin for the contract.
      * @param _campaign The address of the associated campaign contract.
      * @param _campaignName The name of the campaign.
      * @return newTicket The address of the newly deployed ticket contract.

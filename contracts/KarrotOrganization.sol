@@ -12,17 +12,16 @@ import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 
 /**
  * @title KarrotOrganization contract
- * @dev Manages organization-related functionality including minting organization tokens.
+ * @notice The KarrotOrganization contract handles the creation and ownership of organization tokens in Karrot.
+ * @dev KarrotOrganization allows minting new tokens for specific addresses and ensures each address can own only one organization token.
  */
 contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
-    
+    /// @notice Mapping from owner address to its associated organization ID.
     mapping(address => uint256) public ownerToken;
-
-    event OrganizationTokenMinted(address indexed to, uint256 indexed tokenId);
 
     /**
      * @notice Constructor function to initialize the KarrotOrganization contract.
-     * @param _defaultAdmin The address of the default admin role.
+     * @param _defaultAdmin The address of the admin this contract.
      * @param _minter The address of the minter role.
      * @param _name The name of the contract.
      */
@@ -75,7 +74,7 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     }
 
     /**
-     * @notice Performs operations before accepting a child contract.
+     * @notice Performs check whether the child has IKarrotCampaign interface before accepting it.
      * @param childAddress The address of the child contract.
      * @dev Throws an error if the child contract does not support the IKarrotCampaign interface.
      */

@@ -15,22 +15,28 @@ import {ITicketRedemption} from "./interface/ITicketRedemption.sol";
 
 /**
  * @title TicketRedemption contract
- * @dev Manages the redemption of tickets for rewards.
+ * @notice TicketRedemption enables users to exchange tickets for rewards on Karrot platform before the burn deadline.
+ * @dev TicketRedemption manages reward token addresses, handles ticket redemption, and oversees redemption price and caps.
  */
 contract TicketRedemption is ITicketRedemption, AccessControl {
     using SafeERC20 for IERC20;
 
+    /// @notice Price per redeemed one ticket.
     uint public redemptionPrice;
+    /// @notice The amount of tokens spent on ticket redemption.
     uint public redeemed;
+    /// @notice Maximum total redemption amount of tokens allowed.
     uint public redemptionCap;
 
+    /// @notice The address of the associated lottery contract.
     address lottery;
 
+    /// @notice Token contract for rewards.
     IERC20 public rewardToken;
 
     /**
      * @dev Constructor function to initialize the TicketRedemption contract.
-     * @param _defaultAdmin The address of the default admin role.
+     * @param _defaultAdmin The address of the admin this contract.
      * @param _lottery The address of the Lottery contract.
      * @dev Reverts if the lottery contract does not support their respective interfaces.
      */
@@ -51,7 +57,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     /**
      * @notice Sets the reward token contract address.
      * @param _rewardToken The address of the reward token contract.
-     * @dev Only accessible by the default admin role.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
      * @dev Reverts if reward token is not a contract.
      */
     function setRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE)  {
@@ -63,10 +69,10 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     }
 
     /**
-     * @notice Redeems tickets for rewards.
+     * @notice Redeems(burns) tickets for a reward.
      * @param ticketContract The ticket contract address.
      * @param amountOfTicketsToBurn The number of tickets to redeem.
-     * @dev It is possible to redeem if the TicketRedemption has been approved from KarrotCampaing contract.
+     * @dev It is possible to redeem if the TicketRedemption must be approved from KarrotCampaing contract.
      * @dev After burn, user receives a reward in tokens.
      * @dev Only callable if burn period hasn't ended, redemption price is set, redemption cap.
      * isn't reached, user owns an organization and the ticket is registered in the lottery.
@@ -105,8 +111,8 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     /**
      * @dev Sets the redemption price.
      * @param _redemptionPrice The new redemption price.
-     * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Reverts if the caller is not an administrator or if the redemption price is set to 0.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Reverts if the caller doesn't have admin role or if the redemption price is set to 0.
      */
     function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_redemptionPrice == 0) {
@@ -119,8 +125,8 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     /**
      * @notice Sets the redemption cap.
      * @param _redemptionCap The new redemption cap. A value of 0 indicates no cap.
-     * @dev Only accessible by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Note: redemptionCap can be 0, meaning no cap
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev redemptionCap can be 0, meaning no cap
      */
     function setRedemptionCap(uint _redemptionCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         //redemptionCap can be 0, meaning no cap

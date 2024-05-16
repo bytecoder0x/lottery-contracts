@@ -13,14 +13,17 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 
 /**
  * @title KarrotTicket
- * @dev Manages ticket-related functionality including minting and burning tickets.
+ * @notice The KarrotTicket contract manages the minting and burning of ticket within the Karrot platform.
+ * @dev KarrotTicket contract allows minting tokens to specific campaigns, burning the last minted token,
+ * and retrieving contract-related information.
  */
 contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
+    /// @notice Address of the campaign contract that is the parent of this ticket.
     address public campaign;
 
     /**
      * @notice Constructor function to initialize the KarrotTicket contract.
-     * @param _defaultAdmin The address of the default admin role.
+     * @param _defaultAdmin The address of the admin this contract.
      * @param _minter The address of the minter role.
      * @param _campaign The address of the KarrotCampaign contract.
      * @param _name The name of the contract.
@@ -43,7 +46,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     }
 
     /**
-     * @notice Mints a token to the specified campaign.
+     * @notice Mints a token to the specified parent campaign.
      * @param parentId The ID of the parent campaign.
      * @param data Additional data to include in the minted token.
      * @return The ID of the last minted token.
@@ -63,7 +66,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     }
 
     /**
-     * @notice Mints multiple tokens to the specified campaign.
+     * @notice Mints multiple tokens to the specified parent campaign.
      * @param tokenCount The number of tokens to mint.
      * @param parentId The ID of the parent campaign.
      * @param data Additional data to include in the minted tokens.
@@ -91,6 +94,8 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     /**
      * @notice Burns the last minted ticket.
      * @dev Only callable by the campaign contract.
+     * @dev After swapping the ticket to be burned with the last ticket in KarrotCampaign,
+     * we burn the last ticket using this function.
      */
     function burnLastTicket() external {
         if(msg.sender != campaign){
@@ -136,6 +141,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
      */
     function getUserTicketIds(address _owner) view external returns (uint256[] memory){
         uint256 campaignId = IKarrotCampaign(campaign).getUserCampaignId(_owner);
+        // code campaign contract ensures that a campaign can only have tickets in its children
         Child[] memory tickets = IKarrotCampaign(campaign).childrenOf(campaignId);
 
         uint256[] memory tiketIds = new uint256[](tickets.length);
@@ -161,7 +167,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     }
 
     /**
-     * @notice Mints a new token and assigns it to the specified campaign.
+     * @notice Mints a new token and assigns it to the specified parent campaign.
      * @param parentId The ID of the parent campaign.
      * @param data Additional data to include in the minted token.
      */

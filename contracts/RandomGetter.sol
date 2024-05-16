@@ -12,20 +12,32 @@ import {IRandomGetter} from "./interface/IRandomGetter.sol";
 
 /**
  * @title RandomGetter contract
- * @dev Manages the retrieval of random numbers for lottery contracts.
+ * @notice RandomGetter gets random numbers for lotteries using chainlink VRF.
+ * @notice RandomGetter contract must be has enough link token, since we pay a link token for getting a random number.
+ * @dev We use one RandomGetter contract for all lotteries, avoiding the
+ * need to send the link token to the balance of each contract separately.
  */
 contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter {
     using SafeERC20 for IERC20;
 
+    /// @notice Gas limit for callback fulfillRandomWords function execution.
     uint32 constant callbackGasLimit = 100_000;
+    /// @notice Amount of random numbers that will be received.
     uint32 constant numWords = 1;
+    /// @notice Minimum amount of confirmations during the request.
     uint16 constant requestConfirmations = 3; // cannot be lower
 
+    /// @notice Address of the KarrotFactory contract.
     IKarrotFactory factory;
 
+    /// @notice Mapping from lottery address to its associated request ID.
     mapping(address => uint) public requestIds;
+    /// @notice Mapping from request ID to its associated random number.
     mapping(uint256 => uint256) public randomNumbersByRequestId;
 
+    /**
+     * @notice The modifier checks whether the function is called from the lottery contract.
+     */
     modifier onlyLottery() {
         if (!factory.isLottery(msg.sender)) {
             revert IncorrectCondition("Only lottery can call this function");
@@ -35,11 +47,10 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
 
     /**
      * @notice Constructor function to initialize the RandomGetter contract.
-     * factory contract address, and default admin address.
      * @param _link The address of the LINK token contract.
      * @param _vrfWrapper The address of the VRF wrapper contract.
      * @param _factory The address of the KarrotFactory contract.
-     * @param _defaultAdmin The address of the default admin role.
+     * @param _defaultAdmin The address of the admin this contract.
      * @dev Reverts if the factory contract does not support their respective interfaces.
      */
     constructor(
@@ -62,8 +73,9 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     /**
-     * @notice Requests a random number for the calling lottery contract.
-     * @dev Only callable by the lottery contract itself.
+     * @notice Requests a random number for the calling lottery contract
+     * after that calls the VRF that returns the requestId. With this requestId we can get a random number.
+     * @dev Only can be called callable by the lottery contract itself.
      * @return requestId The unique identifier for the random number request.
      * @dev Reverts if the lottery contract already has random number request is pending.
      */
@@ -104,7 +116,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     }
 
     /**
-     * @notice Allows the DEFAULT_ADMIN_ROLE to withdraw tokens from the contract.
+     * @notice Allows the admin of this contract to withdraw tokens from the contract.
      * @param _token The address of the token to withdraw.
      * @param _amount The amount of tokens to withdraw.
      */
