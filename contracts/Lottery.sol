@@ -118,6 +118,9 @@ contract Lottery is AccessControl, ILottery {
         if (IERC165(_ticketContract).supportsInterface(type(IKarrotTicket).interfaceId) == false) {
             revert InterfaceNotSupported();
         }
+        if(isRegisteredTicket[_ticketContract]){
+            revert IncorrectValue("Ticket contract is already registered");
+        }
         address organization = IKarrotTicket(_ticketContract).getOrganisation();
         if (!isOrganizationAdded[organization]) {
             organizations.push(organization);

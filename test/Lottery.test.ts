@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { KarrotFactory, TicketMinter, Lottery, RewardTokenMintableMock, VRFV2Wrapper, VRFCoordinatorV2Mock, RandomGetter } from "../typechain-types";
+import { KarrotFactory, Lottery, RewardTokenMintableMock, VRFV2Wrapper, VRFCoordinatorV2Mock } from "../typechain-types";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
@@ -122,6 +122,20 @@ describe("Lottery", async () => {
       expect(organizationTickets.length).to.be.equal(2);
       expect(ticketAddress).to.equal(ticketContract);
     }
+  });
+
+  it("Should prevents register ticket if ticket is already registered", async function () {
+    // to test this scenario we need to deploy a lottery contract not from a factory
+    const mintDeadline = +(new Date().getTime() / 1000).toFixed(0) + 1000;
+    const burnDeadline = +(new Date().getTime() / 1000).toFixed(0) + 2000;
+    const lotteryTime = +(new Date().getTime() / 1000).toFixed(0) + 3000;
+    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+    const ticketContract = await campaign.ticketsContract();
+
+    const lottery2 = await (await ethers.getContractFactory("Lottery")).deploy(owner.address, owner.address, owner.address, mintDeadline, burnDeadline, lotteryTime);
+    await lottery2.registerTicketContract(ticketContract);
+
+    await expect(lottery2.registerTicketContract(ticketContract)).to.be.revertedWith("Ticket contract is already registered");
   });
 
   it("Should prevents from deploy lottery if incorrect time values", async function () {
