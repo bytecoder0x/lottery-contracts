@@ -99,6 +99,7 @@ describe("KarrotFactory", async () => {
     it("Should test all functions with 'onlyRole(DEFAULT_ADMIN_ROLE)' modifier with negative scenario", async function () {
         const DEFAULT_ADMIN_ROLE = ethers.constants.HashZero;
         await expect(karrotFactory.connect(user1).setMinterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
+        await expect(karrotFactory.connect(user1).setRandomGetterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
         await expect(karrotFactory.connect(user1).disableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
         await expect(karrotFactory.connect(user1).enableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
     });
@@ -118,9 +119,10 @@ describe("KarrotFactory", async () => {
 
     it("Should not support incorrect interface", async function () {
         await expect(karrotFactory.connect(owner).setMinterContract(organizationAddress)).to.be.revertedWith("InterfaceNotSupported");
+        await expect(karrotFactory.connect(owner).setRandomGetterContract(organizationAddress)).to.be.revertedWith("InterfaceNotSupported");
     });
 
-    it("Should test all functions with 'withSetupMinterContract' modifier with negative scenario", async function () {
+    it("Should test all functions with 'withSetupMinterContract' and 'withSetupRandomGetterContract' modifier with negative scenario", async function () {
         const lotteryDeployerLibrary = await (await ethers.getContractFactory("LotteryDeployerLibrary")).deploy();
         const redemptionDeployerLibrary = await (await ethers.getContractFactory("RedemptionDeployerLibrary")).deploy();
         const organizationDeployerLibrary = await (await ethers.getContractFactory("OrganizationDeployerLibrary")).deploy();
@@ -140,7 +142,7 @@ describe("KarrotFactory", async () => {
         const burnDeadline = currentTime + 172800;
         const lotteryTime = currentTime + 259200;
 
-        await expect(karrotFactory1.connect(owner).deployLotteryAndRedemptionContract(owner.address, mintDeadline, burnDeadline, lotteryTime)).to.be.revertedWith("Minter contract not set");
+        await expect(karrotFactory1.connect(owner).deployLotteryAndRedemptionContract(owner.address, mintDeadline, burnDeadline, lotteryTime)).to.be.revertedWith("RandomGetter contract not set");
         await expect(karrotFactory1.connect(owner).deployOrganizationContract(owner.address, "Test Organization")).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, organizationAddress, "Test Campaign")).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("Minter contract not set");
