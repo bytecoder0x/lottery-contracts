@@ -132,50 +132,6 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /**
-     * @notice Initializes the lottery by assigning ticket ranges to each organization's tickets.
-     * @notice Initializes a specified number of organizations to avoid exceeding gas limits when dealing with many organizations.
-     * @param organizationsCount The amount of organizations to initialize in the lottery.
-     * @dev If the gas limit is exceeded when calling the function, the organization must be initialized in parts.
-     * @dev This function can be called when the burn deadline passed, since after that amount of tokens cannot be changed.
-     * @dev This function can be called if lottery hasn't been fully initialized.
-     * @dev If `organizationsCount` is 0 or exceeds the remaining amount of organizations to initialize,
-     * it automatically sets `organizationsCount` to the remaining amount of organizations.
-     */
-    function initializeLottery(uint organizationsCount) external {
-        if (block.timestamp < burnDeadline) {
-            revert IncorrectCondition("Burn period not finished yet");
-        }
-        if (initializedOrganizationsCount == organizations.length) {
-            revert ActionPerformed("Lottery already initialized");
-        }
-
-        uint initializedOrganizationIndex = initializedOrganizationsCount; //cache value for gas optimization
-        if (organizationsCount == 0 || organizationsCount > organizations.length - initializedOrganizationIndex) {
-            organizationsCount = organizations.length - initializedOrganizationIndex;
-        }
-
-        uint startIndex;
-        uint lotteryTotalSupply;
-        for (uint o = initializedOrganizationIndex; o < initializedOrganizationIndex + organizationsCount; o++) {
-            address[] memory organizationTickets = organizationTicketsContracts[organizations[o]];
-            organizationTicketsRange[organizations[o]].firstLotteryTicketId = lotteryTotalSupply;
-            for (uint t; t < organizationTickets.length; t++) {
-                uint campaignTotalSupply = IKarrotTicket(organizationTickets[t]).totalSupply();
-                lotteryTotalSupply = startIndex + campaignTotalSupply;
-                allCampaignTickets.push(CampaignTickets(organizationTickets[t], TicketRange(startIndex, lotteryTotalSupply - 1)));
-                //if (o != organizations.length - 1 && t != organizationTickets.length - 1) {
-                    startIndex = lotteryTotalSupply;
-                //}
-            }
-            organizationTicketsRange[organizations[o]].lastLotteryTicketId = lotteryTotalSupply - 1;
-            initializedOrganizationsCount++;
-        }
-        lotteryTicketsTotalSupply += lotteryTotalSupply;
-
-        emit LotteryInitialized(organizations.length);
-    }
-
-    /**
      * @notice Sets up the lottery with specified parameters is like reward token, tiers and shares of organizations for fixed tiers.
      * @notice The specified reward token will be sent to the winners of the lottery.
      * @notice Based on shares of organizations will choose the winners for the fixed tier. The large shares from the organization, the more winners it will have.
@@ -186,10 +142,9 @@ contract Lottery is AccessControl, ILottery {
      * @dev Each element in `_tiers` is defined by its type(jackpot, random and fixed), the amount of winners and the reward amount.
      * @dev Each element in the `_organizationSharesForFixedTiers` is the percentage share of an organization for fixed tiers.
      * @dev Total share is 100_00 corresponds to 100% and 100 corresponds to 1% (BIPS).
-     * @dev Calculates the amount of winners for random tier based on the total supply of lottery tickets.
      * @dev This function must be called before the deadline lottery time.
      * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Reverts if the reward token is not a contract or lottery is not fully initialized.
+     * @dev Reverts if the reward token is not a contract.
      * @dev Reverts if the amount of organization shares for fixed tiers does not match the amount of organizations.
      * @dev Reverts if there are any incorrect tier configurations or if the total organization shares do not sum up to 100%.
      */
@@ -200,9 +155,6 @@ contract Lottery is AccessControl, ILottery {
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (block.timestamp > lotteryTime) {
             revert IncorrectCondition("Can't setup after lottery time");
-        }
-        if (initializedOrganizationsCount != organizations.length) {
-            revert IncorrectCondition("Lottery is not fully initialized");
         }
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
@@ -255,6 +207,57 @@ contract Lottery is AccessControl, ILottery {
         }
         organizationSharesForFixedTiers = _organizationSharesForFixedTiers;
         emit LotterySetup(_rewardToken, tiers, organizationSharesForFixedTiers);
+    }
+
+    /**
+     * @notice Initializes the lottery by assigning ticket ranges to each organization's tickets.
+     * @notice Initializes a specified number of organizations to avoid exceeding gas limits when dealing with many organizations.
+     * @param organizationsCount The amount of organizations to initialize in the lottery.
+     * @dev If the gas limit is exceeded when calling the function, the organization must be initialized in parts.
+     * @dev This function can be called when the burn deadline passed, since after that amount of tokens cannot be changed.
+     * @dev This function can be called if lottery hasn't been fully initialized.
+     * @dev Calculates the amount of winners for each random tier based on the total supply of lottery tickets.
+     * @dev If `organizationsCount` is 0 or exceeds the remaining amount of organizations to initialize,
+     * it automatically sets `organizationsCount` to the remaining amount of organizations.
+     */
+    function initializeLottery(uint organizationsCount) external {
+        if (block.timestamp < burnDeadline) {
+            revert IncorrectCondition("Burn period not finished yet");
+        }
+        if (initializedOrganizationsCount == organizations.length) {
+            revert ActionPerformed("Lottery already initialized");
+        }
+
+        uint initializedOrganizationIndex = initializedOrganizationsCount; //cache value for gas optimization
+        if (organizationsCount == 0 || organizationsCount > organizations.length - initializedOrganizationIndex) {
+            organizationsCount = organizations.length - initializedOrganizationIndex;
+        }
+
+        uint startIndex;
+        uint lotteryTotalSupply;
+        for (uint o = initializedOrganizationIndex; o < initializedOrganizationIndex + organizationsCount; o++) {
+            address[] memory organizationTickets = organizationTicketsContracts[organizations[o]];
+            organizationTicketsRange[organizations[o]].firstLotteryTicketId = lotteryTotalSupply;
+            for (uint t; t < organizationTickets.length; t++) {
+                uint campaignTotalSupply = IKarrotTicket(organizationTickets[t]).totalSupply();
+                lotteryTotalSupply = startIndex + campaignTotalSupply;
+                allCampaignTickets.push(CampaignTickets(organizationTickets[t], TicketRange(startIndex, lotteryTotalSupply - 1)));
+                //if (o != organizations.length - 1 && t != organizationTickets.length - 1) {
+                    startIndex = lotteryTotalSupply;
+                //}
+            }
+            organizationTicketsRange[organizations[o]].lastLotteryTicketId = lotteryTotalSupply - 1;
+            initializedOrganizationsCount++;
+        }
+        lotteryTicketsTotalSupply += lotteryTotalSupply;
+
+        for (uint i; i < tiers.length; i++) {
+            if (tiers[i].tierType == TierType.Random) {    
+                tiers[i].winnersCount = lotteryTicketsTotalSupply * tiers[i].winnersShare / BIPS;
+            }
+        }
+
+        emit LotteryInitialized(organizations.length);
     }
 
     /**

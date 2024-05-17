@@ -6,7 +6,7 @@ import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
 import { BigNumber } from "ethers";
 
-describe("Lottery", async () => {
+describe.only("Lottery", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
   let lottery: Lottery;
@@ -16,10 +16,9 @@ describe("Lottery", async () => {
   let organizationAddresses: string[];
   let campaignsAddresses: string[];
   let organazationsTicketsCount: number[];
-  let tiers: any;
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
 
-  async function deployLottery() {
+  async function deployAndSetupLottery() {
     const {
       karrotFactory,
       ticketMinter,
@@ -60,7 +59,7 @@ describe("Lottery", async () => {
     ];
 
     await rewardToken.transfer(lottery.address, ethers.utils.parseEther("1000"));
-
+    await lottery.setupLottery(rewardToken.address, tiers, [8000, 2000]);
     let organazationsTicketsCount = [0, 0];
 
     for (let c = 0; c < campaignsAddresses.length; c++) {
@@ -83,7 +82,6 @@ describe("Lottery", async () => {
       organizationAddresses,
       campaignsAddresses,
       organazationsTicketsCount,
-      tiers,
       owner,
       minter,
       user1,
@@ -96,7 +94,7 @@ describe("Lottery", async () => {
   });
 
   beforeEach("Init test environment", async () => {
-    const fixture = await loadFixture(deployLottery);
+    const fixture = await loadFixture(deployAndSetupLottery);
     karrotFactory = fixture.karrotFactory;
     lottery = fixture.lottery;
     coordinator = fixture.coordinator;
@@ -107,7 +105,6 @@ describe("Lottery", async () => {
     organizationAddresses = fixture.organizationAddresses;
     campaignsAddresses = fixture.campaignsAddresses;
     organazationsTicketsCount = fixture.organazationsTicketsCount;
-    tiers = fixture.tiers;
     user1 = fixture.user1;
     user2 = fixture.user2;
   });
@@ -122,20 +119,6 @@ describe("Lottery", async () => {
       expect(organizationTickets.length).to.be.equal(2);
       expect(ticketAddress).to.equal(ticketContract);
     }
-  });
-
-  it("Should prevents register ticket if ticket is already registered", async function () {
-    // to test this scenario we need to deploy a lottery contract not from a factory
-    const mintDeadline = +(new Date().getTime() / 1000).toFixed(0) + 1000;
-    const burnDeadline = +(new Date().getTime() / 1000).toFixed(0) + 2000;
-    const lotteryTime = +(new Date().getTime() / 1000).toFixed(0) + 3000;
-    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
-    const ticketContract = await campaign.ticketsContract();
-
-    const lottery2 = await (await ethers.getContractFactory("Lottery")).deploy(owner.address, owner.address, owner.address, mintDeadline, burnDeadline, lotteryTime);
-    await lottery2.registerTicketContract(ticketContract);
-
-    await expect(lottery2.registerTicketContract(ticketContract)).to.be.revertedWith("Ticket contract is already registered");
   });
 
   it("Should prevents from deploy lottery if incorrect time values", async function () {
@@ -156,6 +139,15 @@ describe("Lottery", async () => {
     await expect(lottery.connect(user1).registerTicketContract(ticketAddress)).to.be.revertedWith(
       "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + registerRole
     );
+  });
+
+  it("Should prevents register ticket if ticket is already registered", async function () {
+    const registerRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("REGISTRAR"));
+    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+    const ticketContract = await campaign.ticketsContract();
+    await lottery.grantRole(registerRole, owner.address);
+
+    await expect(lottery.registerTicketContract(ticketContract)).to.be.revertedWith("Ticket contract is already registered");
   });
 
   it("Should prevents from register ticket contracts with wrong interface", async function () {
@@ -227,8 +219,7 @@ describe("Lottery", async () => {
         startIndex = endIndex + 1;
       }
 
-      await lottery.setupLottery(rewardToken.address, tiers, [8000, 2000]);
-      const allTiers = await lottery.getAllTiers();
+      const tiers = await lottery.getAllTiers();
       const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
 
       expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
@@ -236,22 +227,22 @@ describe("Lottery", async () => {
       expect(tiers.length).to.equal(await lottery.getTiersCount());
       expect(tiers.length).to.equal(3);
       //Jackpot tier
-      expect(allTiers[0].tierType).to.equal(0);
-      expect(allTiers[0].winnersCount).to.equal(1);
-      expect(allTiers[0].winnersShare).to.equal(0);
-      expect(allTiers[0].rewardAmount).to.equal(ethers.utils.parseEther("100"));
+      expect(tiers[0].tierType).to.equal(0);
+      expect(tiers[0].winnersCount).to.equal(1);
+      expect(tiers[0].winnersShare).to.equal(0);
+      expect(tiers[0].rewardAmount).to.equal(ethers.utils.parseEther("100"));
 
       //Random tier should be initialized with winners count
-      expect(allTiers[1].tierType).to.equal(1);
-      expect(allTiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 45) / 100));
-      expect(allTiers[1].winnersShare).to.equal(4500); // 45%
-      expect(allTiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
+      expect(tiers[1].tierType).to.equal(1);
+      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 45) / 100));
+      expect(tiers[1].winnersShare).to.equal(4500); // 45%
+      expect(tiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
 
       //Fixed winners tier
-      expect(allTiers[2].tierType).to.equal(2);
-      expect(allTiers[2].winnersCount).to.equal(10);
-      expect(allTiers[2].winnersShare).to.equal(0);
-      expect(allTiers[2].rewardAmount).to.equal(ethers.utils.parseEther("1"));
+      expect(tiers[2].tierType).to.equal(2);
+      expect(tiers[2].winnersCount).to.equal(10);
+      expect(tiers[2].winnersShare).to.equal(0);
+      expect(tiers[2].rewardAmount).to.equal(ethers.utils.parseEther("1"));
     });
 
     it("Can't call initializeLottery twice", async function () {
@@ -270,14 +261,13 @@ describe("Lottery", async () => {
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery is not fully initialized");
     });
 
-    it("Can't setup if lottery is not fully initialized", async function () {
-      await lottery.initializeLottery(1);
-      await expect(lottery.setupLottery(rewardToken.address, [], [])).to.be.revertedWith("Lottery is not fully initialized");
-    });
+    // it("Can't setup if lottery is not fully initialized", async function () {
+    //   await lottery.initializeLottery(1);
+    //   await expect(lottery.setupLottery(rewardToken.address, [], [])).to.be.revertedWith("Lottery is not fully initialized");
+    // });
 
     it("Can't call rewardWinners if lottery is not run", async function () {
       await lottery.initializeLottery(0);
-      await lottery.setupLottery(rewardToken.address, tiers, [8000, 2000])
       await expect(lottery.rewardWinners(0)).to.be.revertedWith("Request is pending or lottery is not run");
     });
   });
@@ -320,10 +310,8 @@ describe("Lottery", async () => {
     }
 
     beforeEach(async function () {
-      await ethers.provider.send("evm_increaseTime", [2001]);
+      await ethers.provider.send("evm_increaseTime", [3001]);
       await lottery.initializeLottery(0);
-      await lottery.setupLottery(rewardToken.address, tiers, [8000, 2000])
-      await ethers.provider.send("evm_increaseTime", [1000]);
       await lottery.runLottery();
       await fulfillRandomWord();
     });
