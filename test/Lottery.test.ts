@@ -203,6 +203,7 @@ describe("Lottery", async () => {
       const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
       const organizations = await lottery.getAllOrganizations();
 
+      expect(organizations.length).to.be.eq(await lottery.getOrganizationsCount());
       expect(organizations[0]).to.be.eq(organizationAddresses[0]);
       expect(organizations[1]).to.be.eq(organizationAddresses[1]);
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(expectedTicketsCount);
@@ -232,6 +233,7 @@ describe("Lottery", async () => {
 
       expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
       expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
+      expect(tiers.length).to.equal(await lottery.getTiersCount());
       expect(tiers.length).to.equal(3);
       //Jackpot tier
       expect(allTiers[0].tierType).to.equal(0);

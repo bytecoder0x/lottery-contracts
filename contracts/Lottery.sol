@@ -384,6 +384,22 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /**
+     * @notice Retrieves the amount of tiers in the lottery.
+     * @return The amount of tiers in the lottery.
+     */
+    function getTiersCount() public view returns (uint) {
+        return tiers.length;
+    }
+
+    /**
+     * @notice Retrieves the amount of organizations participating in the lottery.
+     * @return The amount of participating organizations.
+     */
+    function getOrganizationsCount() public view returns (uint) {
+        return organizations.length;
+    }
+
+    /**
      * @notice Retrieves the addresses of all ticket contracts associated with a specific organization.
      * @param organization The address of the organization.
      * @return An array containing the addresses of ticket contracts associated with the organization.
