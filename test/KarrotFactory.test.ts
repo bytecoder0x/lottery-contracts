@@ -5,7 +5,7 @@ import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
 
-describe.only("KarrotFactory", async () => {
+describe("KarrotFactory", async () => {
     let hardhatSnapshotId: string;
     let karrotFactory: KarrotFactory
     let ticketMinter: TicketMinter;

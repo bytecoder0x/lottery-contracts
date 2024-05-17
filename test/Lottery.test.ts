@@ -6,7 +6,7 @@ import { expect } from "chai";
 import { deployBasicContracts, deployRandomGetter } from "./utis";
 import { BigNumber } from "ethers";
 
-describe("Lottery", async () => {
+describe.only("Lottery", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
   let ticketMinter: TicketMinter;
@@ -18,6 +18,7 @@ describe("Lottery", async () => {
   let organizationAddresses: string[];
   let campaignsAddresses: string[];
   let organazationsTicketsCount: number[];
+  let tiers: any;
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
 
   async function deployAndSetupLottery() {
@@ -50,7 +51,6 @@ describe("Lottery", async () => {
       },
     ];
 
-    await lottery.setupLottery(rewardToken.address, randomGetter.address, tiers, [8000, 2000]);
     await rewardToken.transfer(lottery.address, ethers.utils.parseEther("1000"));
 
     let organazationsTicketsCount = [0, 0];
@@ -77,6 +77,7 @@ describe("Lottery", async () => {
       organizationAddresses,
       campaignsAddresses,
       organazationsTicketsCount,
+      tiers,
       owner,
       minter,
       user1,
@@ -102,6 +103,7 @@ describe("Lottery", async () => {
     organizationAddresses = fixture.organizationAddresses;
     campaignsAddresses = fixture.campaignsAddresses;
     organazationsTicketsCount = fixture.organazationsTicketsCount;
+    tiers = fixture.tiers;
     user1 = fixture.user1;
     user2 = fixture.user2;
   });
@@ -158,10 +160,8 @@ describe("Lottery", async () => {
     it("Lottery initialized correctly for 1 organization", async function () {
       await lottery.initializeLottery(1);
       const organizations = await lottery.getAllOrganizations();
-      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
 
       expect(organizations[0]).to.be.eq(organizationAddresses[0]);
-      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
       expect(await lottery.initializedOrganizationsCount()).to.equal(1);
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(organazationsTicketsCount[0]);
     });
@@ -171,11 +171,8 @@ describe("Lottery", async () => {
 
       expect(await lottery.initializedOrganizationsCount()).to.equal(2);
       const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
-      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
       const organizations = await lottery.getAllOrganizations();
 
-      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
-      expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
       expect(organizations[0]).to.be.eq(organizationAddresses[0]);
       expect(organizations[1]).to.be.eq(organizationAddresses[1]);
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(expectedTicketsCount);
@@ -186,11 +183,8 @@ describe("Lottery", async () => {
 
       expect(await lottery.initializedOrganizationsCount()).to.equal(2);
       const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
-      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
       const organizations = await lottery.getAllOrganizations();
 
-      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
-      expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
       expect(organizations[0]).to.be.eq(organizationAddresses[0]);
       expect(organizations[1]).to.be.eq(organizationAddresses[1]);
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(expectedTicketsCount);
@@ -214,25 +208,30 @@ describe("Lottery", async () => {
         startIndex = endIndex + 1;
       }
 
-      const tiers = await lottery.getAllTiers();
+      await lottery.setupLottery(rewardToken.address, randomGetter.address, tiers, [8000, 2000]);
+      const allTiers = await lottery.getAllTiers();
+      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
+
+      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
+      expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
       expect(tiers.length).to.equal(3);
       //Jackpot tier
-      expect(tiers[0].tierType).to.equal(0);
-      expect(tiers[0].winnersCount).to.equal(1);
-      expect(tiers[0].winnersShare).to.equal(0);
-      expect(tiers[0].rewardAmount).to.equal(ethers.utils.parseEther("100"));
+      expect(allTiers[0].tierType).to.equal(0);
+      expect(allTiers[0].winnersCount).to.equal(1);
+      expect(allTiers[0].winnersShare).to.equal(0);
+      expect(allTiers[0].rewardAmount).to.equal(ethers.utils.parseEther("100"));
 
       //Random tier should be initialized with winners count
-      expect(tiers[1].tierType).to.equal(1);
-      expect(tiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 45) / 100));
-      expect(tiers[1].winnersShare).to.equal(4500); // 45%
-      expect(tiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
+      expect(allTiers[1].tierType).to.equal(1);
+      expect(allTiers[1].winnersCount).to.equal(Math.trunc((expectedTicketsCount * 45) / 100));
+      expect(allTiers[1].winnersShare).to.equal(4500); // 45%
+      expect(allTiers[1].rewardAmount).to.equal(ethers.utils.parseEther("10"));
 
       //Fixed winners tier
-      expect(tiers[2].tierType).to.equal(2);
-      expect(tiers[2].winnersCount).to.equal(10);
-      expect(tiers[2].winnersShare).to.equal(0);
-      expect(tiers[2].rewardAmount).to.equal(ethers.utils.parseEther("1"));
+      expect(allTiers[2].tierType).to.equal(2);
+      expect(allTiers[2].winnersCount).to.equal(10);
+      expect(allTiers[2].winnersShare).to.equal(0);
+      expect(allTiers[2].rewardAmount).to.equal(ethers.utils.parseEther("1"));
     });
 
     it("Can't call initializeLottery twice", async function () {
@@ -251,8 +250,14 @@ describe("Lottery", async () => {
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery is not fully initialized");
     });
 
+    it("Can't setup if lottery is not fully initialized", async function () {
+      await lottery.initializeLottery(1);
+      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [], [])).to.be.revertedWith("Lottery is not fully initialized");
+    });
+
     it("Can't call rewardWinners if lottery is not run", async function () {
-      await ethers.provider.send("evm_increaseTime", [3001]);
+      await lottery.initializeLottery(0);
+      await lottery.setupLottery(rewardToken.address, randomGetter.address, tiers, [8000, 2000])
       await expect(lottery.rewardWinners(0)).to.be.revertedWith("Request is pending or lottery is not run");
     });
   });
@@ -295,8 +300,10 @@ describe("Lottery", async () => {
     }
 
     beforeEach(async function () {
-      await ethers.provider.send("evm_increaseTime", [3001]);
+      await ethers.provider.send("evm_increaseTime", [2001]);
       await lottery.initializeLottery(0);
+      await lottery.setupLottery(rewardToken.address, randomGetter.address, tiers, [8000, 2000])
+      await ethers.provider.send("evm_increaseTime", [1000]);
       await lottery.runLottery();
       await fulfillRandomWord();
     });
@@ -391,6 +398,9 @@ describe("Lottery", async () => {
         winnersCount: 10,
         rewardAmount: ethers.utils.parseEther("1"),
       };
+
+      await ethers.provider.send("evm_increaseTime", [2001]);
+      await lottery.initializeLottery(0);
     });
 
     it("Should prevents if non-admin setup", async function () {

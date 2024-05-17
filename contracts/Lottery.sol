@@ -130,7 +130,6 @@ contract Lottery is AccessControl, ILottery {
      * @dev If the gas limit is exceeded when calling the function, the organization must be initialized in parts.
      * @dev This function can be called when the burn deadline passed, since after that amount of tokens cannot be changed.
      * @dev This function can be called if lottery hasn't been fully initialized.
-     * @dev Calculates the amount of winners for each random tier based on the total supply of lottery tickets.
      * @dev If `organizationsCount` is 0 or exceeds the remaining amount of organizations to initialize,
      * it automatically sets `organizationsCount` to the remaining amount of organizations.
      */
@@ -185,9 +184,10 @@ contract Lottery is AccessControl, ILottery {
      * @dev Each element in `_tiers` is defined by its type(jackpot, random and fixed), the amount of winners and the reward amount.
      * @dev Each element in the `_organizationSharesForFixedTiers` is the percentage share of an organization for fixed tiers.
      * @dev Total share is 100_00 corresponds to 100% and 100 corresponds to 1% (BIPS).
+     * @dev Calculates the amount of winners for random tier based on the total supply of lottery tickets.
      * @dev This function must be called before the deadline lottery time.
      * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Reverts if the reward token is not a contract or if the random getter contract does not support the required interface.
+     * @dev Reverts if the reward token is not a contract or if the random getter contract doesn't support the required interface or lottery is not fully initialized.
      * @dev Reverts if the amount of organization shares for fixed tiers does not match the amount of organizations.
      * @dev Reverts if there are any incorrect tier configurations or if the total organization shares do not sum up to 100%.
      */
@@ -199,6 +199,9 @@ contract Lottery is AccessControl, ILottery {
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (block.timestamp > lotteryTime) {
             revert IncorrectCondition("Can't setup after lottery time");
+        }
+        if (initializedOrganizationsCount != organizations.length) {
+            revert IncorrectCondition("Lottery is not fully initialized");
         }
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
