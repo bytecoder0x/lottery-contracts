@@ -31,6 +31,28 @@ interface ITicketRedemption is IERC165, IKarrotErrors {
      */
     event SetRedemptionCap(uint redemptionCap);
 
+    /** 
+     * @notice Price per redeemed one ticket.
+    */
+    function redemptionPrice() external view returns (uint);
+    /** 
+    * @notice The amount of tokens spent on ticket redemption.
+    */
+    function redeemed() external view returns (uint);
+    /**
+     * @notice Maximum total redemption amount of tokens allowed.
+     */
+    function redemptionCap() external view returns (uint);
+    /**
+     * @notice The address of the associated lottery contract.
+     */
+    function lottery() external view returns (address);
+
+    /**
+     * @notice Token contract for rewards.
+     */
+    function rewardToken() external view returns (address);
+
     /**
      * @notice Sets the reward token contract address.
      * @param _rewardToken The address of the reward token contract.
