@@ -164,11 +164,6 @@ contract Lottery is AccessControl, ILottery {
         }
         lotteryTicketsTotalSupply += lotteryTotalSupply;
 
-        for (uint i; i < tiers.length; i++) {
-            if (tiers[i].tierType == TierType.Random) {    
-                tiers[i].winnersCount = lotteryTicketsTotalSupply * tiers[i].winnersShare / BIPS;
-            }
-        }
         emit LotteryInitialized(organizations.length);
     }
 
