@@ -79,6 +79,7 @@ contract Lottery is AccessControl, ILottery {
      * @notice Constructor function to initialize the contract with the default admin, registrar, and time values.
      * @param _defaultAdmin The address of the default admin role.
      * @param _registrar The address of the registrar role (expected to be the factory contract).
+     * @param _randomGetter The address of the contract providing random numbers.
      * @param _mintDeadline The timestamp indicating the deadline for minting tickets.
      * @param _burnDeadline The timestamp indicating the deadline for burning tickets.
      * @param _lotteryTime The timestamp indicating the time when the lottery will occur.
@@ -87,6 +88,7 @@ contract Lottery is AccessControl, ILottery {
     constructor(
         address _defaultAdmin,
         address _registrar,
+        address _randomGetter,
         uint32 _mintDeadline,
         uint32 _burnDeadline,
         uint32 _lotteryTime
@@ -94,9 +96,12 @@ contract Lottery is AccessControl, ILottery {
         if (block.timestamp > _mintDeadline || _mintDeadline > _burnDeadline || _burnDeadline > _lotteryTime) {
             revert IncorrectValue("Incorrect time values");
         }
+
         mintDeadline = _mintDeadline;
         burnDeadline = _burnDeadline;
         lotteryTime = _lotteryTime;
+
+        randomGetter = IRandomGetter(_randomGetter);
 
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _setupRole(REGISTRAR_ROLE, _registrar); //expected to be factory contract
@@ -173,7 +178,6 @@ contract Lottery is AccessControl, ILottery {
      * @notice Based on shares of organizations will choose the winners for the fixed tier. The large shares from the organization, the more winners it will have.
      * @notice The tiers contain detailed information about each tier, such as type, amount of winners, reward amount.
      * @param _rewardToken The address of the token used as rewards.
-     * @param _randomGetter The address of the contract providing random numbers.
      * @param _tiers An array containing the configuration of lottery tiers.
      * @param _organizationSharesForFixedTiers An array containing the percentage shares of organizations for fixed tiers.
      * @dev Each element in `_tiers` is defined by its type(jackpot, random and fixed), the amount of winners and the reward amount.
@@ -182,13 +186,12 @@ contract Lottery is AccessControl, ILottery {
      * @dev Calculates the amount of winners for random tier based on the total supply of lottery tickets.
      * @dev This function must be called before the deadline lottery time.
      * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Reverts if the reward token is not a contract or if the random getter contract doesn't support the required interface or lottery is not fully initialized.
+     * @dev Reverts if the reward token is not a contract or lottery is not fully initialized.
      * @dev Reverts if the amount of organization shares for fixed tiers does not match the amount of organizations.
      * @dev Reverts if there are any incorrect tier configurations or if the total organization shares do not sum up to 100%.
      */
     function setupLottery(
         address _rewardToken,
-        address _randomGetter,
         Tier[] memory _tiers,
         uint[] memory _organizationSharesForFixedTiers
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -201,19 +204,11 @@ contract Lottery is AccessControl, ILottery {
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
         }
-        if (
-            !IRandomGetter(_randomGetter).supportsInterface(
-                type(IRandomGetter).interfaceId
-            )
-        ) {
-            revert InterfaceNotSupported();
-        }
         if (_organizationSharesForFixedTiers.length != organizations.length) {
             revert IncorrectValue("Incorrect organization shares count");
         }
 
         rewardToken = IERC20(_rewardToken);
-        randomGetter = IRandomGetter(_randomGetter);
 
         for (uint i; i < _tiers.length; i++) {
             Tier memory tier = _tiers[i]; 

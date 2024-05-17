@@ -25,6 +25,7 @@ library LotteryDeployerLibrary {
     function deployLotteryContract(
         address defaultAdmin,
         address lowerAdmin,
+        address randomGetterContract,
         uint256 lotteriesCount,
         uint32 mintDeadline,
         uint32 burnDeadline,
@@ -34,6 +35,7 @@ library LotteryDeployerLibrary {
             new Lottery{salt: keccak256(abi.encodePacked(lotteriesCount))}(
                 defaultAdmin,
                 lowerAdmin,
+                randomGetterContract,
                 mintDeadline,
                 burnDeadline,
                 lotteryTime
