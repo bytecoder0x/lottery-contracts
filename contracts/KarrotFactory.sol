@@ -16,6 +16,7 @@ import {ILottery} from "./interface/ILottery.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ITicketMinter} from "./interface/ITicketMinter.sol";
+import {IRandomGetter} from "./interface/IRandomGetter.sol";
 
 import {LotteryDeployerLibrary} from "./libraries/LotteryDeployerLibrary.sol";
 import {RedemptionDeployerLibrary} from "./libraries/RedemptionDeployerLibrary.sol";
@@ -36,6 +37,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     bytes32 public constant DEPLOYER_ROLE = keccak256("DEPLOYER");
     /// @notice Address of the minterContract that can mint organization, campaigns and tickets. Expected to be the TicketMinter contract.
     address public minterContract;
+    /// @notice Address of the randomGetterContract providing random numbers. Expected to be the RandomGetter contract.
+    address public randomGetterContract;
 
     /// @notice Stores addresses of active organizations.
     EnumerableSet.AddressSet private activeOrganizations;
@@ -69,27 +72,20 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     }
 
     /**
+     * @notice The modifier checks whether the function is without set randomGetter contract.
+     */
+    modifier withSetupRandomGetterContract() {
+        if (randomGetterContract == address(0)) revert IncorrectCondition("RandomGetter contract not set");
+        _;
+    }
+
+    /**
      * @notice Constructor function to initialize the KarrotFactory contract.
      * @param _deployer The address of the deployer role.
      */
     constructor(address _deployer) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(DEPLOYER_ROLE, _deployer);
-    }
-
-    /**
-     * @notice Enables an organization if they are returned in the project.
-     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @param _organization The address of the organization to be enabled.
-     * @dev If the organization is already enabled, reverts with an error message.
-     */
-    function enableOrganization(
-        address _organization
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
-        activeOrganizations.add(_organization);
-
-        emit EnableOrganization(_organization);
     }
 
     /**
@@ -105,6 +101,21 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         activeOrganizations.remove(_organization);
 
         emit DisabledOrganization(_organization);
+    }
+
+    /**
+     * @notice Enables an organization if they are returned in the project.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _organization The address of the organization to be enabled.
+     * @dev If the organization is already enabled, reverts with an error message.
+     */
+    function enableOrganization(
+        address _organization
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
+        activeOrganizations.add(_organization);
+
+        emit EnableOrganization(_organization);
     }
 
     /**
@@ -129,6 +140,27 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     }
 
     /**
+     * @notice Sets the randomGetter contract address to get a random number in the lottery.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _randomGetterContract The address of the randomGetter contract to be set.
+     * @dev Reverts if the randomGetter contract does not support the required interface.
+     */
+    function setRandomGetterContract(
+        address _randomGetterContract
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (
+            !IRandomGetter(_randomGetterContract).supportsInterface(
+                type(IRandomGetter).interfaceId
+            )
+        ) {
+            revert InterfaceNotSupported();
+        }
+        randomGetterContract = _randomGetterContract;
+        
+        emit RandomGetterContractUpdated(_randomGetterContract);
+    }
+
+    /**
      * @notice Deploys a new lottery and redemption contract.
      * @dev Only can be called by accounts with the DEPLOYER_ROLE.
      * @param _defaultAdmin The address of the admin for the contracts.
@@ -146,7 +178,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         uint32 _mintDeadline,
         uint32 _burnDeadline,
         uint32 _lotteryTime
-    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address newLottery, address newRedemption) {
+    ) public withSetupRandomGetterContract onlyRole(DEPLOYER_ROLE) returns (address newLottery, address newRedemption) {
     
             newLottery = _deployLotteryContract(
                 _defaultAdmin,
@@ -282,6 +314,46 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return tickets;
     }
 
+        /**
+     * @notice Returns the amount of deployed lottery contracts.
+     * @return The amount of deployed lottery contracts.
+     */
+    function getLotteriesCount() external view returns (uint256) {
+        return lotteries.length;
+    }
+
+    /**
+     * @notice Returns the amount of deployed redemption contracts.
+     * @return The amount of deployed redemption contracts.
+     */
+    function getRedemptionsCount() external view returns (uint256) {
+        return redemptions.length;
+    }
+
+    /**
+     * @notice Returns the amount of deployed organization contracts.
+     * @return The amount of deployed organization contracts.
+     */
+    function getOrganizationsCount() external view returns (uint256) {
+        return organizations.length;
+    }
+
+    /**
+     * @notice Returns the amount of deployed campaign contracts.
+     * @return The amount of deployed campaign contracts.
+     */
+    function getCampaignsCount() external view returns (uint256) {
+        return campaigns.length;
+    }
+
+    /**
+     * @notice Returns the amount of deployed ticket contracts.
+     * @return The amount of deployed ticket contracts.
+     */
+    function getTicketsCount() external view returns (uint256) {
+        return tickets.length;
+    }
+
     /**
      * @notice Deploys a new organization contract.
      * @param defaultAdmin The address of the admin for the contract.
@@ -367,7 +439,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
         address newLottery = LotteryDeployerLibrary.deployLotteryContract(
             _defaultAdmin, 
-            address(this), 
+            address(this),
+            randomGetterContract,
             lotteries.length, 
             _mintDeadline, 
             _burnDeadline, 

@@ -17,6 +17,11 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
      */
     event MinterContractUpdated(address indexed minterContract);
     /**
+     * @notice Emitted when the randomGetter contract address is updated.
+     * @param randomGetterContract The new address of the randomGetter contract.
+     */
+    event RandomGetterContractUpdated(address indexed randomGetterContract);
+    /**
      * @notice Emitted when a lottery contract is deployed.
      * @param lotteryContract The address of the deployed lottery contract.
      */
@@ -120,6 +125,11 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
      * @param _minterContract The address of the minter contract to set.
      */
     function setMinterContract(address _minterContract) external;
+    /**
+     * @notice Sets the randomGetter contract address providing random numbers.
+     * @param _randomGettercontract The address of the randomGetter contract to set.
+     */
+    function setRandomGetterContract(address _randomGettercontract) external;
 
     /**
      * @notice Deploys a new lottery and redemption contract.

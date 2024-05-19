@@ -1,17 +1,15 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { KarrotFactory, TicketMinter, Lottery, RewardTokenMintableMock, VRFV2Wrapper, VRFCoordinatorV2Mock, RandomGetter } from "../typechain-types";
+import { KarrotFactory, Lottery, RewardTokenMintableMock, VRFV2Wrapper, VRFCoordinatorV2Mock } from "../typechain-types";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
-import { deployBasicContracts, deployRandomGetter } from "./utis";
+import { deployBasicContracts } from "./utis";
 import { BigNumber } from "ethers";
 
-describe("Lottery", async () => {
+describe.only("Lottery", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
-  let ticketMinter: TicketMinter;
   let lottery: Lottery;
-  let randomGetter: RandomGetter;
   let coordinator: VRFCoordinatorV2Mock;
   let wrapper: VRFV2Wrapper;
   let rewardToken: RewardTokenMintableMock;
@@ -21,8 +19,18 @@ describe("Lottery", async () => {
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
 
   async function deployAndSetupLottery() {
-    const { karrotFactory, ticketMinter, lotteryAddress, owner, minter, user1, user2 } = await deployBasicContracts();
-    const { coordinator, wrapper, randomGetter } = await deployRandomGetter(karrotFactory, owner);
+    const {
+      karrotFactory,
+      ticketMinter,
+      lotteryAddress,
+      coordinator,
+      wrapper,
+      owner,
+      minter,
+      user1,
+      user2,
+    } = await deployBasicContracts();
+    
     await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization 2", ["Campaign 3", "Campaign 4"]);
     const campaignsAddresses = await karrotFactory.getAllCampaigns();
     const organizationAddresses = await karrotFactory.getAllOrganizations();
@@ -50,9 +58,8 @@ describe("Lottery", async () => {
       },
     ];
 
-    await lottery.setupLottery(rewardToken.address, randomGetter.address, tiers, [8000, 2000]);
     await rewardToken.transfer(lottery.address, ethers.utils.parseEther("1000"));
-
+    await lottery.setupLottery(rewardToken.address, tiers, [8000, 2000]);
     let organazationsTicketsCount = [0, 0];
 
     for (let c = 0; c < campaignsAddresses.length; c++) {
@@ -68,9 +75,7 @@ describe("Lottery", async () => {
 
     return {
       karrotFactory,
-      ticketMinter,
       lottery,
-      randomGetter,
       coordinator,
       wrapper,
       rewardToken,
@@ -91,9 +96,7 @@ describe("Lottery", async () => {
   beforeEach("Init test environment", async () => {
     const fixture = await loadFixture(deployAndSetupLottery);
     karrotFactory = fixture.karrotFactory;
-    ticketMinter = fixture.ticketMinter;
     lottery = fixture.lottery;
-    randomGetter = fixture.randomGetter;
     coordinator = fixture.coordinator;
     wrapper = fixture.wrapper;
     rewardToken = fixture.rewardToken;
@@ -138,6 +141,15 @@ describe("Lottery", async () => {
     );
   });
 
+  it("Should prevents register ticket if ticket is already registered", async function () {
+    const registerRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("REGISTRAR"));
+    const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
+    const ticketContract = await campaign.ticketsContract();
+    await lottery.grantRole(registerRole, owner.address);
+
+    await expect(lottery.registerTicketContract(ticketContract)).to.be.revertedWith("Ticket contract is already registered");
+  });
+
   it("Should prevents from register ticket contracts with wrong interface", async function () {
     const registerRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("REGISTRAR"));
     await lottery.grantRole(registerRole, owner.address);
@@ -158,10 +170,8 @@ describe("Lottery", async () => {
     it("Lottery initialized correctly for 1 organization", async function () {
       await lottery.initializeLottery(1);
       const organizations = await lottery.getAllOrganizations();
-      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
 
       expect(organizations[0]).to.be.eq(organizationAddresses[0]);
-      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
       expect(await lottery.initializedOrganizationsCount()).to.equal(1);
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(organazationsTicketsCount[0]);
     });
@@ -171,11 +181,8 @@ describe("Lottery", async () => {
 
       expect(await lottery.initializedOrganizationsCount()).to.equal(2);
       const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
-      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
       const organizations = await lottery.getAllOrganizations();
 
-      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
-      expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
       expect(organizations[0]).to.be.eq(organizationAddresses[0]);
       expect(organizations[1]).to.be.eq(organizationAddresses[1]);
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(expectedTicketsCount);
@@ -186,11 +193,9 @@ describe("Lottery", async () => {
 
       expect(await lottery.initializedOrganizationsCount()).to.equal(2);
       const expectedTicketsCount = organazationsTicketsCount[0] + organazationsTicketsCount[1];
-      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
       const organizations = await lottery.getAllOrganizations();
 
-      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
-      expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
+      expect(organizations.length).to.be.eq(await lottery.getOrganizationsCount());
       expect(organizations[0]).to.be.eq(organizationAddresses[0]);
       expect(organizations[1]).to.be.eq(organizationAddresses[1]);
       expect(await lottery.lotteryTicketsTotalSupply()).to.equal(expectedTicketsCount);
@@ -215,6 +220,11 @@ describe("Lottery", async () => {
       }
 
       const tiers = await lottery.getAllTiers();
+      const organizationSharesForFixedTiers = await lottery.getOrganizationSharesForFixedTiers();
+
+      expect(organizationSharesForFixedTiers[0]).to.be.eq(8000);
+      expect(organizationSharesForFixedTiers[1]).to.be.eq(2000);
+      expect(tiers.length).to.equal(await lottery.getTiersCount());
       expect(tiers.length).to.equal(3);
       //Jackpot tier
       expect(tiers[0].tierType).to.equal(0);
@@ -251,8 +261,19 @@ describe("Lottery", async () => {
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery is not fully initialized");
     });
 
+    it("Can't initializeLottery if lottery is not set up", async function () {
+      // to test this scenario we need to deploy a lottery contract not from a factory
+      const mintDeadline = +(new Date().getTime() / 1000).toFixed(0) + 3000;
+      const burnDeadline = +(new Date().getTime() / 1000).toFixed(0) + 4000;
+      const lotteryTime = +(new Date().getTime() / 1000).toFixed(0) + 5000;
+
+      const lottery2 = await (await ethers.getContractFactory("Lottery")).deploy(owner.address, owner.address, owner.address, mintDeadline, burnDeadline, lotteryTime);
+      await ethers.provider.send("evm_increaseTime", [2001]);
+      await expect(lottery2.initializeLottery(0)).to.be.revertedWith("Lottery is not set up");
+    });
+
     it("Can't call rewardWinners if lottery is not run", async function () {
-      await ethers.provider.send("evm_increaseTime", [3001]);
+      await lottery.initializeLottery(0);
       await expect(lottery.rewardWinners(0)).to.be.revertedWith("Request is pending or lottery is not run");
     });
   });
@@ -391,67 +412,67 @@ describe("Lottery", async () => {
         winnersCount: 10,
         rewardAmount: ethers.utils.parseEther("1"),
       };
+
+      await ethers.provider.send("evm_increaseTime", [2001]);
+      await lottery.initializeLottery(0);
     });
 
     it("Should prevents if non-admin setup", async function () {
       const adminRole = ethers.constants.HashZero;
-      await expect(lottery.connect(user1).setupLottery(rewardToken.address, randomGetter.address, [], [])).to.be.revertedWith(
+      await expect(lottery.connect(user1).setupLottery(rewardToken.address, [], [])).to.be.revertedWith(
         "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
       );
     });
 
     it("Should prevents setup after lottery time", async function () {
       await ethers.provider.send("evm_increaseTime", [3001]);
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [], [])).to.be.revertedWith("Can't setup after lottery time");
+      await expect(lottery.setupLottery(rewardToken.address, [], [])).to.be.revertedWith("Can't setup after lottery time");
     });
 
     it("Should prevents setup if reward token is not a contract", async function () {
-      await expect(lottery.setupLottery(user1.address, randomGetter.address, [], [])).to.be.revertedWith("Reward token is not a contract");
+      await expect(lottery.setupLottery(user1.address, [], [])).to.be.revertedWith("Reward token is not a contract");
     });
 
-    it("Should prevents setup if randomGetter doesn't have IRandomGetter interface", async function () {
-      await expect(lottery.setupLottery(rewardToken.address, ticketMinter.address, [], [])).to.be.revertedWith("InterfaceNotSupported");
-    });
 
     it("Should prevents setup if incorrect organization shares count", async function () {
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [], [])).to.be.revertedWith("Incorrect organization shares count");
+      await expect(lottery.setupLottery(rewardToken.address, [], [])).to.be.revertedWith("Incorrect organization shares count");
     });
 
     it("Should prevents setup if organization shares count more than bips or 0", async function () {
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [], [12000, 2000])).to.be.revertedWith("Incorrect organization shares");
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [], [0, 2000])).to.be.revertedWith("Incorrect organization shares");
+      await expect(lottery.setupLottery(rewardToken.address, [], [12000, 2000])).to.be.revertedWith("Incorrect organization shares");
+      await expect(lottery.setupLottery(rewardToken.address, [], [0, 2000])).to.be.revertedWith("Incorrect organization shares");
     });
 
     it("Should prevents setup if total shares amounu is not 100%", async function () {
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [], [8000, 1999])).to.be.revertedWith("Total shares sum must be 100%");
+      await expect(lottery.setupLottery(rewardToken.address, [], [8000, 1999])).to.be.revertedWith("Total shares sum must be 100%");
     });
 
     it("Should prevents setup if first tier is not jackpot", async function () {
       tier0.tierType = 1;
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [tier0], [8000, 2000])).to.be.revertedWith("First tier must be Jackpot");
+      await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("First tier must be Jackpot");
     });
 
     it("Should prevents setup if jackpot tier has more than 2 winners", async function () {
       tier0.winnersCount = 2;
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [tier0], [8000, 2000])).to.be.revertedWith("There must be 1 winner in Jackpot tier");
+      await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("There must be 1 winner in Jackpot tier");
     });
 
     it("Should prevents setup if reward amount equal 0", async function () {
       tier0.rewardAmount = ethers.utils.parseEther("0");
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [tier0], [8000, 2000])).to.be.revertedWith("Incorrect tier values");
+      await expect(lottery.setupLottery(rewardToken.address, [tier0], [8000, 2000])).to.be.revertedWith("Incorrect tier values");
     });
 
     it("Should prevents setup if tiers in the wrong order", async function () {
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [tier0, tier2, tier1], [8000, 2000])).to.be.revertedWith("Incorrect tier order");
+      await expect(lottery.setupLottery(rewardToken.address, [tier0, tier2, tier1], [8000, 2000])).to.be.revertedWith("Incorrect tier order");
     });
 
     it("Should prevents setup if winners share equal 0 for random tier or count for fixed", async function () {
       tier1.winnersShare = 0;
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [tier0, tier1], [8000, 2000])).to.be.revertedWith("Winners share can't be 0 for random tier");
+      await expect(lottery.setupLottery(rewardToken.address, [tier0, tier1], [8000, 2000])).to.be.revertedWith("Winners share can't be 0 for random tier");
 
       tier1.winnersShare = 40_00;
       tier2.winnersCount = 0;
-      await expect(lottery.setupLottery(rewardToken.address, randomGetter.address, [tier0, tier2], [8000, 2000])).to.be.revertedWith("Winners count can't be 0 for fixed tier");
+      await expect(lottery.setupLottery(rewardToken.address, [tier0, tier2], [8000, 2000])).to.be.revertedWith("Winners count can't be 0 for fixed tier");
     });
   });
 

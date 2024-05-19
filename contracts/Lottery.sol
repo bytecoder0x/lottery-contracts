@@ -79,6 +79,7 @@ contract Lottery is AccessControl, ILottery {
      * @notice Constructor function to initialize the contract with the default admin, registrar, and time values.
      * @param _defaultAdmin The address of the default admin role.
      * @param _registrar The address of the registrar role (expected to be the factory contract).
+     * @param _randomGetter The address of the contract providing random numbers.
      * @param _mintDeadline The timestamp indicating the deadline for minting tickets.
      * @param _burnDeadline The timestamp indicating the deadline for burning tickets.
      * @param _lotteryTime The timestamp indicating the time when the lottery will occur.
@@ -87,6 +88,7 @@ contract Lottery is AccessControl, ILottery {
     constructor(
         address _defaultAdmin,
         address _registrar,
+        address _randomGetter,
         uint32 _mintDeadline,
         uint32 _burnDeadline,
         uint32 _lotteryTime
@@ -94,9 +96,12 @@ contract Lottery is AccessControl, ILottery {
         if (block.timestamp > _mintDeadline || _mintDeadline > _burnDeadline || _burnDeadline > _lotteryTime) {
             revert IncorrectValue("Incorrect time values");
         }
+
         mintDeadline = _mintDeadline;
         burnDeadline = _burnDeadline;
         lotteryTime = _lotteryTime;
+
+        randomGetter = IRandomGetter(_randomGetter);
 
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _setupRole(REGISTRAR_ROLE, _registrar); //expected to be factory contract
@@ -113,6 +118,9 @@ contract Lottery is AccessControl, ILottery {
         if (IERC165(_ticketContract).supportsInterface(type(IKarrotTicket).interfaceId) == false) {
             revert InterfaceNotSupported();
         }
+        if(isRegisteredTicket[_ticketContract]){
+            revert IncorrectValue("Ticket contract is already registered");
+        }
         address organization = IKarrotTicket(_ticketContract).getOrganisation();
         if (!isOrganizationAdded[organization]) {
             organizations.push(organization);
@@ -124,62 +132,11 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /**
-     * @notice Initializes the lottery by assigning ticket ranges to each organization's tickets.
-     * @notice Initializes a specified number of organizations to avoid exceeding gas limits when dealing with many organizations.
-     * @param organizationsCount The amount of organizations to initialize in the lottery.
-     * @dev If the gas limit is exceeded when calling the function, the organization must be initialized in parts.
-     * @dev This function can be called when the burn deadline passed, since after that amount of tokens cannot be changed.
-     * @dev This function can be called if lottery hasn't been fully initialized.
-     * @dev Calculates the amount of winners for each random tier based on the total supply of lottery tickets.
-     * @dev If `organizationsCount` is 0 or exceeds the remaining amount of organizations to initialize,
-     * it automatically sets `organizationsCount` to the remaining amount of organizations.
-     */
-    function initializeLottery(uint organizationsCount) external {
-        if (block.timestamp < burnDeadline) {
-            revert IncorrectCondition("Burn period not finished yet");
-        }
-        if (initializedOrganizationsCount == organizations.length) {
-            revert ActionPerformed("Lottery already initialized");
-        }
-
-        uint initializedOrganizationIndex = initializedOrganizationsCount; //cache value for gas optimization
-        if (organizationsCount == 0 || organizationsCount > organizations.length - initializedOrganizationIndex) {
-            organizationsCount = organizations.length - initializedOrganizationIndex;
-        }
-
-        uint startIndex;
-        uint lotteryTotalSupply;
-        for (uint o = initializedOrganizationIndex; o < initializedOrganizationIndex + organizationsCount; o++) {
-            address[] memory organizationTickets = organizationTicketsContracts[organizations[o]];
-            organizationTicketsRange[organizations[o]].firstLotteryTicketId = lotteryTotalSupply;
-            for (uint t; t < organizationTickets.length; t++) {
-                uint campaignTotalSupply = IKarrotTicket(organizationTickets[t]).totalSupply();
-                lotteryTotalSupply = startIndex + campaignTotalSupply;
-                allCampaignTickets.push(CampaignTickets(organizationTickets[t], TicketRange(startIndex, lotteryTotalSupply - 1)));
-                //if (o != organizations.length - 1 && t != organizationTickets.length - 1) {
-                    startIndex = lotteryTotalSupply;
-                //}
-            }
-            organizationTicketsRange[organizations[o]].lastLotteryTicketId = lotteryTotalSupply - 1;
-            initializedOrganizationsCount++;
-        }
-        lotteryTicketsTotalSupply += lotteryTotalSupply;
-
-        for (uint i; i < tiers.length; i++) {
-            if (tiers[i].tierType == TierType.Random) {    
-                tiers[i].winnersCount = lotteryTicketsTotalSupply * tiers[i].winnersShare / BIPS;
-            }
-        }
-        emit LotteryInitialized(organizations.length);
-    }
-
-    /**
      * @notice Sets up the lottery with specified parameters is like reward token, tiers and shares of organizations for fixed tiers.
      * @notice The specified reward token will be sent to the winners of the lottery.
      * @notice Based on shares of organizations will choose the winners for the fixed tier. The large shares from the organization, the more winners it will have.
      * @notice The tiers contain detailed information about each tier, such as type, amount of winners, reward amount.
      * @param _rewardToken The address of the token used as rewards.
-     * @param _randomGetter The address of the contract providing random numbers.
      * @param _tiers An array containing the configuration of lottery tiers.
      * @param _organizationSharesForFixedTiers An array containing the percentage shares of organizations for fixed tiers.
      * @dev Each element in `_tiers` is defined by its type(jackpot, random and fixed), the amount of winners and the reward amount.
@@ -187,13 +144,12 @@ contract Lottery is AccessControl, ILottery {
      * @dev Total share is 100_00 corresponds to 100% and 100 corresponds to 1% (BIPS).
      * @dev This function must be called before the deadline lottery time.
      * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Reverts if the reward token is not a contract or if the random getter contract does not support the required interface.
+     * @dev Reverts if the reward token is not a contract.
      * @dev Reverts if the amount of organization shares for fixed tiers does not match the amount of organizations.
      * @dev Reverts if there are any incorrect tier configurations or if the total organization shares do not sum up to 100%.
      */
     function setupLottery(
         address _rewardToken,
-        address _randomGetter,
         Tier[] memory _tiers,
         uint[] memory _organizationSharesForFixedTiers
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -203,19 +159,11 @@ contract Lottery is AccessControl, ILottery {
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
         }
-        if (
-            !IRandomGetter(_randomGetter).supportsInterface(
-                type(IRandomGetter).interfaceId
-            )
-        ) {
-            revert InterfaceNotSupported();
-        }
         if (_organizationSharesForFixedTiers.length != organizations.length) {
             revert IncorrectValue("Incorrect organization shares count");
         }
 
         rewardToken = IERC20(_rewardToken);
-        randomGetter = IRandomGetter(_randomGetter);
 
         for (uint i; i < _tiers.length; i++) {
             Tier memory tier = _tiers[i]; 
@@ -259,6 +207,60 @@ contract Lottery is AccessControl, ILottery {
         }
         organizationSharesForFixedTiers = _organizationSharesForFixedTiers;
         emit LotterySetup(_rewardToken, tiers, organizationSharesForFixedTiers);
+    }
+
+    /**
+     * @notice Initializes the lottery by assigning ticket ranges to each organization's tickets.
+     * @notice Initializes a specified number of organizations to avoid exceeding gas limits when dealing with many organizations.
+     * @param organizationsCount The amount of organizations to initialize in the lottery.
+     * @dev If the gas limit is exceeded when calling the function, the organization must be initialized in parts.
+     * @dev This function can be called when the burn deadline passed, since after that amount of tokens cannot be changed.
+     * @dev This function can be called if lottery hasn't been fully initialized.
+     * @dev Calculates the amount of winners for each random tier based on the total supply of lottery tickets.
+     * @dev If `organizationsCount` is 0 or exceeds the remaining amount of organizations to initialize,
+     * it automatically sets `organizationsCount` to the remaining amount of organizations.
+     */
+    function initializeLottery(uint organizationsCount) external {
+        if (block.timestamp < burnDeadline) {
+            revert IncorrectCondition("Burn period not finished yet");
+        }
+        if (tiers.length == 0){
+            revert IncorrectCondition("Lottery is not set up");
+        }
+        if (initializedOrganizationsCount == organizations.length) {
+            revert ActionPerformed("Lottery already initialized");
+        }
+
+        uint initializedOrganizationIndex = initializedOrganizationsCount; //cache value for gas optimization
+        if (organizationsCount == 0 || organizationsCount > organizations.length - initializedOrganizationIndex) {
+            organizationsCount = organizations.length - initializedOrganizationIndex;
+        }
+
+        uint startIndex;
+        uint lotteryTotalSupply;
+        for (uint o = initializedOrganizationIndex; o < initializedOrganizationIndex + organizationsCount; o++) {
+            address[] memory organizationTickets = organizationTicketsContracts[organizations[o]];
+            organizationTicketsRange[organizations[o]].firstLotteryTicketId = lotteryTotalSupply;
+            for (uint t; t < organizationTickets.length; t++) {
+                uint campaignTotalSupply = IKarrotTicket(organizationTickets[t]).totalSupply();
+                lotteryTotalSupply = startIndex + campaignTotalSupply;
+                allCampaignTickets.push(CampaignTickets(organizationTickets[t], TicketRange(startIndex, lotteryTotalSupply - 1)));
+                //if (o != organizations.length - 1 && t != organizationTickets.length - 1) {
+                    startIndex = lotteryTotalSupply;
+                //}
+            }
+            organizationTicketsRange[organizations[o]].lastLotteryTicketId = lotteryTotalSupply - 1;
+            initializedOrganizationsCount++;
+        }
+        lotteryTicketsTotalSupply += lotteryTotalSupply;
+
+        for (uint i; i < tiers.length; i++) {
+            if (tiers[i].tierType == TierType.Random) {    
+                tiers[i].winnersCount = lotteryTicketsTotalSupply * tiers[i].winnersShare / BIPS;
+            }
+        }
+
+        emit LotteryInitialized(organizations.length);
     }
 
     /**
@@ -388,6 +390,22 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /**
+     * @notice Retrieves the amount of tiers in the lottery.
+     * @return The amount of tiers in the lottery.
+     */
+    function getTiersCount() public view returns (uint) {
+        return tiers.length;
+    }
+
+    /**
+     * @notice Retrieves the amount of organizations participating in the lottery.
+     * @return The amount of participating organizations.
+     */
+    function getOrganizationsCount() public view returns (uint) {
+        return organizations.length;
+    }
+
+    /**
      * @notice Retrieves the addresses of all ticket contracts associated with a specific organization.
      * @param organization The address of the organization.
      * @return An array containing the addresses of ticket contracts associated with the organization.
@@ -468,6 +486,6 @@ contract Lottery is AccessControl, ILottery {
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {
         return interfaceId == type(ILottery).interfaceId || 
-            AccessControl.supportsInterface(interfaceId);
+            super.supportsInterface(interfaceId);
     }
 }

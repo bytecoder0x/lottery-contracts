@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotErrors} from "./IKarrotErrors.sol";
 
@@ -30,6 +31,31 @@ interface ITicketRedemption is IERC165, IKarrotErrors {
      * @param redemptionCap The new redemption cap.
      */
     event SetRedemptionCap(uint redemptionCap);
+
+
+    /** 
+     * @notice Represents the total tokens utilized for ticket redemption.
+     * @return The amount of tokens spent on ticket redemption.
+     */
+    function redeemed() external view returns (uint);
+
+    /**
+     * @notice Indicates the maximum tokens permitted for redemption.
+     * @return The maximum total redemption amount of tokens allowed.
+     */
+    function redemptionCap() external view returns (uint);
+
+    /**
+     * @notice Address of the lottery contract associated with this redemption.
+     * @return The address of the associated lottery contract.
+     */
+    function lottery() external view returns (address);
+
+    /**
+     * @notice Token contract used as rewards in the lottery and redemption.
+     * @return The address contract for rewards.
+     */
+    function rewardToken() external view returns (IERC20);
 
     /**
      * @notice Sets the reward token contract address.

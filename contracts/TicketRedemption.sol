@@ -29,7 +29,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     uint public redemptionCap;
 
     /// @notice The address of the associated lottery contract.
-    address lottery;
+    address public lottery;
 
     /// @notice Token contract for rewards.
     IERC20 public rewardToken;
@@ -143,6 +143,6 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {
         return interfaceId == type(ITicketRedemption).interfaceId || 
-            AccessControl.supportsInterface(interfaceId);
+            super.supportsInterface(interfaceId);
     }
 }
