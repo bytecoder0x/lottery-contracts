@@ -261,10 +261,16 @@ describe.only("Lottery", async () => {
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery is not fully initialized");
     });
 
-    // it("Can't setup if lottery is not fully initialized", async function () {
-    //   await lottery.initializeLottery(1);
-    //   await expect(lottery.setupLottery(rewardToken.address, [], [])).to.be.revertedWith("Lottery is not fully initialized");
-    // });
+    it("Can't initializeLottery if lottery is not set up", async function () {
+      // to test this scenario we need to deploy a lottery contract not from a factory
+      const mintDeadline = +(new Date().getTime() / 1000).toFixed(0) + 3000;
+      const burnDeadline = +(new Date().getTime() / 1000).toFixed(0) + 4000;
+      const lotteryTime = +(new Date().getTime() / 1000).toFixed(0) + 5000;
+
+      const lottery2 = await (await ethers.getContractFactory("Lottery")).deploy(owner.address, owner.address, owner.address, mintDeadline, burnDeadline, lotteryTime);
+      await ethers.provider.send("evm_increaseTime", [2001]);
+      await expect(lottery2.initializeLottery(0)).to.be.revertedWith("Lottery is not set up");
+    });
 
     it("Can't call rewardWinners if lottery is not run", async function () {
       await lottery.initializeLottery(0);

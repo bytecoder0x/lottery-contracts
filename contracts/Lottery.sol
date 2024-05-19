@@ -224,6 +224,9 @@ contract Lottery is AccessControl, ILottery {
         if (block.timestamp < burnDeadline) {
             revert IncorrectCondition("Burn period not finished yet");
         }
+        if (tiers.length == 0){
+            revert IncorrectCondition("Lottery is not set up");
+        }
         if (initializedOrganizationsCount == organizations.length) {
             revert ActionPerformed("Lottery already initialized");
         }
