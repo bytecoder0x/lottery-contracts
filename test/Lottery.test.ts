@@ -6,7 +6,7 @@ import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
 import { BigNumber } from "ethers";
 
-describe.only("Lottery", async () => {
+describe("Lottery", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
   let lottery: Lottery;

@@ -5,8 +5,9 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotErrors} from "./IKarrotErrors.sol";
 
 /**
- * @title Ticket Minter Interface
- * @notice Interface for the TicketMinter contract that responsible for minting tickets for campaigns.
+ * @title TicketMinter contract
+ * @notice The TicketMinter contract manages the creation of tickets for campaigns on the Karrot platform by interfacing with the KarrotFactory. 
+ * @dev TicketMinter ensures that tickets are minted for end owners within specified campaigns.
  */
 interface ITicketMinter is IERC165, IKarrotErrors {
 

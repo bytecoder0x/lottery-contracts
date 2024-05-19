@@ -34,10 +34,9 @@ contract KarrotCampaign is
     /// @notice Address of the ticket contract used for this campaign.
     address public ticketsContract;
 
-    /// @notice Mapping from organization ID to its associated campaign ID.
+    /// @inheritdoc IKarrotCampaign
     mapping(uint256 => uint256) public ownerToken;
-    /// @notice Mapping from organization ID to its associated campaign ID.
-    /// @dev Used to prevent duplicate campaign tokens within organizations.
+    /// @inheritdoc IKarrotCampaign
     mapping(uint256 => uint256) public organizationToCampaign;
 
     /**
@@ -73,13 +72,7 @@ contract KarrotCampaign is
         _setupRole(LOWER_ADMIN_ROLE, _lowerAdmin);
     }
 
-    /**
-     * @notice Mints a new campaign token to the specified parent organization.
-     * @param parentId The ID of the parent organization.
-     * @param data Additional data to include in the minted token.
-     * @return mintedTokenId The ID of the newly minted token.
-     * @dev Reverts if the parent organization already has the campaign token.
-     */
+    /// @inheritdoc IKarrotCampaign
     function mintToOrganization(
         uint256 parentId,
         bytes memory data
@@ -96,12 +89,7 @@ contract KarrotCampaign is
         emit CampaignTokenMintedToOrganization(mintedTokenId, msg.sender, parentId);
     }
 
-    /**
-     * @notice Sets the ticket contract address.
-     * @param _ticketsContract The address of the ticket contract to set.
-     * @dev Reverts if the sender does not have the required admin role.
-     * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
-     */
+    /// @inheritdoc IKarrotCampaign
     function setTicketContract(
         address _ticketsContract
     ) public {
@@ -120,44 +108,24 @@ contract KarrotCampaign is
         ticketsContract = _ticketsContract;
     }
 
-    /**
-     * @notice Burns the user's ticket for the current campaign.
-     * @dev Retrieves the campaign ID for the user and calls _burnTicket.
-     * @dev Transfers the burning ticket to the owner of the last ticket ID.
-     * @dev Transfers the last ticket ID to the burning campaign.
-     * @dev The owner of the last ticket loses it, but received the burning ticket.
-     * @dev We swap the ticket to be burned with the last ticket, then burn the last one.
-     * Due this swap approach user's ticket ID(s) may change and it's expected behaviour,
-     * since it does not change the chance of winning lottery
-     */
+    /// @inheritdoc IKarrotCampaign
     function burnTicket() external {
         uint campaignId = _getUserCampaignId();
         _burnTicket(campaignId);
     }
 
-    /**
-     * @notice Burns a batch of tickets for the current campaign.
-     * @param amountOfTicketsToBurn The number of tickets to burn.
-     */
+    /// @inheritdoc IKarrotCampaign
     function burnTicketBatch(uint256 amountOfTicketsToBurn) public {
         uint campaignId = _getUserCampaignId();
         burnTicketBatch(campaignId, amountOfTicketsToBurn);
     }
 
-    /**
-     * @notice Burns the user's ticket for the specified campaign.
-     * @param campaignId The ID of the campaign to burn the ticket for.
-     */
+    /// @inheritdoc IKarrotCampaign
     function burnTicket(uint campaignId) public {
         _burnTicket(campaignId);
     }
 
-    /**
-     * @notice Burns a batch of tickets for the specified campaign.
-     * @param campaignId The ID of the campaign to burn tickets for.
-     * @param amountOfTicketsToBurn The number of tickets to burn.
-     * @dev Reverts if the specified amount exceeds the available campaign tickets.
-     */
+    /// @inheritdoc IKarrotCampaign
     function burnTicketBatch(uint campaignId, uint256 amountOfTicketsToBurn) public {
         //this check doesn't give 100% guarantee that the user is trying to burn the correct amount of tickets
         //as _activeChildren may have not only tickets in case of manual child accepting.
@@ -171,40 +139,25 @@ contract KarrotCampaign is
         }
     }
 
-    /**
-     * @notice Gets the owner of the specified token ID.
-     * @param tokenId The ID of the token.
-     * @return The address of the owner of the token.
-     */
+    /// @inheritdoc IERC7401
     function ownerOf(
         uint256 tokenId
     ) public view override(RMRKNestable, IERC7401) returns (address) {
         return super.ownerOf(tokenId);
     }
 
-    /**
-     * @notice Retrieves the address of the lottery contract.
-     * @return The address of the lottery contract.
-     */
+    /// @inheritdoc KarrotCheckMintTime
     function getLotteryContract() public view override returns (address) {
         return lottery;
     }
 
-    /**
-     * @notice Retrieves the campaign ID associated with a specific user.
-     * @param _owner The address of the user whose campaign ID is to be retrieved.
-     * @return The campaign ID associated with the specified user.
-     */
+    /// @inheritdoc IKarrotCampaign
     function getUserCampaignId(address _owner) external view returns (uint256) {
         uint organizationId = IKarrotOrganization(organization).ownerToken(_owner);
         return ownerToken[organizationId];
     }
 
-    /**
-     * @notice Checks if the contract supports a given interface.
-     * @param interfaceId The interface identifier.
-     * @return A boolean indicating whether the contract supports the interface.
-     */
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {

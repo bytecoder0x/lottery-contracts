@@ -5,8 +5,10 @@ import {IERC7401} from "@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC740
 import {IKarrotErc7401Base} from "./IKarrotErc7401Base.sol";
 
 /**
- * @title KarrotTicket Interface
- * @notice Interface for the KarrotTicket contract that managing ticket minting and burning within the Karrot platform.
+ * @title KarrotTicket
+ * @notice The KarrotTicket contract manages the minting and burning of ticket within the Karrot platform.
+ * @dev KarrotTicket contract allows minting tokens to specific campaigns, burning the last minted token,
+ * and retrieving contract-related information.
  */
 interface IKarrotTicket is IERC7401, IKarrotErc7401Base {
 
@@ -24,19 +26,19 @@ interface IKarrotTicket is IERC7401, IKarrotErc7401Base {
     event TicketBurned(uint256 indexed tokenId);
 
     /**
-     * @notice Mints a new ticket to the specified parent campaign.
+     * @notice Mints a token to the specified parent campaign.
      * @param parentId The ID of the parent campaign.
-     * @param data Additional data to include in the minted ticket.
-     * @return The ID of the last minted ticket.
+     * @param data Additional data to include in the minted token.
+     * @return The ID of the last minted token.
      */
     function mintToCampaign(uint256 parentId, bytes memory data) external returns (uint256);
 
     /**
-     * @notice Mints multiple tickets to the specified parent campaign.
-     * @param tokenCount The number of tickets to mint.
+     * @notice Mints multiple tokens to the specified parent campaign.
+     * @param tokenCount The number of tokens to mint.
      * @param parentId The ID of the parent campaign.
-     * @param data Additional data to include in the minted tickets.
-     * @return An array containing the IDs of the minted tickets.
+     * @param data Additional data to include in the minted tokens.
+     * @return An array containing the IDs of the minted tokens.
      */
     function mintToCampaignBatch(
         uint256 tokenCount,
@@ -51,7 +53,7 @@ interface IKarrotTicket is IERC7401, IKarrotErc7401Base {
      */
     function getUserTicketIds(address _owner) external view returns (uint256[] memory);
     /**
-     * @notice Retrieves the address of the parent organization associated with the parent campaign.
+     * @notice Retrieves the address of the organization associated with the campaign.
      * @return The address of the organization.
      */
     function getOrganisation() external view returns (address);
@@ -62,6 +64,7 @@ interface IKarrotTicket is IERC7401, IKarrotErc7401Base {
     function campaign() external view returns (address);
     /**
      * @notice Burns the last minted ticket.
+     * @dev Only callable by the campaign contract.
      * @dev After swapping the ticket to be burned with the last ticket in KarrotCampaign,
      * we burn the last ticket using this function.
      */

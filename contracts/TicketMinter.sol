@@ -47,14 +47,7 @@ contract TicketMinter is
         factory = IKarrotFactory(_factory);
     }
 
-    /**
-     * @notice Mints tickets for multiple end owners in batches.
-     * @param endOwners An array of end owners to whom tickets will be minted.
-     * @param campaign The address of the campaign for which tickets are being minted.
-     * @param ticketsCounts An array specifying the number of tickets to mint for each end owner.
-     * @return ticketsTokenIds An array of arrays containing the token IDs of the minted tickets for each end owner.
-     * @dev Reverts if the length of `endOwners` does not match the length of `ticketsCounts`.
-     */
+    /// @inheritdoc ITicketMinter
     function mintTicketsBatch(
         address[] memory endOwners,
         address campaign,
@@ -73,15 +66,7 @@ contract TicketMinter is
         }
     }
 
-    /**
-     * @notice Mints tickets for a specific end owner in a campaign.
-     * @param endOwner The address of the end owner who will receive the tickets.
-     * @param campaign The address of the campaign for which tickets are being minted.
-     * @param ticketsCount The number of tickets to mint.
-     * @return ticketsTokenIds An array containing the token IDs of the minted tickets.
-     * @dev If no organization is found for the endOwner, we will mint it for him.
-     * @dev If no campaign is found for the endOwner, we will mint it for him.
-     */
+    /// @inheritdoc ITicketMinter
     function mintTickets(
         address endOwner,
         address campaign,

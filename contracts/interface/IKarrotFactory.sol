@@ -5,10 +5,11 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotErrors} from "./IKarrotErrors.sol";
 
 /**
- * @title KarrotFactory Interface
- * @notice Interface for the KarrotFactory contract that serving as a factory for various contracts such as organizations, campaigns, lotteries, redemption, and tickets.
+ * @title KarrotFactory contract
+ * @notice The KarrotFactory contract serves as a factory for various contracts 
+ * such as organizations, campaigns, lotteries, redemption and tickets.
  * @dev KarrotFactory manages the deployment process and keeps track of deployed contracts.
- */
+*/
 interface IKarrotFactory is IERC165, IKarrotErrors {
 
     /**
@@ -111,37 +112,76 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
     function getAllTickets() external view returns (address[] memory);
 
     /**
-     * @notice Enables an organization.
-     * @param organization The address of the organization to enable.
+     * @notice Returns the amount of deployed lottery contracts.
+     * @return The amount of deployed lottery contracts.
+     */
+    function getLotteriesCount() external view returns (uint256);
+
+    /**
+     * @notice Returns the amount of deployed redemption contracts.
+     * @return The amount of deployed redemption contracts.
+     */
+    function getRedemptionsCount() external view returns (uint256);
+
+    /**
+     * @notice Returns the amount of deployed organization contracts.
+     * @return The amount of deployed organization contracts.
+     */
+    function getOrganizationsCount() external view returns (uint256);
+
+    /**
+     * @notice Returns the amount of deployed campaign contracts.
+     * @return The amount of deployed campaign contracts.
+     */
+    function getCampaignsCount() external view returns (uint256);
+
+    /**
+     * @notice Returns the amount of deployed ticket contracts.
+     * @return The amount of deployed ticket contracts.
+     */
+    function getTicketsCount() external view returns (uint256);
+
+    /**
+     * @notice Enables an organization if they are returned in the project.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param organization The address of the organization to be enabled.
+     * @dev If the organization is already enabled, reverts with an error message.
      */
     function enableOrganization(address organization) external;
     /**
-     * @notice Disables an organization.
-     * @param organization The address of the organization to disable.
+     * @notice Disables an organization if they leave the project.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param organization The address of the organization to be disabled.
+     * @dev If the organization is Non Karrot or already disabled, reverts with an error message.
      */
     function disableOrganization(address organization) external;
     /**
-     * @notice Sets the minter contract address that can mint organization, campaigns and tickets.
-     * @param _minterContract The address of the minter contract to set.
+     * @notice Sets the minter contract address for ticket minting.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _minterContract The address of the minter contract to be set.
+     * @dev Reverts if the minter contract does not support the required interface.
      */
     function setMinterContract(address _minterContract) external;
     /**
-     * @notice Sets the randomGetter contract address providing random numbers.
-     * @param _randomGettercontract The address of the randomGetter contract to set.
+     * @notice Sets the randomGetter contract address to get a random number in the lottery.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _randomGetterContract The address of the randomGetter contract to be set.
+     * @dev Reverts if the randomGetter contract does not support the required interface.
      */
-    function setRandomGetterContract(address _randomGettercontract) external;
+    function setRandomGetterContract(address _randomGetterContract) external;
 
     /**
      * @notice Deploys a new lottery and redemption contract.
+     * @dev Only can be called by accounts with the DEPLOYER_ROLE.
      * @param defaultAdmin The address of the admin for the contracts.
      * @param mintDeadline The deadline for ticket minting.
      * @param burnDeadline The deadline for ticket burning.
      * @param lotteryTime The time when the lottery will be conducted.
      * @return deployedLottery The address of the newly deployed lottery contract.
      * @return deployedRedemption The address of the newly deployed redemption contract.
-     * @dev Reverts if _mintDeadline is greater than _burnDeadline,
-     *  _burnDeadline is greater than _lotteryTime,
-     *  _mintDeadline is greater than _lotteryTime.
+     * @dev Reverts if mintDeadline is greater than burnDeadline,
+     *  burnDeadline is greater than lotteryTime,
+     *  mintDeadline is greater than lotteryTime.
      */
     function deployLotteryAndRedemptionContract(
         address defaultAdmin,
@@ -163,6 +203,7 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
 
     /**
      * @notice Deploys a new campaign and ticket contract.
+     * @dev Only can be called by accounts with the DEPLOYER_ROLE.
      * @param defaultAdmin The address of the admin for the contracts.
      * @param lottery The address of the lottery contract.
      * @param organization The address of the parent organization contract.
@@ -179,6 +220,7 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
 
     /**
      * @notice Deploys an organization contract and multiple campaigns that are linked to the organization and corresponding ticket contracts.
+     * @dev Only can be called by accounts with the DEPLOYER_ROLE.
      * @param defaultAdmin The address of the admin for the contracts.
      * @param lottery The address of the lottery contract.
      * @param organizationName The name of the organization.

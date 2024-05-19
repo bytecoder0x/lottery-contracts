@@ -30,29 +30,17 @@ abstract contract KarrotErc7401Base is RMRKNestable, AccessControl, IKarrotErc74
         _setupRole(MINTER_ROLE, _minter);
     }
 
-    /**
-     * @notice Checks if the spender is approved or the owner of the token.
-     * @param spender The address being checked.
-     * @param tokenId The ID of the token.
-     * @return A boolean indicating whether the spender is approved or the owner of the token.
-     */
+    /// @inheritdoc IKarrotErc7401Base
     function isApprovedOrOwner(address spender, uint256 tokenId) external view returns (bool) {
         return _isApprovedOrOwner(spender, tokenId);
     }
 
-    /**
-     * @notice Retrieves the total supply of tokens.
-     * @return The total number of tokens minted.
-     */
+    /// @inheritdoc IKarrotErc7401Base
     function totalSupply() external view returns (uint256) {
         return _lastTokenId;
     }
 
-    /**
-     * @notice Checks if the contract supports a given interface.
-     * @param interfaceId The interface identifier.
-     * @return A boolean indicating whether the contract supports the interface.
-     */
+    /// @inheritdoc RMRKNestable
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(AccessControl, RMRKNestable) returns (bool) {

@@ -45,12 +45,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         campaign = _campaign;
     }
 
-    /**
-     * @notice Mints a token to the specified parent campaign.
-     * @param parentId The ID of the parent campaign.
-     * @param data Additional data to include in the minted token.
-     * @return The ID of the last minted token.
-     */
+    /// @inheritdoc IKarrotTicket
     function mintToCampaign(
         uint256 parentId,
         bytes memory data
@@ -65,13 +60,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         return _lastTokenId;
     }
 
-    /**
-     * @notice Mints multiple tokens to the specified parent campaign.
-     * @param tokenCount The number of tokens to mint.
-     * @param parentId The ID of the parent campaign.
-     * @param data Additional data to include in the minted tokens.
-     * @return An array containing the IDs of the minted tokens.
-     */
+    /// @inheritdoc IKarrotTicket
     function mintToCampaignBatch(
         uint256 tokenCount,
         uint256 parentId,
@@ -91,12 +80,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         return tokenIds;
     }
     
-    /**
-     * @notice Burns the last minted ticket.
-     * @dev Only callable by the campaign contract.
-     * @dev After swapping the ticket to be burned with the last ticket in KarrotCampaign,
-     * we burn the last ticket using this function.
-     */
+    /// @inheritdoc IKarrotTicket
     function burnLastTicket() external {
         if(msg.sender != campaign){
             revert IncorrectValue("Only Campaign can burn tickets");
@@ -107,38 +91,24 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         _lastTokenId--;
     }
 
-    /**
-     * @notice Retrieves the address of the lottery contract associated with this campaign.
-     * @return The address of the lottery contract.
-     */
+    /// @inheritdoc KarrotCheckMintTime
     function getLotteryContract() public view override returns (address) {
         return IKarrotCampaign(campaign).lottery();
     }
 
-    /**
-     * @notice Retrieves the owner of the specified token ID.
-     * @param tokenId The ID of the token to query.
-     * @return The address of the owner of the token.
-     */
+    /// @inheritdoc IERC7401
     function ownerOf(
         uint256 tokenId
     ) public view override(RMRKNestable, IERC7401) returns (address) {
         return super.ownerOf(tokenId);
     }
 
-    /**
-     * @notice Retrieves the address of the organization associated with the campaign.
-     * @return The address of the organization.
-     */
+    /// @inheritdoc IKarrotTicket
     function getOrganisation() public view returns (address) {
         return IKarrotCampaign(campaign).organization();
     }
 
-    /**
-     * @notice Retrieves the ticket IDs owned by a specific user.
-     * @param _owner The address of the user whose ticket IDs are to be retrieved.
-     * @return tiketIds An array containing the IDs of the tickets owned by the specified user.
-     */
+    /// @inheritdoc IKarrotTicket
     function getUserTicketIds(address _owner) view external returns (uint256[] memory){
         uint256 campaignId = IKarrotCampaign(campaign).getUserCampaignId(_owner);
         // code campaign contract ensures that a campaign can only have tickets in its children
@@ -153,11 +123,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         return tiketIds;
     }
 
-    /**
-     * @notice Checks if the contract supports a given interface.
-     * @param interfaceId The interface identifier.
-     * @return A boolean indicating whether the contract supports the interface.
-     */
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {

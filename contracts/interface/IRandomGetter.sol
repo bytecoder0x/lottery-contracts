@@ -5,8 +5,11 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotErrors} from "./IKarrotErrors.sol";
 
 /**
- * @title Random Getter Interface
- * @notice Interface for the RandomGetter contract that responsible for retrieving random numbers vue chainlink VRF for lotteries.
+ * @title RandomGetter contract
+ * @notice RandomGetter gets random numbers for lotteries using chainlink VRF.
+ * @notice RandomGetter contract must be has enough link token, since we pay a link token for getting a random number.
+ * @dev We use one RandomGetter contract for all lotteries, avoiding the
+ * need to send the link token to the balance of each contract separately.
  */
 interface IRandomGetter is IERC165, IKarrotErrors {
     /**
@@ -23,28 +26,44 @@ interface IRandomGetter is IERC165, IKarrotErrors {
     event RequestFulfilled(uint256 requestId, uint256 randomWord);
 
     /**
-     * @notice Requests a random number after that calls the VRF that returns the requestId.
-     * With this requestId we can get a random number.
-     * @return requestId The ID of request that is done.
+     * @notice Retrieves the request ID associated with the given lottery address.
+     * @param lotteryAddress The address of the lottery.
+     * @return The associated request ID.
+     */
+    function requestIds(address lotteryAddress) external view returns (uint);
+
+    /**
+     * @notice Retrieves the random number associated with the given request ID.
+     * @param requestId The ID of the request.
+     * @return The associated random number.
+     */
+    function randomNumbersByRequestId(uint256 requestId) external view returns (uint256);
+
+    /**
+     * @notice Requests a random number for the calling lottery contract
+     * after that calls the VRF that returns the requestId. With this requestId we can get a random number.
+     * @dev Only can be called callable by the lottery contract itself.
+     * @return requestId The unique identifier for the random number request.
+     * @dev Reverts if the lottery contract already has random number request is pending.
      */
     function requestRandomNumber() external returns (uint256);
 
     /**
      * @notice Retrieves the random number associated with the given request ID.
-     * @param requestId The ID for which we received as a result of the request.
+     * @param requestId The unique identifier for the random number request.
      * @return random The generated random number.
      */
     function getRandomNumber(uint256 requestId) external view returns (uint256);
 
     /**
      * @notice Retrieves the random number associated with the given lottery contract address.
-     * @param lottery The address of the lottery contract that made the request.
+     * @param lottery The address of the lottery contract.
      * @return random The generated random number.
      */
     function getRandomNumber(address lottery) external view returns (uint256);
 
     /**
-     * @notice Allows the withdrawal of tokens from the contract.
+     * @notice Allows the admin of this contract to withdraw tokens from the contract.
      * @param token The address of the token to withdraw.
      * @param amount The amount of tokens to withdraw.
      */

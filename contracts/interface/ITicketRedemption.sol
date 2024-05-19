@@ -6,8 +6,9 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IKarrotErrors} from "./IKarrotErrors.sol";
 
 /**
- * @title Ticket Redemption Interface
- * @notice Interface for the TicketRedemption contract that enables users to exchange tickets for rewards on Karrot platform.
+ * @title TicketRedemption contract
+ * @notice TicketRedemption enables users to exchange tickets for rewards on Karrot platform before the burn deadline.
+ * @dev TicketRedemption manages reward token addresses, handles ticket redemption, and oversees redemption price and caps.
  */
 interface ITicketRedemption is IERC165, IKarrotErrors {
 
@@ -32,34 +33,11 @@ interface ITicketRedemption is IERC165, IKarrotErrors {
      */
     event SetRedemptionCap(uint redemptionCap);
 
-
-    /** 
-     * @notice Represents the total tokens utilized for ticket redemption.
-     * @return The amount of tokens spent on ticket redemption.
-     */
-    function redeemed() external view returns (uint);
-
-    /**
-     * @notice Indicates the maximum tokens permitted for redemption.
-     * @return The maximum total redemption amount of tokens allowed.
-     */
-    function redemptionCap() external view returns (uint);
-
-    /**
-     * @notice Address of the lottery contract associated with this redemption.
-     * @return The address of the associated lottery contract.
-     */
-    function lottery() external view returns (address);
-
-    /**
-     * @notice Token contract used as rewards in the lottery and redemption.
-     * @return The address contract for rewards.
-     */
-    function rewardToken() external view returns (IERC20);
-
     /**
      * @notice Sets the reward token contract address.
      * @param _rewardToken The address of the reward token contract.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Reverts if reward token is not a contract.
      */
     function setRewardToken(address _rewardToken) external;
 
@@ -67,19 +45,26 @@ interface ITicketRedemption is IERC165, IKarrotErrors {
      * @notice Redeems(burns) tickets for a reward.
      * @param ticketContract The ticket contract address.
      * @param amountOfTicketsToBurn The number of tickets to redeem.
-     * @dev It is possible to redeem if the TicketRedemption has approved from KarrotCampaing contract.
+     * @dev It is possible to redeem if the TicketRedemption must be approved from KarrotCampaing contract.
+     * @dev After burn, user receives a reward in tokens.
+     * @dev Only callable if burn period hasn't ended, redemption price is set, redemption cap.
+     * isn't reached, user owns an organization and the ticket is registered in the lottery.
      */
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external;
 
     /**
      * @dev Sets the redemption price.
-     * @param _redemptionPrice The new redemption price.0.
+     * @param _redemptionPrice The new redemption price.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Reverts if the caller doesn't have admin role or if the redemption price is set to 0.
      */
     function setRedemptionPrice(uint _redemptionPrice) external;
     
     /**
      * @notice Sets the redemption cap.
      * @param _redemptionCap The new redemption cap. A value of 0 indicates no cap.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev redemptionCap can be 0, meaning no cap
      */
     function setRedemptionCap(uint _redemptionCap) external;
 }

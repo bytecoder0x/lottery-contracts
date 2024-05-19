@@ -16,7 +16,7 @@ import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
  * @dev KarrotOrganization allows minting new tokens for specific addresses and ensures each address can own only one organization token.
  */
 contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
-    /// @notice Mapping from owner address to its associated organization ID.
+    /// @inheritdoc IKarrotOrganization
     mapping(address => uint256) public ownerToken;
 
     /**
@@ -28,13 +28,7 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     constructor(address _defaultAdmin, address _minter, string memory _name) 
         KarrotErc7401Base(_defaultAdmin, _minter, _name) { }
 
-    /**
-     * @notice Mints a new organization token to the specified address.
-     * @param to The address to mint the token to.
-     * @param data Additional data to include in the minted token.
-     * @return The ID of the newly minted token.
-     * @dev Reverts if the recipient already owns an organization token.
-     */
+    /// @inheritdoc IKarrotOrganization
     function mintTo(
         address to,
         bytes memory data
@@ -52,20 +46,12 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
         return _lastTokenId;
     }
 
-    /**
-     * @notice Retrieves the owner of the specified token ID.
-     * @param tokenId The ID of the token to query.
-     * @return The address of the owner of the token.
-     */
+    /// @inheritdoc IERC7401
     function ownerOf(uint256 tokenId) public view override(RMRKNestable, IERC7401) returns (address) {
         return super.ownerOf(tokenId);
     }
 
-    /**
-     * @notice Checks if the contract supports a given interface.
-     * @param interfaceId The interface identifier.
-     * @return A boolean indicating whether the contract supports the interface.
-     */
+     /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {

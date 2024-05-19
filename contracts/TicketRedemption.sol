@@ -54,12 +54,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
 
-    /**
-     * @notice Sets the reward token contract address.
-     * @param _rewardToken The address of the reward token contract.
-     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Reverts if reward token is not a contract.
-     */
+    /// @inheritdoc ITicketRedemption
     function setRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE)  {
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
@@ -68,15 +63,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         rewardToken = IERC20(_rewardToken);
     }
 
-    /**
-     * @notice Redeems(burns) tickets for a reward.
-     * @param ticketContract The ticket contract address.
-     * @param amountOfTicketsToBurn The number of tickets to redeem.
-     * @dev It is possible to redeem if the TicketRedemption must be approved from KarrotCampaing contract.
-     * @dev After burn, user receives a reward in tokens.
-     * @dev Only callable if burn period hasn't ended, redemption price is set, redemption cap.
-     * isn't reached, user owns an organization and the ticket is registered in the lottery.
-     */
+    /// @inheritdoc ITicketRedemption
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
         address campaignAddress = IKarrotTicket(ticketContract).campaign();
         address organizationAddress = IKarrotCampaign(campaignAddress).organization();
@@ -108,12 +95,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         emit TicketRedeemed(msg.sender, ticketContract, amountOfTicketsToBurn, redemptionAmount);
     }
 
-    /**
-     * @dev Sets the redemption price.
-     * @param _redemptionPrice The new redemption price.
-     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Reverts if the caller doesn't have admin role or if the redemption price is set to 0.
-     */
+    /// @inheritdoc ITicketRedemption
     function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_redemptionPrice == 0) {
             revert IncorrectValue("Redemption price can't be 0");
@@ -122,23 +104,14 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         emit SetRedemptionPrice(_redemptionPrice);
     }
 
-    /**
-     * @notice Sets the redemption cap.
-     * @param _redemptionCap The new redemption cap. A value of 0 indicates no cap.
-     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev redemptionCap can be 0, meaning no cap
-     */
+    /// @inheritdoc ITicketRedemption
     function setRedemptionCap(uint _redemptionCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         //redemptionCap can be 0, meaning no cap
         redemptionCap = _redemptionCap;
         emit SetRedemptionCap(_redemptionCap);
     }
 
-    /**
-     * @notice Checks if the contract supports a given interface.
-     * @param interfaceId The interface identifier.
-     * @return A boolean indicating whether the contract supports the interface.
-     */
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {

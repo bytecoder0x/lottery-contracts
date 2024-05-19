@@ -30,14 +30,12 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
     /// @notice Address of the KarrotFactory contract.
     IKarrotFactory public factory;
 
-    /// @notice Mapping from lottery address to its associated request ID.
+    /// @inheritdoc IRandomGetter
     mapping(address => uint) public requestIds;
-    /// @notice Mapping from request ID to its associated random number.
+    /// @inheritdoc IRandomGetter
     mapping(uint256 => uint256) public randomNumbersByRequestId;
 
-    /**
-     * @notice The modifier checks whether the function is called from the lottery contract.
-     */
+    /// @notice The modifier checks whether the function is called from the lottery contract.
     modifier onlyLottery() {
         if (!factory.isLottery(msg.sender)) {
             revert IncorrectCondition("Only lottery can call this function");
@@ -72,13 +70,7 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
 
-    /**
-     * @notice Requests a random number for the calling lottery contract
-     * after that calls the VRF that returns the requestId. With this requestId we can get a random number.
-     * @dev Only can be called callable by the lottery contract itself.
-     * @return requestId The unique identifier for the random number request.
-     * @dev Reverts if the lottery contract already has random number request is pending.
-     */
+    /// @inheritdoc IRandomGetter
     function requestRandomNumber() external onlyLottery returns (uint256) {
         if (requestIds[msg.sender] != 0) {
             revert IncorrectCondition("Lottery already has random number or request id pending");
@@ -96,39 +88,23 @@ contract RandomGetter is VRFV2WrapperConsumerBase, AccessControl, IRandomGetter 
         return requestId;
     }
 
-    /**
-     * @notice Retrieves the random number associated with the given request ID.
-     * @param requestId The unique identifier for the random number request.
-     * @return random The generated random number.
-     */
+    /// @inheritdoc IRandomGetter
     function getRandomNumber(uint256 requestId) external view returns (uint256 random) {
         random = randomNumbersByRequestId[requestId];
     }
 
-    /**
-     * @notice Retrieves the random number associated with the given lottery contract address.
-     * @param lottery The address of the lottery contract.
-     * @return random The generated random number.
-     */
+    /// @inheritdoc IRandomGetter
     function getRandomNumber(address lottery) external view returns (uint256 random) {
         uint256 requestId = requestIds[lottery];
         random = randomNumbersByRequestId[requestId];
     }
 
-    /**
-     * @notice Allows the admin of this contract to withdraw tokens from the contract.
-     * @param _token The address of the token to withdraw.
-     * @param _amount The amount of tokens to withdraw.
-     */
+    /// @inheritdoc IRandomGetter
     function withdraw(address _token, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         IERC20(_token).safeTransfer(msg.sender, _amount);
     }
 
-    /**
-     * @notice Checks if the contract supports a given interface.
-     * @param interfaceId The interface identifier.
-     * @return A boolean indicating whether the contract supports the interface.
-     */
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     )
