@@ -28,6 +28,7 @@ describe("RandomGetter", async () => {
 
         await rewardToken.transfer(lottery.address, ethers.utils.parseEther("1000"));
         await ticketMinter.connect(minter).mintTickets(user1.address, campaignsAddresses[0], 5);
+        await lottery.setupLottery(rewardToken.address, [ { tierType: 0, winnersShare: 0, winnersCount: 1, rewardAmount: 100}], [10000]);
 
         return { karrotFactory, lottery, coordinator, wrapper, randomGetter, rewardToken, linkToken, owner, user1, user2 };
     }
@@ -67,10 +68,8 @@ describe("RandomGetter", async () => {
     });
 
     it("Should successfully receive a random number", async function () {
-        await ethers.provider.send("evm_increaseTime", [2001]);
+        await ethers.provider.send("evm_increaseTime", [3001]);
         await lottery.initializeLottery(0);
-        await lottery.setupLottery(rewardToken.address, [], [10000]);
-        await ethers.provider.send("evm_increaseTime", [1001]);
         await lottery.runLottery();
         await fulfillRandomWord();
         await lottery.rewardWinners(0);
@@ -86,10 +85,8 @@ describe("RandomGetter", async () => {
 
     
     it("Should successfully receive 1 if random number equal 0", async function () {
-        await ethers.provider.send("evm_increaseTime", [2001]);
+        await ethers.provider.send("evm_increaseTime", [3001]);
         await lottery.initializeLottery(0);
-        await lottery.setupLottery(rewardToken.address, [], [10000]);
-        await ethers.provider.send("evm_increaseTime", [1001]);
         await lottery.runLottery();
         const lastRequestId = await lottery.requestRandomNumberId();
         await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [0]);
@@ -156,6 +153,8 @@ describe("RandomGetter", async () => {
         expect(await randomGetter.supportsInterface(interfaceIDHex)).to.equal(true);
 
         let functionSignatureRedemption = [
+            'requestIds(address)',
+            'randomNumbersByRequestId(uint256)',
             'requestRandomNumber()',
             'getRandomNumber(uint256)',
             'getRandomNumber(address)',

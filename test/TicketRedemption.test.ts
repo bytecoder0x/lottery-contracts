@@ -205,10 +205,6 @@ describe("TicketRedemption", async () => {
     expect(await redemption.supportsInterface(interfaceIDHex)).to.equal(true);
 
     let functionSignatureRedemption = [
-      'redeemed()',
-      'redemptionCap()',
-      'lottery()',
-      'rewardToken()',
       'setRewardToken(address)',
       'redeem(address,uint256)',
       'setRedemptionPrice(uint256)',
