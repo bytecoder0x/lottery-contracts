@@ -27,11 +27,11 @@ contract KarrotCampaign is
     /// @notice Сonstant that contains the LOWER_ADMIN role. Owner of this role can set the contract ticket.
     bytes32 public constant LOWER_ADMIN_ROLE = keccak256("LOWER_ADMIN");
 
-    /// @notice Address of the lottery contract in that the campaign participates.
+    /// @inheritdoc IKarrotCampaign
     address public lottery;
-    /// @notice Address of the organization contract that is the parent of this campaign.
+    /// @inheritdoc IKarrotCampaign
     address public organization;
-    /// @notice Address of the ticket contract used for this campaign.
+    /// @inheritdoc IKarrotCampaign
     address public ticketsContract;
 
     /// @inheritdoc IKarrotCampaign

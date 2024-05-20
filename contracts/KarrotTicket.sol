@@ -18,7 +18,7 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
  * and retrieving contract-related information.
  */
 contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
-    /// @notice Address of the campaign contract that is the parent of this ticket.
+    /// @inheritdoc IKarrotTicket
     address public campaign;
 
     /**

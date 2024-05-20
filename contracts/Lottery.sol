@@ -27,11 +27,11 @@ contract Lottery is AccessControl, ILottery {
     /// @notice Basis points. Used to calculate the amount of winners.
     uint256 public constant BIPS = 100_00;
 
-    /// @notice Deadline for minting tickets.
+    /// @inheritdoc ILottery
     uint32 public mintDeadline;
-    /// @notice Deadline for burning tickets.
+    /// @inheritdoc ILottery
     uint32 public burnDeadline;
-    /// @notice The time after that the lottery can be ran.
+    /// @inheritdoc ILottery
     uint32 public lotteryTime;
     
     /// @notice Total supply of tickets participating in the lottery.

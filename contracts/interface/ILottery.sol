@@ -100,8 +100,8 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function burnDeadline() external view returns (uint32);
     /**
-     * @notice Retrieves the timestamp indicating the time when the lottery will occur.
-     * @return The timestamp indicating the time when the lottery will occur.
+     * @notice Retrieves the timestamp indicating the time when the lottery can run.
+     * @return The timestamp indicating the time when the lottery can run.
      */
     function lotteryTime() external view returns (uint32);
     
