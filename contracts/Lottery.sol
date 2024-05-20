@@ -43,18 +43,18 @@ contract Lottery is AccessControl, ILottery {
 
     /// @notice Addresses of organizations participating in the lottery.
     address[] public organizations;
-    /// @notice An array of each organization's deposited tokens.
+    /// @notice An array of each organization's shares.
     uint[] public organizationSharesForFixedTiers;
 
     /// @notice The amount of initialized organizations
     uint public initializedOrganizationsCount;
-    /// @notice Mapping that contains registered addresses of tickets.
+    /// @inheritdoc ILottery
     mapping(address => bool) public isRegisteredTicket;
-    /// @notice Mapping that contains added addresses of organizations.
+    /// @inheritdoc ILottery
     mapping(address => bool) public isOrganizationAdded;
-    /// @notice Mapping from organization address to its associated an array of tickets.
+    /// @inheritdoc ILottery
     mapping(address => address[]) public organizationTicketsContracts;
-    /// @notice Mapping from organization address to its associated TicketRange that contains the first and last ticket of this organization.
+    /// @inheritdoc ILottery
     mapping(address => TicketRange) public organizationTicketsRange;
     /// @notice Array containing tickets of each campaign and TicketRange. 
     CampaignTickets[] public allCampaignTickets;
@@ -69,21 +69,21 @@ contract Lottery is AccessControl, ILottery {
     /// @notice randomGetter contract that is responsible for obtaining a random number.
     IRandomGetter public randomGetter;
 
-    /// @notice Mapping from ticket ID to its associated winner amount.
+    /// @inheritdoc ILottery
     mapping(uint256 => uint256) public winnerAmount;
-    /// @notice Mapping from tier index to its associated array of winners.
+    /// @inheritdoc ILottery
     mapping(uint256 => uint256[]) public tierWinners;
-    /// @notice Flag indicating whether the lottery has been completely processed(all tiers).
+    /// @notice Flag indicating whether the lottery has been completely processed (all tiers).
     bool public lotteryProcessed;
     
     /**
-     * @notice Constructor function to initialize the contract with the default admin, registrar, and time values.
-     * @param _defaultAdmin The address of the default admin role.
+     * @notice Constructor function to initialize the Lottery contract.
+     * @param _defaultAdmin The address of the admin this contract.
      * @param _registrar The address of the registrar role (expected to be the factory contract).
      * @param _randomGetter The address of the contract providing random numbers.
      * @param _mintDeadline The timestamp indicating the deadline for minting tickets.
      * @param _burnDeadline The timestamp indicating the deadline for burning tickets.
-     * @param _lotteryTime The timestamp indicating the time when the lottery will occur.
+     * @param _lotteryTime The timestamp indicating the time when the lottery can be run.
      * @dev Reverts if the provided time values are incorrect.
      */
     constructor(
@@ -365,9 +365,7 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /**
-     * @notice Rewards the winners for the specified tier.
-     * @notice This function calculates the rewards for winners in the specified tier, selects winners randomly based on
-     * a random number within the given range of lottery tickets then the reward amount is transferred to the winners.
+     * @notice This function randomly selects winners from registered tickets based on a random number and rewards them.
      * @param startTicketId The starting ID of the lottery tickets range.
      * @param endTicketId The ending ID of the lottery tickets range.
      * @param tierIndex The index of the tier.

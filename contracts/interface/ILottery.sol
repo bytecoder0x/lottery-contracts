@@ -105,15 +105,49 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function lotteryTime() external view returns (uint32);
     
+    
     /**
     * @notice Mapping that contains registered addresses of tickets.
     * @param ticketAddress The address of the ticket contract.
     * @return True if the ticket address is registered, false otherwise.
     */
     function isRegisteredTicket(address ticketAddress) external view returns (bool);
+    /**
+    * @notice Mapping that contains added organization.
+    * @param organizationAddress The address of the ticket contract.
+    * @return True if the organization address is added, false otherwise.
+    */
+    function isOrganizationAdded(address organizationAddress) external view returns (bool);
+    /**
+     * @notice Mapping that contains array of ticket contracts associated with an organization address.
+     * @param organization The address of the organization.
+     * @param ticketContractIndex The index of the ticket in array.
+     * @return tickets An array containing the addresses of ticket contracts.
+     */
+    function organizationTicketsContracts(address organization, uint256 ticketContractIndex) external view returns (address);
+    /**
+     * @notice Mapping that contains the ticket range associated with an organization.
+     * @param organization The address of the organization.
+     * @return firstLotteryTicketId First ticket ID that associated with its organization.
+     * @return lastLotteryTicketId Last ticket ID that associated with its organization.
+     */
+    function organizationTicketsRange(address organization) external view returns (uint256 firstLotteryTicketId, uint256 lastLotteryTicketId);
+    /**
+     * @notice Mapping that contains the winner amount associated with a ticket ID.
+     * @param ticketId The ID of the ticket.
+     * @return The amount won by the ticket.
+     */
+    function winnerAmount(uint256 ticketId) external view returns (uint256);
+    /**
+     * @notice Mapping that contains array of winners associated with a tier index.
+     * @param tierIndex The index of the tier.
+     * @param winnerIndex The index of the winner in array.
+     * @return winners An array containing the IDs of winners in the tier.
+     */
+    function tierWinners(uint256 tierIndex, uint256 winnerIndex) external view returns (uint256);
 
     /**
-     * @notice Registers a ticket contract for the lottery.
+     * @notice This function registers a ticket contract for the lottery.
      * @param ticketContract The address of the ticket contract to register.
      * @dev Only can be called by accounts with the REGISTRAR_ROLE.
      * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
@@ -122,62 +156,60 @@ interface ILottery is IERC165, IKarrotErrors {
     function registerTicketContract(address ticketContract) external;
 
     /**
-     * @notice Sets up the lottery with specified parameters is like reward token, tiers and shares of organizations for fixed tiers.
-     * @notice The specified reward token will be sent to the winners of the lottery.
-     * @notice Based on shares of organizations will choose the winners for the fixed tier. The large shares from the organization, the more winners it will have.
-     * @notice The tiers contain detailed information about each tier, such as type, amount of winners, reward amount.
+     * @notice This function sets up the lottery with specified parameters such as reward token, tiers and shares of organizations.
+     * @notice Part of winners for each organization depends on its shares.
+     * @notice The tiers contain information about each tier, such as type, amount of winners, reward amount.
      * @param _rewardToken The address of the token used as rewards.
      * @param _tiers An array containing the configuration of lottery tiers.
      * @param _organizationSharesForFixedTiers An array containing the percentage shares of organizations for fixed tiers.
-     * @dev Each element in `_tiers` is defined by its type(jackpot, random and fixed), the amount of winners and the reward amount.
+     * @dev Each element in `_tiers` is defined by its type (jackpot, random and fixed), the amount of winners and the reward amount.
      * @dev Each element in the `_organizationSharesForFixedTiers` is the percentage share of an organization for fixed tiers.
-     * @dev Total share is 100_00 corresponds to 100% and 100 corresponds to 1% (BIPS).
-     * @dev This function must be called before the deadline lottery time.
+     * @dev Total share is 100_00 corresponds to 100% (BIPS).
+     * @dev This function must be called before the lottery time.
      * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
      * @dev Reverts if the reward token is not a contract.
      * @dev Reverts if the amount of organization shares for fixed tiers does not match the amount of organizations.
-     * @dev Reverts if there are any incorrect tier configurations or if the total organization shares do not sum up to 100%.
+     * @dev Reverts if there are any incorrect tier configurations or if the total organization shares don't sum up to 100%.
      */
     function setupLottery(
         address _rewardToken,
-        Tier[] calldata _tiers,
-        uint256[] calldata _organizationSharesForFixedTiers
+        Tier[] memory _tiers,
+        uint256[] memory _organizationSharesForFixedTiers
     ) external;
 
     /**
-     * @notice Initializes the lottery by assigning ticket ranges to each organization's tickets.
-     * @notice Initializes a specified number of organizations to avoid exceeding gas limits when dealing with many organizations.
+     * @notice This function initializes the lottery by assigning ticket ranges to each organization's tickets.
+     * @notice This function initializes a specified number of organizations to avoid exceeding gas limits when dealing with many organizations.
      * @param organizationsCount The amount of organizations to initialize in the lottery.
      * @dev If the gas limit is exceeded when calling the function, the organization must be initialized in parts.
-     * @dev This function can be called when the burn deadline passed, since after that amount of tokens cannot be changed.
+     * @dev This function can be called when the burn deadline passed, since after that amount of tickets cannot be changed.
      * @dev This function can be called if lottery hasn't been fully initialized.
-     * @dev Calculates the amount of winners for each random tier based on the total supply of lottery tickets.
+     * @dev Calculates the amount of winners for random tier based on the total supply of lottery tickets.
      * @dev If `organizationsCount` is 0 or exceeds the remaining amount of organizations to initialize,
      * it automatically sets `organizationsCount` to the remaining amount of organizations.
      */
     function initializeLottery(uint256 organizationsCount) external;
 
     /**
-     * @notice Run the lottery process. We'll receive a random number based on that all winners can be selected. 
+     * @notice This function run the lottery process. 
+     * @notice This function makes a request for a random number. Later, winners are selected based on this random number.
      * @dev This function can be called when the lottery time reached.
-     * @dev This function doesn't select winners and rewards aren't distributed here.
+     * @dev This function doesn't include selecting winners or distributing rewards.
      * @dev Reverts if the function was called before and the `requestRandomNumberId` was received.
      * @dev Reverts if the lottery is not fully initialized with all organizations.
-     * @dev Initiates a request for a random number using the `requestRandomNumber`.
      */
     function runLottery() external;
 
     /**
-     * @notice Rewards the winners of the lottery tiers.
-     * @notice Rewards a specified amoumt of tiers to avoid exceeding gas limits when dealing with many tiers.
-     * @notice This function calculates the rewards for winners in the specified tier, selects winners randomly based on
-     * a random number within the given range of lottery tickets then the reward amount is transferred to the winners.
+     * @notice This function rewards the winners of the lottery tiers.
+     * @notice This function randomly selects winners from registered tickets based on a random number.
+     * @notice This function rewards a specified amoumt of tiers to avoid exceeding gas limits when dealing with many tiers.
      * @param tiersCount The number of tiers to process.
      * @dev If the gas limit is exceeded when calling the function, the tiers should be rewarded in parts.
      * @dev Winners are chosen based on a random number.
+     * @dev Transfer tokens to winners.
      * @dev Reverts if a random number is still pending or if the lottery is not yet run.
      * @dev Reverts if the lottery has already been processed.
-     * @dev If the tier is of type `Random`, it distributes rewards among the winners based on the random number.
      * @dev If the tier is of type `Fixed`, it distributes rewards among the winners based on their organization's shares.
      * @dev If `tiersCount` is 0 or exceeds the remaining amount of tiers to initialize,
      * it automatically sets `tiersCount` to the remaining amount of tiers.
