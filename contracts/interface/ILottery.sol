@@ -106,6 +106,13 @@ interface ILottery is IERC165, IKarrotErrors {
     function lotteryTime() external view returns (uint32);
     
     /**
+    * @notice Mapping that contains registered addresses of tickets.
+    * @param ticketAddress The address of the ticket contract.
+    * @return True if the ticket address is registered, false otherwise.
+    */
+    function isRegisteredTicket(address ticketAddress) external view returns (bool);
+
+    /**
      * @notice Registers a ticket contract for the lottery.
      * @param ticketContract The address of the ticket contract to register.
      * @dev Only can be called by accounts with the REGISTRAR_ROLE.

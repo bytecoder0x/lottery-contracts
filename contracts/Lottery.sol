@@ -394,11 +394,7 @@ contract Lottery is AccessControl, ILottery {
         }
     }
 
-    /**
-     * @notice Checks if the contract supports a given interface.
-     * @param interfaceId The interface identifier.
-     * @return A boolean indicating whether the contract supports the interface.
-     */
+     /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {
