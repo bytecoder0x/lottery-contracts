@@ -149,3 +149,14 @@ To deploy an organization, campaign and tickets, there are three options availab
 
 ### Lottery and Redemption:
 To deploy a lottery and redemption, requires specifying admin address, mint deadline (for ticket minting), burn deadline (for ticket burning), and lottery time (to run the lottery).
+
+## Contracts
+
+- [KarrotFactory.sol](./contracts/KarrotFactory.sol)
+- [KarrotOrganization.sol](./contracts/KarrotOrganization.sol)
+- [KarrotCampaign.sol](./contracts/KarrotCampaign.sol)
+- [KarrotTicket.sol](./contracts/KarrotTicket.sol)
+- [TicketMinter.sol](./contracts/TicketMinter.sol)
+- [Lottery.sol](./contracts/Lottery.sol)
+- [TicketRedemption.sol](./contracts/TicketRedemption.sol)
+- [RandomGetter.sol](./contracts/RandomGetter.sol)
