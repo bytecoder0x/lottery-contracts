@@ -220,6 +220,9 @@ describe("KarrotTicket", async () => {
             await campaign.grantRole(minterRole, minter.address);
 
             let user1Data = await mintTickets(karrotTicket, user1, 2);
+            const ticketIds = await karrotTicket.getUserTicketIds(user1.address);
+
+            expect(user1Data.ticketIds.length).to.be.eq(ticketIds.length);
             expect(user1Data.ticketIds.length).to.be.eq(2);
             
             expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(2);

@@ -16,6 +16,7 @@ import {ILottery} from "./interface/ILottery.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ITicketMinter} from "./interface/ITicketMinter.sol";
+import {IRandomGetter} from "./interface/IRandomGetter.sol";
 
 import {LotteryDeployerLibrary} from "./libraries/LotteryDeployerLibrary.sol";
 import {RedemptionDeployerLibrary} from "./libraries/RedemptionDeployerLibrary.sol";
@@ -23,44 +24,67 @@ import {OrganizationDeployerLibrary} from "./libraries/OrganizationDeployerLibra
 import {CampaignDeployerLibrary} from "./libraries/CampaignDeployerLibrary.sol";
 import {TicketDeployerLibrary} from "./libraries/TicketDeployerLibrary.sol";
 
+/**
+ * @title KarrotFactory contract
+ * @notice The KarrotFactory contract serves as a factory for various contracts 
+ * such as organizations, campaigns, lotteries, redemption and tickets.
+ * @dev KarrotFactory manages the deployment process and keeps track of deployed contracts.
+*/
 contract KarrotFactory is AccessControl, IKarrotFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// @notice Сonstant that contains the DEPLOYER role. Owner of this role can deploy contracts.
     bytes32 public constant DEPLOYER_ROLE = keccak256("DEPLOYER");
+    /// @notice Address of the minterContract that can mint organization, campaigns and tickets. Expected to be the TicketMinter contract.
     address public minterContract;
+    /// @notice Address of the randomGetterContract providing random numbers. Expected to be the RandomGetter contract.
+    address public randomGetterContract;
 
+    /// @notice Stores addresses of active organizations.
     EnumerableSet.AddressSet private activeOrganizations;
 
+    /// @notice Stores addresses of deployed lottery contracts.
     address[] public lotteries;
+    /// @notice Stores addresses of deployed redemption contracts.
     address[] public redemptions;
+    /// @notice Stores addresses of deployed organization contracts.
     address[] public organizations;
+    /// @notice Stores addresses of deployed campaign contracts.
     address[] public campaigns;
+    /// @notice Stores addresses of deployed ticket contracts.
     address[] public tickets;
 
+    /// @inheritdoc IKarrotFactory
     mapping(address => bool) public isOrganization;
+    /// @inheritdoc IKarrotFactory
     mapping(address => bool) public isLottery;
+    /// @inheritdoc IKarrotFactory
     mapping(address => address) public campaignOrganization;
+    /// @inheritdoc IKarrotFactory
     mapping(address => address) public ticketsCampaign;
-   
+
+    /// @notice The modifier checks whether the function is without set minter contract.
     modifier withSetupMinterContract() {
         if (minterContract == address(0)) revert IncorrectCondition("Minter contract not set");
         _;
     }
 
+    /// @notice The modifier checks whether the function is without set randomGetter contract.
+    modifier withSetupRandomGetterContract() {
+        if (randomGetterContract == address(0)) revert IncorrectCondition("RandomGetter contract not set");
+        _;
+    }
+
+    /**
+     * @notice Constructor function to initialize the KarrotFactory contract.
+     * @param _deployer The address of the deployer role.
+     */
     constructor(address _deployer) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(DEPLOYER_ROLE, _deployer);
     }
 
-    function enableOrganization(
-        address _organization
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
-        activeOrganizations.add(_organization);
-
-        emit EnableOrganization(_organization);
-    }
-
+    /// @inheritdoc IKarrotFactory
     function disableOrganization(
         address _organization
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -70,6 +94,17 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         emit DisabledOrganization(_organization);
     }
 
+    /// @inheritdoc IKarrotFactory
+    function enableOrganization(
+        address _organization
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
+        activeOrganizations.add(_organization);
+
+        emit EnableOrganization(_organization);
+    }
+
+    /// @inheritdoc IKarrotFactory
     function setMinterContract(
         address _minterContract
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -85,12 +120,29 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         emit MinterContractUpdated(_minterContract);
     }
 
+    /// @inheritdoc IKarrotFactory
+    function setRandomGetterContract(
+        address _randomGetterContract
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (
+            !IRandomGetter(_randomGetterContract).supportsInterface(
+                type(IRandomGetter).interfaceId
+            )
+        ) {
+            revert InterfaceNotSupported();
+        }
+        randomGetterContract = _randomGetterContract;
+        
+        emit RandomGetterContractUpdated(_randomGetterContract);
+    }
+
+    /// @inheritdoc IKarrotFactory
     function deployLotteryAndRedemptionContract(
         address _defaultAdmin,
         uint32 _mintDeadline,
         uint32 _burnDeadline,
         uint32 _lotteryTime
-    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address newLottery, address newRedemption) {
+    ) public withSetupRandomGetterContract onlyRole(DEPLOYER_ROLE) returns (address newLottery, address newRedemption) {
     
             newLottery = _deployLotteryContract(
                 _defaultAdmin,
@@ -104,6 +156,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
             emit RedemptionContractDeployed(newRedemption);
     }
 
+    /// @inheritdoc IKarrotFactory
     function deployOrganizationContract(
         address defaultAdmin,
         string memory organizationName
@@ -113,6 +166,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return newOrganization;
     }
 
+    /// @inheritdoc IKarrotFactory
     function deployCampaignAndTicketContract(
         address defaultAdmin,
         address lottery,
@@ -125,6 +179,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return (newCampaign, newTicket);
     }
 
+    /// @inheritdoc IKarrotFactory
     function deployOrganizationAndCampaigns(
         address _defaultAdmin,
         address _lottery,
@@ -158,26 +213,62 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     }
 
+    /// @inheritdoc IKarrotFactory
     function getAllLotteries() external view returns (address[] memory) {
         return lotteries;
     }
 
+    /// @inheritdoc IKarrotFactory
     function getAllRedemptions() external view returns (address[] memory) {
         return redemptions;
     }
 
+    /// @inheritdoc IKarrotFactory
     function getAllOrganizations() external view returns (address[] memory) {
         return organizations;
     }
 
+    /// @inheritdoc IKarrotFactory
     function getAllCampaigns() external view returns (address[] memory) {
         return campaigns;
     }
 
+    /// @inheritdoc IKarrotFactory
     function getAllTickets() external view returns (address[] memory) {
         return tickets;
     }
 
+    /// @inheritdoc IKarrotFactory
+    function getLotteriesCount() external view returns (uint256) {
+        return lotteries.length;
+    }
+
+    /// @inheritdoc IKarrotFactory
+    function getRedemptionsCount() external view returns (uint256) {
+        return redemptions.length;
+    }
+
+    /// @inheritdoc IKarrotFactory
+    function getOrganizationsCount() external view returns (uint256) {
+        return organizations.length;
+    }
+
+    /// @inheritdoc IKarrotFactory
+    function getCampaignsCount() external view returns (uint256) {
+        return campaigns.length;
+    }
+
+    /// @inheritdoc IKarrotFactory
+    function getTicketsCount() external view returns (uint256) {
+        return tickets.length;
+    }
+
+    /**
+     * @notice Deploys a new organization contract.
+     * @param defaultAdmin The address of the admin for the contract.
+     * @param _organizationName The name of the organization.
+     * @return newOrganization The address of the newly deployed organization contract.
+     */
     function _deployOrganizationContract(
         address defaultAdmin,
         string memory _organizationName
@@ -194,6 +285,15 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return newOrganization;
     }
 
+    /**
+     * @notice Deploys a new campaign and ticket contract.
+     * @param defaultAdmin The address of the admin for the contracts.
+     * @param lottery The address of the lottery contract.
+     * @param organization The address of organization contract to that tickets belong to.
+     * @param campaignName The name of the campaign.
+     * @return deployedCampaign The address of the newly deployed campaign contract.
+     * @return deployedTicket The address of the newly deployed ticket contract.
+     */
     function _deployCampaignAndTicketContract(
         address defaultAdmin,
         address lottery,
@@ -228,6 +328,17 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         ILottery(lottery).registerTicketContract(deployedTicket);
     }
 
+    /**
+     * @notice Deploys a new lottery contract.
+     * @param _defaultAdmin The address of the admin for the contract.
+     * @param _mintDeadline The deadline for ticket minting.
+     * @param _burnDeadline The deadline for ticket burning.
+     * @param _lotteryTime The time when the lottery will be conducted.
+     * @return newLottery The address of the newly deployed lottery contract.
+     * @dev Reverts if _mintDeadline is greater than _burnDeadline,
+     *  _burnDeadline is greater than _lotteryTime,
+     *  _mintDeadline is greater than _lotteryTime.
+     */
     function _deployLotteryContract(
         address _defaultAdmin,
         uint32 _mintDeadline,
@@ -237,7 +348,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
         address newLottery = LotteryDeployerLibrary.deployLotteryContract(
             _defaultAdmin, 
-            address(this), 
+            address(this),
+            randomGetterContract,
             lotteries.length, 
             _mintDeadline, 
             _burnDeadline, 
@@ -249,6 +361,12 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return newLottery;
     }
 
+    /**
+     * @notice Deploys a new redemption contract.
+     * @param _defaultAdmin The address of the admin for the contract.
+     * @param _lottery The address of the associated lottery contract.
+     * @return newRedemption The address of the newly deployed redemption contract.
+     */
     function _deployRedemptionContract(
         address _defaultAdmin,
         address _lottery
@@ -264,6 +382,13 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         return newRedemption;
     }
 
+    /**
+     * @notice Deploys a new ticket contract.
+     * @param _defaultAdmin The address of the admin for the contract.
+     * @param _campaign The address of the associated campaign contract.
+     * @param _campaignName The name of the campaign.
+     * @return newTicket The address of the newly deployed ticket contract.
+     */
     function _deployTicketContract(
         address _defaultAdmin,
         address _campaign,
@@ -282,6 +407,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         ticketsCampaign[newTicket] = _campaign;
         return newTicket;
     }
+
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     )

@@ -12,14 +12,28 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ITicketMinter} from "./interface/ITicketMinter.sol";
 
+/**
+ * @title TicketMinter contract
+ * @notice The TicketMinter contract manages the creation of tickets for campaigns on the Karrot platform by interfacing with the KarrotFactory. 
+ * @dev TicketMinter ensures that tickets are minted for end owners within specified campaigns.
+ */
 contract TicketMinter is
     ITicketMinter,
     AccessControl
 {
+    /// @notice Сonstant that contains the MINTER role. Owner of this role can mint organization, campaigns and tickets.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER");
 
+    /// @notice Address of the KarrotFactory contract.
     IKarrotFactory public factory;
-    
+
+    /**
+     * @notice Constructor function to initialize the TicketMinter contract.
+     * @param _defaultAdmin The address of the admin this contract.
+     * @param _minter The address of the minter role.
+     * @param _factory The address of the KarrotFactory contract.
+     * @dev Reverts if the factory contract does not support their respective interfaces.
+     */
     constructor(address _defaultAdmin, address _minter, address _factory) {
         if (
             !IKarrotFactory(_factory).supportsInterface(
@@ -33,6 +47,7 @@ contract TicketMinter is
         factory = IKarrotFactory(_factory);
     }
 
+    /// @inheritdoc ITicketMinter
     function mintTicketsBatch(
         address[] memory endOwners,
         address campaign,
@@ -51,6 +66,7 @@ contract TicketMinter is
         }
     }
 
+    /// @inheritdoc ITicketMinter
     function mintTickets(
         address endOwner,
         address campaign,
@@ -97,6 +113,12 @@ contract TicketMinter is
         );
     }
 
+    /**
+     * @notice Retrieves the organization address associated with a campaign from the factory contract.
+     * @param campaign The address of the campaign.
+     * @return organization The address of the organization associated with the campaign.
+     * @dev Reverts if any organization is found for the provided campaign.
+     */
     function _getOrganizationFromFactory(
         address campaign
     ) private view returns (address) {
@@ -107,6 +129,11 @@ contract TicketMinter is
         return organization;
     }
 
+    /**
+     * @notice Retrieves the ticket contract address associated with a campaign.
+     * @param campaign The address of the campaign.
+     * @return The address of the ticket contract associated with the campaign.
+     */
     function _getTicketFromCampaign(
         address campaign
     ) private view returns (address) {
@@ -115,6 +142,12 @@ contract TicketMinter is
         return ticket;
     }
 
+    /**
+     * @notice Finds the token ID a campaign.
+     * @param organizationChildren The list of children tokens owned by the organization.
+     * @param campaign The address of the campaign.
+     * @return campaignTokenId The token ID associated with the campaign, or 0 if not found.
+     */
     function _getCampaignTokenId(
         IERC7401.Child[] memory organizationChildren,
         address campaign
@@ -133,6 +166,13 @@ contract TicketMinter is
         return campaignTokenId;
     }
 
+    /**
+     * @notice Mints the campaign token to the organization and accepts it as a child.
+     * @param campaign The address of the campaign contract.
+     * @param organization The address of the organization contract.
+     * @param organizationTokenId The ID of the organization token.
+     * @return campaignTokenId The token ID associated with the minted campaign.
+     */
     function _mintCampaignToOrganizationAndAccept(
         address campaign,
         address organization,
@@ -154,6 +194,14 @@ contract TicketMinter is
         );
     }
 
+    /**
+     * @notice Mints tickets to the campaign and accepts them as children.
+     * @param ticket The address of the ticket contract.
+     * @param campaign The address of the campaign contract.
+     * @param ticketsCount The number of tickets to mint.
+     * @param campaignTokenId The ID of the campaign token.
+     * @return ticketsTokenIds An array containing the IDs of the minted tickets.
+     */
     function _mintTicketToCampaignAndAccept(
         address ticket,
         address campaign,
@@ -182,6 +230,11 @@ contract TicketMinter is
         return ticketsTokenIds;
     }
 
+    /**
+     * @notice Checks if the contract supports a given interface.
+     * @param interfaceId The interface identifier.
+     * @return A boolean indicating whether the contract supports the interface.
+     */
     function supportsInterface(
         bytes4 interfaceId
     )

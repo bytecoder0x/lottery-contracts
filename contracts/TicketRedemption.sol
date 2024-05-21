@@ -13,17 +13,33 @@ import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {ILottery} from "./interface/ILottery.sol";
 import {ITicketRedemption} from "./interface/ITicketRedemption.sol";
 
+/**
+ * @title TicketRedemption contract
+ * @notice TicketRedemption enables users to exchange tickets for rewards on Karrot platform before the burn deadline.
+ * @dev TicketRedemption manages reward token addresses, handles ticket redemption, and oversees redemption price and caps.
+ */
 contract TicketRedemption is ITicketRedemption, AccessControl {
     using SafeERC20 for IERC20;
 
+    /// @notice Price per redeemed one ticket.
     uint public redemptionPrice;
+    /// @notice The amount of tokens spent on ticket redemption.
     uint public redeemed;
+    /// @notice Maximum total redemption amount of tokens allowed.
     uint public redemptionCap;
 
-    address lottery;
+    /// @notice The address of the associated lottery contract.
+    address public lottery;
 
+    /// @notice Token contract for rewards.
     IERC20 public rewardToken;
 
+    /**
+     * @dev Constructor function to initialize the TicketRedemption contract.
+     * @param _defaultAdmin The address of the admin this contract.
+     * @param _lottery The address of the Lottery contract.
+     * @dev Reverts if the lottery contract does not support their respective interfaces.
+     */
     constructor(address _defaultAdmin, address _lottery) {
         if (
             !ILottery(_lottery).supportsInterface(
@@ -38,6 +54,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
     }
 
+    /// @inheritdoc ITicketRedemption
     function setRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE)  {
         if (Address.isContract(_rewardToken) == false) {
             revert IncorrectValue("Reward token is not a contract");
@@ -46,6 +63,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         rewardToken = IERC20(_rewardToken);
     }
 
+    /// @inheritdoc ITicketRedemption
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
         address campaignAddress = IKarrotTicket(ticketContract).campaign();
         address organizationAddress = IKarrotCampaign(campaignAddress).organization();
@@ -77,6 +95,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         emit TicketRedeemed(msg.sender, ticketContract, amountOfTicketsToBurn, redemptionAmount);
     }
 
+    /// @inheritdoc ITicketRedemption
     function setRedemptionPrice(uint _redemptionPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_redemptionPrice == 0) {
             revert IncorrectValue("Redemption price can't be 0");
@@ -85,16 +104,18 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         emit SetRedemptionPrice(_redemptionPrice);
     }
 
+    /// @inheritdoc ITicketRedemption
     function setRedemptionCap(uint _redemptionCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
         //redemptionCap can be 0, meaning no cap
         redemptionCap = _redemptionCap;
         emit SetRedemptionCap(_redemptionCap);
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(AccessControl, IERC165) returns (bool) {
         return interfaceId == type(ITicketRedemption).interfaceId || 
-            AccessControl.supportsInterface(interfaceId);
+            super.supportsInterface(interfaceId);
     }
 }

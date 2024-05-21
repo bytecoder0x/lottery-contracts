@@ -13,21 +13,42 @@ import {ILottery} from "./interface/ILottery.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 
+/**
+ * @title KarrotCampaign contract
+ * @notice The KarrotCampaign contract manages the creation and ownership of campaign tokens within the Karrot platform.
+ * @dev KarrotCampaign allows minting campaign tokens for specific organizations, setting ticket contracts,
+ * burning tickets, and retrieving campaign-related information.
+ */
 contract KarrotCampaign is 
     KarrotErc7401Base,
     KarrotCheckMintTime,
     IKarrotCampaign
 {
+    /// @notice Сonstant that contains the LOWER_ADMIN role. Owner of this role can set the contract ticket.
     bytes32 public constant LOWER_ADMIN_ROLE = keccak256("LOWER_ADMIN");
 
+    /// @inheritdoc IKarrotCampaign
     address public lottery;
+    /// @inheritdoc IKarrotCampaign
     address public organization;
+    /// @inheritdoc IKarrotCampaign
     address public ticketsContract;
 
+    /// @inheritdoc IKarrotCampaign
     mapping(uint256 => uint256) public ownerToken;
+    /// @inheritdoc IKarrotCampaign
     mapping(uint256 => uint256) public organizationToCampaign;
 
-
+    /**
+     * @notice Constructor function to initialize the KarrotCampaign contract.
+     * @param _defaultAdmin The address of the admin this contract.
+     * @param _lowerAdmin The address of the lower admin role that can set the contract ticket. Expected to be the KarrotFacotry contract.
+     * @param _minter The address of the minter role that can mint campaign to the organization.
+     * @param _organization The address of the KarrotOrganization contract that is the parent of this KarrotCampaign.
+     * @param _lottery The address of the Lottery contract.
+     * @param _name The name of the contract.
+     * @dev Reverts if the organization or lottery contracts do not support their respective interfaces.
+     */
     constructor(
         address _defaultAdmin,
         address _lowerAdmin,
@@ -51,6 +72,7 @@ contract KarrotCampaign is
         _setupRole(LOWER_ADMIN_ROLE, _lowerAdmin);
     }
 
+    /// @inheritdoc IKarrotCampaign
     function mintToOrganization(
         uint256 parentId,
         bytes memory data
@@ -67,6 +89,7 @@ contract KarrotCampaign is
         emit CampaignTokenMintedToOrganization(mintedTokenId, msg.sender, parentId);
     }
 
+    /// @inheritdoc IKarrotCampaign
     function setTicketContract(
         address _ticketsContract
     ) public {
@@ -85,20 +108,24 @@ contract KarrotCampaign is
         ticketsContract = _ticketsContract;
     }
 
+    /// @inheritdoc IKarrotCampaign
     function burnTicket() external {
         uint campaignId = _getUserCampaignId();
         _burnTicket(campaignId);
     }
 
+    /// @inheritdoc IKarrotCampaign
     function burnTicketBatch(uint256 amountOfTicketsToBurn) public {
         uint campaignId = _getUserCampaignId();
         burnTicketBatch(campaignId, amountOfTicketsToBurn);
     }
 
+    /// @inheritdoc IKarrotCampaign
     function burnTicket(uint campaignId) public {
         _burnTicket(campaignId);
     }
 
+    /// @inheritdoc IKarrotCampaign
     function burnTicketBatch(uint campaignId, uint256 amountOfTicketsToBurn) public {
         //this check doesn't give 100% guarantee that the user is trying to burn the correct amount of tickets
         //as _activeChildren may have not only tickets in case of manual child accepting.
@@ -112,16 +139,25 @@ contract KarrotCampaign is
         }
     }
 
+    /// @inheritdoc IERC7401
     function ownerOf(
         uint256 tokenId
     ) public view override(RMRKNestable, IERC7401) returns (address) {
         return super.ownerOf(tokenId);
     }
 
+    /// @inheritdoc KarrotCheckMintTime
     function getLotteryContract() public view override returns (address) {
         return lottery;
     }
 
+    /// @inheritdoc IKarrotCampaign
+    function getUserCampaignId(address _owner) external view returns (uint256) {
+        uint organizationId = IKarrotOrganization(organization).ownerToken(_owner);
+        return ownerToken[organizationId];
+    }
+
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {
@@ -129,6 +165,11 @@ contract KarrotCampaign is
             super.supportsInterface(interfaceId);
     }
 
+    /**
+     * @notice Performs check whether the child is a ticket before accepting it
+     * @param childAddress The address of the child contract.
+     * @dev Ensures that only the ticket contract can be accepted as a child of the campaign.
+     */
     function _beforeAcceptChild(
         uint256,
         uint256,
@@ -139,6 +180,14 @@ contract KarrotCampaign is
             revert IncorrectCondition("Only ticket can be child of campaign");
     }
 
+    /**
+     * @notice Burns a ticket associated with the given campaign ID.
+     * @param campaignId The ID of the campaign owning the ticket to be burned.
+     * @dev Reverts if the caller is not approved or the owner of the ticket.
+     * @dev Transfers the burning ticket to the owner of the last ticket ID.
+     * Transfers the last ticket ID to the burning campaign parent id.
+     * Burns the last ticket ID.
+     */
     function _burnTicket(uint256 campaignId) internal {
         if(!_isApprovedOrOwner(msg.sender, campaignId)) {
             revert IncorrectCondition("User is not aprroved or owner");
@@ -193,12 +242,23 @@ contract KarrotCampaign is
         IKarrotTicket(ticketsContract).burnLastTicket();
     }
 
+    /**
+     * @notice Retrieves the campaign ID of the caller's organization.
+     * @return The ID of the campaign owned by the caller's organization.
+     * @dev Reverts if the caller is not the owner of any organization.
+     */
     function _getUserCampaignId() private view returns (uint256) {
         uint organizationId = IKarrotOrganization(organization).ownerToken(msg.sender);
         if (organizationId == 0) revert IncorrectValue("User is not an owner of any organization");
         return ownerToken[organizationId];
     }
 
+    /**
+     * @notice Finds the index of a ticket in the provided list of children.
+     * @param ticketId The ID of the ticket to find.
+     * @param tickets The list of children containing tickets.
+     * @return The index of the ticket in the list.
+     */
     function _findTiketIndex(uint256 ticketId, Child[] memory tickets) private view returns (uint256) {
         for (uint256 i = 0; i < tickets.length; i++) {
             if (tickets[i].tokenId == ticketId && tickets[i].contractAddress == ticketsContract) {
