@@ -14,16 +14,6 @@ mapping(address => uint256) ownerToken
 
 Retrieves the token ID owned by the specified address.
 
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### constructor
 
 ```solidity
@@ -66,7 +56,7 @@ _Reverts if the recipient already owns an organization token._
 ### ownerOf
 
 ```solidity
-function ownerOf(uint256 tokenId) public view returns (address)
+function ownerOf(uint256 tokenId) public view returns (address owner_)
 ```
 
 Used to retrieve the *root* owner of a given token.
@@ -84,7 +74,7 @@ _The *root* owner of the token is an externally owned account (EOA). If the give
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address |  |
+| owner_ | address | The *root* owner of the token |
 
 ### supportsInterface
 
@@ -113,8 +103,6 @@ _Throws an error if the child contract does not support the IKarrotCampaign inte
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-|  | uint256 |  |
-|  | uint256 |  |
 | childAddress | address | The address of the child contract. |
-|  | uint256 |  |
+
 

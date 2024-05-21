@@ -15,11 +15,6 @@ address campaign
 
 Retrieves the address of the parent campaign associated with the ticket.
 
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### constructor
 
 ```solidity
@@ -113,7 +108,7 @@ _This function must be implemented by contracts inheriting from KarrotCheckMintT
 ### ownerOf
 
 ```solidity
-function ownerOf(uint256 tokenId) public view returns (address)
+function ownerOf(uint256 tokenId) public view returns (address owner_)
 ```
 
 Used to retrieve the *root* owner of a given token.
@@ -131,7 +126,7 @@ _The *root* owner of the token is an externally owned account (EOA). If the give
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address |  |
+| owner_ | address | The *root* owner of the token |
 
 ### getOrganisation
 

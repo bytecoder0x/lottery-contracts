@@ -79,16 +79,6 @@ mapping(address => bool) isOrganization
 
 Checks if an address is an organization.
 
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### isLottery
 
 ```solidity
@@ -96,16 +86,6 @@ mapping(address => bool) isLottery
 ```
 
 Checks if an address is a lottery contract.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
 
 ### campaignOrganization
 
@@ -115,16 +95,6 @@ mapping(address => address) campaignOrganization
 
 Retrieves the organization associated with a campaign contract.
 
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### ticketsCampaign
 
 ```solidity
@@ -132,16 +102,6 @@ mapping(address => address) ticketsCampaign
 ```
 
 Retrieves the campaign associated with a ticket contract.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
 
 ### withSetupMinterContract
 
@@ -176,7 +136,7 @@ Constructor function to initialize the KarrotFactory contract.
 ### disableOrganization
 
 ```solidity
-function disableOrganization(address _organization) external
+function disableOrganization(address organization) external
 ```
 
 Disables an organization if they leave the project.
@@ -188,12 +148,12 @@ If the organization is Non Karrot or already disabled, reverts with an error mes
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _organization | address |  |
+| organization | address | The address of the organization to be disabled. |
 
 ### enableOrganization
 
 ```solidity
-function enableOrganization(address _organization) external
+function enableOrganization(address organization) external
 ```
 
 Enables an organization if they are returned in the project.
@@ -205,7 +165,7 @@ If the organization is already enabled, reverts with an error message._
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _organization | address |  |
+| organization | address | The address of the organization to be enabled. |
 
 ### setMinterContract
 
@@ -244,7 +204,7 @@ Reverts if the randomGetter contract does not support the required interface._
 ### deployLotteryAndRedemptionContract
 
 ```solidity
-function deployLotteryAndRedemptionContract(address _defaultAdmin, uint32 _mintDeadline, uint32 _burnDeadline, uint32 _lotteryTime) public returns (address newLottery, address newRedemption)
+function deployLotteryAndRedemptionContract(address defaultAdmin, uint32 mintDeadline, uint32 burnDeadline, uint32 lotteryTime) public returns (address deployedLottery, address deployedRedemption)
 ```
 
 Deploys a new lottery and redemption contract.
@@ -258,22 +218,22 @@ Reverts if mintDeadline is greater than burnDeadline,
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _defaultAdmin | address |  |
-| _mintDeadline | uint32 |  |
-| _burnDeadline | uint32 |  |
-| _lotteryTime | uint32 |  |
+| defaultAdmin | address | The address of the admin for the contracts. |
+| mintDeadline | uint32 | The deadline for ticket minting. |
+| burnDeadline | uint32 | The deadline for ticket burning. |
+| lotteryTime | uint32 | The time when the lottery will be conducted. |
 
 #### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| newLottery | address |  |
-| newRedemption | address |  |
+| deployedLottery | address | The address of the newly deployed lottery contract. |
+| deployedRedemption | address | The address of the newly deployed redemption contract. |
 
 ### deployOrganizationContract
 
 ```solidity
-function deployOrganizationContract(address defaultAdmin, string organizationName) public returns (address)
+function deployOrganizationContract(address defaultAdmin, string organizationName) public returns (address deployedOrganization)
 ```
 
 Deploys a new organization contract.
@@ -289,12 +249,12 @@ Deploys a new organization contract.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address |  |
+| deployedOrganization | address | The address of the newly deployed organization contract. |
 
 ### deployCampaignAndTicketContract
 
 ```solidity
-function deployCampaignAndTicketContract(address defaultAdmin, address lottery, address organization, string campaignName) public returns (address, address)
+function deployCampaignAndTicketContract(address defaultAdmin, address lottery, address organization, string campaignName) public returns (address deplyedCampaign, address deployedTicket)
 ```
 
 Deploys a new campaign and ticket contract.
@@ -314,13 +274,13 @@ _Only can be called by accounts with the DEPLOYER_ROLE._
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address |  |
-| [1] | address |  |
+| deplyedCampaign | address | The address of the newly deployed campaign contract. |
+| deployedTicket | address | The address of the newly deployed ticket contract. |
 
 ### deployOrganizationAndCampaigns
 
 ```solidity
-function deployOrganizationAndCampaigns(address _defaultAdmin, address _lottery, string _organizationName, string[] _campaignNames) external returns (address deployedOrganization, address[] deployedCampaigns, address[] deployedTickets)
+function deployOrganizationAndCampaigns(address defaultAdmin, address lottery, string organizationName, string[] campaignNames) external returns (address deployedOrganization, address[] deployedCampaigns, address[] deployedTickets)
 ```
 
 Deploys an organization contract and multiple campaigns that are linked to the organization and corresponding ticket contracts.
@@ -331,10 +291,10 @@ _Only can be called by accounts with the DEPLOYER_ROLE._
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _defaultAdmin | address |  |
-| _lottery | address |  |
-| _organizationName | string |  |
-| _campaignNames | string[] |  |
+| defaultAdmin | address | The address of the admin for the contracts. |
+| lottery | address | The address of the lottery contract. |
+| organizationName | string | The name of the organization. |
+| campaignNames | string[] | An array of campaign names to be deployed. |
 
 #### Return Values
 

@@ -24,7 +24,7 @@ _Reverts if _mintDeadline is greater than _burnDeadline,
 | ---- | ---- | ----------- |
 | defaultAdmin | address | The address of the admin for the contract. |
 | lowerAdmin | address | The address that can register tickets for the lottery. |
-| randomGetterContract | address |  |
+| randomGetterContract | address | randomGetter contract address to get a random number in the lottery. |
 | lotteriesCount | uint256 | The number of lotteries deployed. |
 | mintDeadline | uint32 | The deadline for ticket minting. |
 | burnDeadline | uint32 | The deadline for ticket burning. |

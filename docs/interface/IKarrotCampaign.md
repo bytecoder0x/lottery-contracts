@@ -58,7 +58,7 @@ Emitted when the ticket contract address is set for the campaign.
 function organization() external view returns (address)
 ```
 
-Retrieves the address of the parent organization contract.
+Retrieves the address of the parent organization contract associated with this campaign.
 
 #### Return Values
 
@@ -72,7 +72,7 @@ Retrieves the address of the parent organization contract.
 function lottery() external view returns (address)
 ```
 
-Retrieves the address of the lottery contract.
+Retrieves the address of the lottery contract associated with this campaign.
 
 #### Return Values
 
@@ -86,7 +86,7 @@ Retrieves the address of the lottery contract.
 function ticketsContract() external view returns (address)
 ```
 
-Retrieves the address of the ticket contract.
+Retrieves the address of the ticket contract associated with this campaign.
 
 #### Return Values
 
@@ -100,19 +100,19 @@ Retrieves the address of the ticket contract.
 function ownerToken(uint256 tokenId) external view returns (uint256)
 ```
 
-Returns the token ID of the specified owner.
+Returns the camapign token ID of the specified parent organization ID.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| tokenId | uint256 | The ID of the token. |
+| tokenId | uint256 | The ID of the organization token. |
 
 #### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | uint256 | The organization token ID associated with the specified token ID. |
+| [0] | uint256 | The camapign token ID. |
 
 ### organizationToCampaign
 
@@ -120,7 +120,7 @@ Returns the token ID of the specified owner.
 function organizationToCampaign(uint256 organizationId) external view returns (uint256)
 ```
 
-Retrieves the associated campaign ID for the given organization ID.
+Returns the camapign token ID of the specified parent organization ID.
 
 _Used to prevent duplicate campaign tokens within organizations._
 
@@ -162,7 +162,7 @@ _Reverts if the parent organization already has the campaign token._
 ### setTicketContract
 
 ```solidity
-function setTicketContract(address _ticketContract) external
+function setTicketContract(address _ticketsContract) external
 ```
 
 Sets the ticket contract address.
@@ -174,7 +174,7 @@ Reverts if the ticket contract does not support the IKarrotTicket interface._
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _ticketContract | address | The address of the ticket contract to set. |
+| _ticketsContract | address | The address of the ticket contract to set. |
 
 ### burnTicket
 

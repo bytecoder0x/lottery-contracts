@@ -31,11 +31,6 @@ uint32 mintDeadline
 
 Retrieves the deadline for minting tickets.
 
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### burnDeadline
 
 ```solidity
@@ -44,11 +39,6 @@ uint32 burnDeadline
 
 Retrieves the deadline for burning tickets.
 
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### lotteryTime
 
 ```solidity
@@ -56,11 +46,6 @@ uint32 lotteryTime
 ```
 
 Retrieves the timestamp indicating the time when the lottery can run.
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
 
 ### lotteryTicketsTotalSupply
 
@@ -136,16 +121,6 @@ mapping(address => bool) isOrganizationAdded
 
 Mapping that contains added organization.
 
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### organizationTicketsContracts
 
 ```solidity
@@ -154,16 +129,6 @@ mapping(address => address[]) organizationTicketsContracts
 
 Mapping that contains array of ticket contracts associated with an organization address.
 
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### organizationTicketsRange
 
 ```solidity
@@ -171,16 +136,6 @@ mapping(address => struct ILottery.TicketRange) organizationTicketsRange
 ```
 
 Mapping that contains the ticket range associated with an organization.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
 
 ### allCampaignTickets
 
@@ -232,16 +187,6 @@ mapping(uint256 => uint256) winnerAmount
 
 Mapping that contains the winner amount associated with a ticket ID.
 
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
 ### tierWinners
 
 ```solidity
@@ -249,16 +194,6 @@ mapping(uint256 => uint256[]) tierWinners
 ```
 
 Mapping that contains array of winners associated with a tier index.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
 
 ### lotteryProcessed
 
@@ -305,7 +240,7 @@ Add the organization of the ticket to all organizations_
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _ticketContract | address |  |
+| _ticketContract | address | The address of the ticket contract to register. |
 
 ### setupLottery
 
@@ -415,8 +350,8 @@ _Uses a binary search algorithm to efficiently locate the corresponding campaign
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address | The address of the ticket contract and the corresponding ticket ID within that contract. |
-| [1] | uint256 |  |
+| [0] | address | The address of the ticket contract. |
+| [1] | uint256 | The ticket ID within ticket contract. |
 
 ### getTier
 

@@ -310,7 +310,7 @@ Mapping that contains array of winners associated with a tier index.
 ### registerTicketContract
 
 ```solidity
-function registerTicketContract(address ticketContract) external
+function registerTicketContract(address _ticketContract) external
 ```
 
 This function registers a ticket contract for the lottery.
@@ -323,7 +323,7 @@ Add the organization of the ticket to all organizations_
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| ticketContract | address | The address of the ticket contract to register. |
+| _ticketContract | address | The address of the ticket contract to register. |
 
 ### setupLottery
 
@@ -433,8 +433,8 @@ _Uses a binary search algorithm to efficiently locate the corresponding campaign
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address | The address of the ticket contract and the corresponding ticket ID within that contract. |
-| [1] | uint256 |  |
+| [0] | address | The address of the ticket contract. |
+| [1] | uint256 | The ticket ID within ticket contract. |
 
 ### getTier
 

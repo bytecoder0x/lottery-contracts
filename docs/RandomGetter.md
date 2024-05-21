@@ -164,7 +164,7 @@ Retrieves the random number associated with the given lottery contract address.
 ### withdraw
 
 ```solidity
-function withdraw(address _token, uint256 _amount) public
+function withdraw(address token, uint256 amount) public
 ```
 
 Allows the admin of this contract to withdraw tokens from the contract.
@@ -173,8 +173,8 @@ Allows the admin of this contract to withdraw tokens from the contract.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _token | address |  |
-| _amount | uint256 |  |
+| token | address | The address of the token to withdraw. |
+| amount | uint256 | The amount of tokens to withdraw. |
 
 ### supportsInterface
 

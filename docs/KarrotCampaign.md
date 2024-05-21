@@ -21,7 +21,7 @@ bytes32 LOWER_ADMIN_ROLE
 address lottery
 ```
 
-Retrieves the address of the lottery contract.
+Retrieves the address of the lottery contract associated with this campaign.
 
 #### Return Values
 
@@ -34,12 +34,7 @@ Retrieves the address of the lottery contract.
 address organization
 ```
 
-Retrieves the address of the parent organization contract.
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+Retrieves the address of the parent organization contract associated with this campaign.
 
 ### ticketsContract
 
@@ -47,12 +42,7 @@ Retrieves the address of the parent organization contract.
 address ticketsContract
 ```
 
-Retrieves the address of the ticket contract.
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+Retrieves the address of the ticket contract associated with this campaign.
 
 ### ownerToken
 
@@ -60,17 +50,7 @@ Retrieves the address of the ticket contract.
 mapping(uint256 => uint256) ownerToken
 ```
 
-Returns the token ID of the specified owner.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+Returns the camapign token ID of the specified parent organization ID.
 
 ### organizationToCampaign
 
@@ -78,19 +58,9 @@ Returns the token ID of the specified owner.
 mapping(uint256 => uint256) organizationToCampaign
 ```
 
-Retrieves the associated campaign ID for the given organization ID.
+Returns the camapign token ID of the specified parent organization ID.
 
 _Used to prevent duplicate campaign tokens within organizations._
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
 
 ### constructor
 
@@ -151,7 +121,7 @@ Reverts if the ticket contract does not support the IKarrotTicket interface._
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _ticketsContract | address |  |
+| _ticketsContract | address | The address of the ticket contract to set. |
 
 ### burnTicket
 
@@ -217,7 +187,7 @@ _Reverts if the specified amount exceeds the available campaign tickets._
 ### ownerOf
 
 ```solidity
-function ownerOf(uint256 tokenId) public view returns (address)
+function ownerOf(uint256 tokenId) public view returns (address owner_)
 ```
 
 Used to retrieve the *root* owner of a given token.
@@ -235,7 +205,7 @@ _The *root* owner of the token is an externally owned account (EOA). If the give
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| [0] | address |  |
+| owner_ | address | The *root* owner of the token |
 
 ### getLotteryContract
 
@@ -300,10 +270,7 @@ _Ensures that only the ticket contract can be accepted as a child of the campaig
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-|  | uint256 |  |
-|  | uint256 |  |
 | childAddress | address | The address of the child contract. |
-|  | uint256 |  |
 
 ### _burnTicket
 
