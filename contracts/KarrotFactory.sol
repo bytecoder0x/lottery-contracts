@@ -86,22 +86,22 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /// @inheritdoc IKarrotFactory
     function disableOrganization(
-        address _organization
+        address organization
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (!activeOrganizations.contains(_organization)) revert IncorrectValue("Non Karrot organization or organization is already disabled");
-        activeOrganizations.remove(_organization);
+        if (!activeOrganizations.contains(organization)) revert IncorrectValue("Non Karrot organization or organization is already disabled");
+        activeOrganizations.remove(organization);
 
-        emit DisabledOrganization(_organization);
+        emit DisabledOrganization(organization);
     }
 
     /// @inheritdoc IKarrotFactory
     function enableOrganization(
-        address _organization
+        address organization
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (activeOrganizations.contains(_organization)) revert IncorrectValue("Organization is already enabled");
-        activeOrganizations.add(_organization);
+        if (activeOrganizations.contains(organization)) revert IncorrectValue("Organization is already enabled");
+        activeOrganizations.add(organization);
 
-        emit EnableOrganization(_organization);
+        emit EnableOrganization(organization);
     }
 
     /// @inheritdoc IKarrotFactory
@@ -138,32 +138,31 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /// @inheritdoc IKarrotFactory
     function deployLotteryAndRedemptionContract(
-        address _defaultAdmin,
-        uint32 _mintDeadline,
-        uint32 _burnDeadline,
-        uint32 _lotteryTime
-    ) public withSetupRandomGetterContract onlyRole(DEPLOYER_ROLE) returns (address newLottery, address newRedemption) {
+        address defaultAdmin,
+        uint32 mintDeadline,
+        uint32 burnDeadline,
+        uint32 lotteryTime
+    ) public withSetupRandomGetterContract onlyRole(DEPLOYER_ROLE) returns (address deployedLottery, address deployedRedemption) {
     
-            newLottery = _deployLotteryContract(
-                _defaultAdmin,
-                _mintDeadline,
-                _burnDeadline,
-                _lotteryTime
+            deployedLottery = _deployLotteryContract(
+                defaultAdmin,
+                mintDeadline,
+                burnDeadline,
+                lotteryTime
             );
-            newRedemption = _deployRedemptionContract(_defaultAdmin, newLottery);
+            deployedRedemption = _deployRedemptionContract(defaultAdmin, deployedLottery);
 
-            emit LotteryContractDeployed(newLottery);
-            emit RedemptionContractDeployed(newRedemption);
+            emit LotteryContractDeployed(deployedRedemption);
+            emit RedemptionContractDeployed(deployedLottery);
     }
 
     /// @inheritdoc IKarrotFactory
     function deployOrganizationContract(
         address defaultAdmin,
         string memory organizationName
-    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address) {
-        address newOrganization = _deployOrganizationContract(defaultAdmin, organizationName);
-        emit OrganizationContractDeployed(newOrganization);
-        return newOrganization;
+    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address deployedOrganization) {
+        deployedOrganization = _deployOrganizationContract(defaultAdmin, organizationName);
+        emit OrganizationContractDeployed(deployedOrganization);
     }
 
     /// @inheritdoc IKarrotFactory
@@ -172,36 +171,35 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address lottery,
         address organization,
         string memory campaignName
-    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address, address) {
-        (address newCampaign, address newTicket) =_deployCampaignAndTicketContract(defaultAdmin, lottery, organization, campaignName);
-        emit CampaignContractDeployed(newCampaign, organization);
-        emit TicketContractDeployed(newTicket, newCampaign);
-        return (newCampaign, newTicket);
+    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address deplyedCampaign, address deployedTicket) {
+        (deplyedCampaign,  deployedTicket) =_deployCampaignAndTicketContract(defaultAdmin, lottery, organization, campaignName);
+        emit CampaignContractDeployed(deplyedCampaign, organization);
+        emit TicketContractDeployed(deployedTicket, deplyedCampaign);
     }
 
     /// @inheritdoc IKarrotFactory
     function deployOrganizationAndCampaigns(
-        address _defaultAdmin,
-        address _lottery,
-        string memory _organizationName,
-        string[] memory _campaignNames
+        address defaultAdmin,
+        address lottery,
+        string memory organizationName,
+        string[] memory campaignNames
     ) external withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns(
         address deployedOrganization,
         address[] memory deployedCampaigns,
         address[] memory deployedTickets
     ) {
         deployedOrganization = _deployOrganizationContract(
-            _defaultAdmin,
-            _organizationName
+            defaultAdmin,
+            organizationName
         );
-        deployedCampaigns = new address[](_campaignNames.length);
-        deployedTickets = new address[](_campaignNames.length);
-        for (uint256 i = 0; i < _campaignNames.length; i++) {
+        deployedCampaigns = new address[](campaignNames.length);
+        deployedTickets = new address[](campaignNames.length);
+        for (uint256 i = 0; i < campaignNames.length; i++) {
             (address deployedCampaign, address deployedTicket) = _deployCampaignAndTicketContract(
-                _defaultAdmin,
-                _lottery,
+                defaultAdmin,
+                lottery,
                 deployedOrganization,
-                _campaignNames[i]
+                campaignNames[i]
             );
             emit CampaignContractDeployed(deployedCampaign, deployedOrganization);
             emit TicketContractDeployed(deployedTicket, deployedCampaign);

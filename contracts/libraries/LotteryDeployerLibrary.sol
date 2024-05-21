@@ -13,6 +13,7 @@ library LotteryDeployerLibrary {
      * @notice Deploys a new lottery contract.
      * @param defaultAdmin The address of the admin for the contract.
      * @param lowerAdmin The address that can register tickets for the lottery.
+     * @param randomGetterContract randomGetter contract address to get a random number in the lottery.
      * @param lotteriesCount The number of lotteries deployed.
      * @param mintDeadline The deadline for ticket minting.
      * @param burnDeadline The deadline for ticket burning.

@@ -99,7 +99,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
     /// @inheritdoc IERC7401
     function ownerOf(
         uint256 tokenId
-    ) public view override(RMRKNestable, IERC7401) returns (address) {
+    ) public view override(RMRKNestable, IERC7401) returns (address owner_) {
         return super.ownerOf(tokenId);
     }
 

@@ -32,32 +32,32 @@ interface IKarrotCampaign is IERC7401, IKarrotErc7401Base {
     event TicketContractSet(address indexed ticketsContract, address indexed setter);
 
     /**
-     * @notice Retrieves the address of the parent organization contract.
+     * @notice Retrieves the address of the parent organization contract associated with this campaign.
      * @return The address of the organization contract that is the parent of this campaign.
      */
     function organization() external view returns (address); 
 
     /**
-     * @notice Retrieves the address of the lottery contract.
+     * @notice Retrieves the address of the lottery contract associated with this campaign.
      * @return The address of the lottery contract in that the campaign participates.
      */
     function lottery() external view returns (address);
 
     /**
-     * @notice Retrieves the address of the ticket contract.
+     * @notice Retrieves the address of the ticket contract associated with this campaign.
      * @return The address of the ticket contract associated with the campaign token.
      */
     function ticketsContract() external view returns (address);
 
     /**
-     * @notice Returns the token ID of the specified owner.
-     * @param tokenId The ID of the token.
-     * @return The organization token ID associated with the specified token ID.
+     * @notice Returns the camapign token ID of the specified parent organization ID.
+     * @param tokenId The ID of the organization token.
+     * @return The camapign token ID.
      */
     function ownerToken(uint256 tokenId) external view returns (uint256);
 
     /**
-     * @notice Retrieves the associated campaign ID for the given organization ID.
+     * @notice Returns the camapign token ID of the specified parent organization ID.
      * @param organizationId The ID of the organization.
      * @return The associated campaign ID.
      * @dev Used to prevent duplicate campaign tokens within organizations.
@@ -75,11 +75,11 @@ interface IKarrotCampaign is IERC7401, IKarrotErc7401Base {
 
     /**
      * @notice Sets the ticket contract address.
-     * @param _ticketContract The address of the ticket contract to set.
+     * @param _ticketsContract The address of the ticket contract to set.
      * @dev Reverts if the sender does not have the required admin role.
      * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
      */
-    function setTicketContract(address _ticketContract) external;
+    function setTicketContract(address _ticketsContract) external;
 
     /**
      * @notice Burns the user's ticket for the current campaign.

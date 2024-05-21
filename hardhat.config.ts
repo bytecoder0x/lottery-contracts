@@ -73,7 +73,7 @@ const config: any = {
     // },
   },
   docgen: {
-    exclude: ["test", "lib"],
+    exclude: ["mocks"],
     pages: 'files'
   },
   networks: {

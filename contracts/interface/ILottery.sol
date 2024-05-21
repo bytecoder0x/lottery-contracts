@@ -148,12 +148,12 @@ interface ILottery is IERC165, IKarrotErrors {
 
     /**
      * @notice This function registers a ticket contract for the lottery.
-     * @param ticketContract The address of the ticket contract to register.
+     * @param _ticketContract The address of the ticket contract to register.
      * @dev Only can be called by accounts with the REGISTRAR_ROLE.
      * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
      * @dev Add the organization of the ticket to all organizations
      */
-    function registerTicketContract(address ticketContract) external;
+    function registerTicketContract(address _ticketContract) external;
 
     /**
      * @notice This function sets up the lottery with specified parameters such as reward token, tiers and shares of organizations.
@@ -219,7 +219,8 @@ interface ILottery is IERC165, IKarrotErrors {
     /**
      * @notice Retrieves the underlying ticket information for a given lottery ticket ID.
      * @param lotteryTicketId The ID of the lottery ticket.
-     * @return The address of the ticket contract and the corresponding ticket ID within that contract.
+     * @return The address of the ticket contract.
+     * @return The ticket ID within ticket contract.
      * @dev Uses a binary search algorithm to efficiently locate the corresponding campaign ticket contract.
      */
     function getUnderlyingTicket(uint256 lotteryTicketId) external view returns (address, uint256);
