@@ -75,11 +75,11 @@ interface IKarrotCampaign is IERC7401, IKarrotErc7401Base {
 
     /**
      * @notice Sets the ticket contract address.
-     * @param _ticketContract The address of the ticket contract to set.
+     * @param _ticketsContract The address of the ticket contract to set.
      * @dev Reverts if the sender does not have the required admin role.
      * @dev Reverts if the ticket contract does not support the IKarrotTicket interface.
      */
-    function setTicketContract(address _ticketContract) external;
+    function setTicketContract(address _ticketsContract) external;
 
     /**
      * @notice Burns the user's ticket for the current campaign.
