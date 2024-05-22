@@ -23,10 +23,6 @@ address lottery
 
 Retrieves the address of the lottery contract associated with this campaign.
 
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
 
 ### organization
 
