@@ -1,190 +1,162 @@
-## Abstract
+# Karrot
 
-The goal of the Meentle project is to create a useful tool for reselling lock funds.
-This goal will be reached by creating a NFT and smart contract wallet (SCW) pair: user mints an NFT, a smart contract wallet is deployed and this smart contract wallet is tied to this NFT. The smart contract wallet is a simple contract that can proxy (execute) any call to/on other contracts. Only the owner of tied NFT can execute calls on this smart contract wallet. Hence, the owner of the NFT is the owner of the SCW. This smart contract wallet address can be passed for allocating vesting funds. It means when someone sells/buys this NFT, he/she sells/buys corresponding SCW and the vested funds that correspond to this wallet.
+## Overview
 
-The Meentle project is going to take a fixed fee for token minting and a variable (percentage) fee for withdrawing ERC20 tokens from the SCW. In future the fee system will be extended and support different scenarios (like lower fees for pool stakers).
+### What is Karrot?
 
-The Meentle smart contract architecture is going to be fully compatible with the ERC-6551 proposition and maximize reuse of its infrastructure (like ERC 6551 registry) and its code base.
+This is a project that allows various organizations to unite and create lotteries together. Each organization can conduct its own campaigns, which are eligible to participate in the lottery. Organizations can pool their campaigns to participate in the lottery.
 
-## Smart contracts infrastructure
+To enter the lottery, participants need tickets, which they can obtain from each campaign. Tickets may be earned by completing specific actions, i.e. email registering or inviting friends etc. If a campaign is entered into the lottery, all its tickets automatically become eligible for participation. Tickets belong to their respective campaigns, and campaigns belong to their respective organizations.
 
-**The smart contract infrastructure of this protocol consists of:**
+Before the lottery begins, participants can redeem their tickets for a fixed reward. Once the lottery runs, winners receive their rewards directly into their wallets.
 
-1. ERC721 smart contract that performs the function of creating a smart contract wallet in accordance with the ERC-6551 standard
-2. AccountProxy smart contract is a custom proxy implementation that will allow users to upgrade to a new implementation of the wallet's smart contract logic. If new standards for SC wallets emerge, we will have the flexibility to follow them.
-3. The smart contract account is an implementation of the wallet's smart contract logic. This implementation supports the ERC-4337 standard.
-4. AccountGuardian This smart contract controls the updating of the AccountProxy contract to new implementations by entering a list of allowed implementations. It also implements control for trusted executors by entering a list of allowed ones.
-5. The FeeManager smart contract manages and configures project fees such as the NFT wallet's minting price and withdrawal fee on the wallet.
+## ERC-7401
 
-## Used technology and existing solutions
+The Karrot project is built on the NFT standard, ERC-7401. The core concept behind ERC-7401 is the ability for one NFT to own another NFT. While conventional ownership involves user accounts or smart contracts holding NFTs, ERC-7401 introduces the innovative notion of "nesting" non-fungibles within each other.
 
-The Meentle protocol implementation is based on https://github.com/tokenbound/contracts/ solution that is an ERC-6551 account implementation (fork commit [b1a0c12f024f3f0ac6319833d712d47aad3b890c](https://github.com/tokenbound/contracts/blob/551a52da3f529bf7fa252309e201d6af772c3088/src/)).
+### The key features are:
+- Each "parent" NFT can contain multiple "child" NFTs.
+- A child NFT can function as a parent and hold additional NFTs.
+- The account owner governing the parent NFT has control over all its "children".
+- Nesting one NFT within another is achieved through a specialized transaction.
+- Separating a child NFT from its parent requires the account owner's approval on a designated transaction.
+- A child token is transferable to a different wallet, another parent NFT, "unnested", abandoned, or rejected.
+- Account owners can option to auto-accept incoming children, with a risk of potential spamming, or reject them.
+- Regular ERC-721 contracts lack interoperability with ERC-7401 collections, preventing the nesting of existing NFTs.
 
-The Meentle protocol uses @account-abstraction/contracts library (https://github.com/eth-infinitism/account-abstraction, fork commit [19918cda7c4f0d2095dac52f4da98444f17fa11b](https://github.com/eth-infinitism/account-abstraction/blob/19918cda7c4f0d2095dac52f4da98444f17fa11b/contracts/core/)) that is implementation of contracts for ERC-4337 account abstraction via alternative mempool.
+### How do we use ERC-7401 standard in Karrot?
+We use a 3-level NFT system:
+1. Organization
+2. Campaign
+3. Ticket
 
-## Stack
+Each EOA (user) can have only one NFT of the first level (organization). As mentioned, each "parent" NFT can contain multiple "child" NFTs. Therefore, the organization owns the campaigns, and the campaigns own the tickets. Accounts with the minter role can mint multiple campaigns to their organization. Similarly, accounts with the minter role can mint multiple tickets for each campaign.
 
-Solidity, JS, TS, hardhat, solidity-coverage, ethers.js, mocha, chai.
+## Smart contracts
 
-## Installation
+### KarrotFactory
+The KarrotFactory contract serves as a factory for deploying various contracts related to the Karrot platform, such as organizations, campaigns, lotteries, redemptions, and tickets. It manages the deployment process and keeps track of deployed contracts.
 
-```bash
-npm install
-```
+### KarrotOrganization
+The KarrotOrganization contract handles the creation and ownership of organization tokens in Karrot. It allows minting new tokens for specific addresses and ensures each address can own only one organization token.
 
-or
+### KarrotCampaign
+The KarrotCampaign contract manages the creation and ownership of campaign tokens within the Karrot platform. It allows minting campaign tokens for specific organizations, setting ticket contracts, burning tickets, and retrieving campaign-related information.
 
-```bash
-yarn install
-```
+### KarrotTicket
+The KarrotTicket contract manages the minting and burning of tokens within the Karrot platform. It allows minting tokens to specific campaigns, burning the last minted token, and retrieving contract-related information.
 
-## Running tests & coverage
+### TicketMinter
+TicketMinter eases the minting process. This contract manages the creation of tickets for campaigns on the Karrot platform, ensuring that tickets are minted for users within specified campaigns.
 
-```bash
-yarn coverage
-```
+### Lottery
+The Lottery contract runs a lottery system for the Karrot platform, handling ticket registration, lottery initialization, winner selection, and reward distribution based on preset tiers — jackpot, random, and fixed. Winners are selected from registered tickets and they receive rewards in their wallets. The lottery also provides information retrieval functions for tickets, organizations, and tier configurations.
 
-or
+### TicketRedemption
+TicketRedemption enables users to exchange tickets for rewards on Karrot. It manages reward token addresses, handles ticket redemption, and controls redemption prices and caps.
 
-```bash
-npx hadhat coverage
-```
+### RandomGetter
+RandomGetter gets random numbers for lotteries. It interacts with Chainlink VRF to provide random values for lotteries. The RandomGetter contract must have enough LINK tokens, as a LINK token is required for obtaining a random number. One RandomGetter contract is used for all lotteries, avoiding the need to send LINK tokens to the balance of each contract separately.
 
-## Running Deployments
+## Lottery
 
-**Example Rinkeby:**
+Running a lottery consists of several steps in order: deploy, set up the lottery, register tickets, initialization of organization, run the lottery and reward winners.
 
-```bash
-yarn deploy:rinkeby
-```
+### Features:
+- The lottery can be run only once, which means the lottery contract cannot be reused. This approach ensures that the ticket and the campaign associated with the lottery will be inactive after the lottery run.
+- The lottery contract must have enough tokens that will be used to reward the winners.
+- The lottery has three main timestamps. The first is the mint deadline, which marks the point until which tickets can be minted. The second is the burn deadline, by which tickets can be burned for a fixed reward using the TicketRedemption contract. The third is the lottery time, after which the lottery can be run among registered tickets.
 
-> The deployment script [`deploy.ts`](./scripts/deploy.ts) includes the `tenderly` Hardhat Runtime Environment (HRE) extension with the `verify` method. Please consider configuring the Tenderly `project` and `username` in the [`hardhat.config.ts`](./hardhat.config.ts) file before deploying or remove this call.
+### Deploy:
+The lottery contract can be deployed only through the KarrotFactory contract, otherwise the lottery will be out of the system and unable to accept participants. Deploying a new lottery contract requires specifying the admin, mint deadline, burn deadline and lottery time.
 
-## Running `CREATE2` Deployments
+### Setup:
+After deployment and ticket registration, the lottery must be set up. The lottery setup requires specifying parameters such as the reward token, tiers, and organization shares. 
+- The reward tokens are used as reward for winners.
+- The lottery has three types of tiers: jackpot, random, and fixed. 
+- The main differences between tiers:
+  - For the jackpot and random tiers, winners are chosen randomly from all registered tickets, independent of organization shares. The jackpot tier can have only one winner, while the random tier can have multiple winners. The fixed tier also has multiple winners chosen randomly, but the part of winners for each organization depends on its shares. It is worth noting that a lottery can have many tiers of the same type apart from the jackpot tier.
+  - Organization shares determine the part of winners for each organization within the fixed tier. For example, if there are 10 winners in the fixed tier and the first organization has 80 shares while the second organization has 20 shares (the total shares must always equal 100), the first organization will have 8 winners, and the second organization will have 2 winners. 
 
-```bash
-yarn xdeploy
-```
+### Register tickets: 
+The KarrotFactory automatically registers tickets for the lottery when deploying ticket contracts. Registration of lottery tickets is also possible only with the required role - REGISTRAR_ROLE. 
 
-This template uses the [xdeploy](https://github.com/pcaversaccio/xdeployer) Hardhat plugin. Check out the documentation for more information on the specifics of the deployments.
+### Initialization:
+Initialization can be run when the lottery setup and burn deadline is finished. It is important to initialize the lottery after the burn deadline, since the number of tickets cannot be changed. During lottery initialization, the total number of tickets for each organization is determined. If the lottery has many organizations, initialization can be reverted due to the block gas limit. In order to solve this problem, the lottery provides the option to initialize organizations in parts (in several transactions).
 
-## `.env` File
+### Run:
+The lottery can be run only after full initialization, meaning all organizations must be initialized and the lottery time reached. It's worth noting that running the lottery doesn't include selecting winners or distributing rewards. During the lottery run, a request is made to the Chainlink VRF for a random number. Later, winners are selected based on this random number.
 
-In the `.env` file place the private key of your wallet in the `PRIVATE_KEY` section. This allows secure access to your wallet to use with both testnet and mainnet funds during Hardhat deployments. For more information on how this works, please read the documentation of the `npm` package [`dotenv`](https://www.npmjs.com/package/dotenv).
+### Reward:
+Winners can be selected only after the lottery has been run. Winners are selected using a specific algorithm that relies on a random number generated by the Chainlink VRF to ensure randomness. Once winners are determined, they receive their rewards to their wallets. It's worth noting that rewards for all tiers can be reverted due to the block gas limit. In order to solve this problem, the lottery provides the option to distribute rewards for tiers in parts (in several transactions).
 
-## Using the Truffle Dashboard
+## Redemption tickets
 
-[Truffle](https://trufflesuite.com) developed the [Truffle Dashboard](https://trufflesuite.com/docs/truffle/getting-started/using-the-truffle-dashboard.html) to provide an easy way to use your existing MetaMask wallet for your deployments and for other transactions that you need to send from a command line context. Because the Truffle Dashboard connects directly to MetaMask it is also possible to use it in combination with hardware wallets like [Ledger](https://www.ledger.com) or [Trezor](https://trezor.io).
+All ticket holders have the option to burn their ticket for a fixed reward until the burn deadline.
 
-First, it is recommended that you install Truffle globally by running:
+Before redeeming, the admin should set the necessary parameters, including the reward token, ticket redemption price, and maximum redemption cap. After this cap is reached, the redemption process stops.
 
-```bash
-npm install -g truffle
-```
+It is worth noting that to redeem a ticket, the TicketRedemption contract must be approved by the owner of the organization associated with the campaign to which the ticket belongs. Only these owners can redeem their tickets.
 
-To start a Truffle Dashboard, you need to run the following command in a separate terminal window:
+After redeeming the tickets, the owner receives a fixed reward on the wallet.
 
-```bash
-truffle dashboard
-```
+During redemption, the tickets are burned as part of the process.
 
-By default, the command above starts a Truffle Dashboard at http://localhost:24012 and opens the Dashboard in a new tab in your default browser. The Dashboard then prompts you to connect your wallet and confirm that you're connected to the right network. **You should double check your connected network at this point, since switching to a different network during a deployment can have unintended consequences.**
+### Ticket burning mechanism:
+- The burning ticket is transferred to the owner (campaign) of the ticket with the last ID.
+- The ticket with the last ID is transferred to the owner (campaign) of the burning ticket.
+- After the swap, the ticket with the last ID is burned.
 
-Eventually, in order to deploy with the Truffle Dashboard, you can simply run:
+This approach ensures that the numbering of tickets remains uninterrupted. As a result of this process, the user's ticket ID(s) may change, but this is expected behavior and does not affect the chance of winning the lottery.
 
-```bash
-yarn deploy:dashboard
-```
+For example: 
+- user1 holds a ticket with ID 7, while user2 holds the last ticket with ID 100. 
+- If user1 decides to burn their ticket with ID 7, the ID of the ticket owned by user2 changes to 7 (100 -> 7), while the ID of the ticket owned by user1 changes to 100 (7 -> 100). 
+- Only after these exchanges, the last ticket with ID 100 owned by user1 is burned. 
 
-## Mainnet Forking
+As a result of this operation: 
+- The last ticket ID equals 99.
+- User1 doesn't have any tickets.
+- User2 has a ticket with ID 7.
 
-You can start an instance of the Hardhat network that forks the mainnet. This means that it will simulate having the same state as the mainnet, but it will work as a local development network. That way you can interact with deployed protocols and test complex interactions locally. To use this feature, you need to connect to an archive node.
+## Mint organizations, campaigns and tickets tokens
 
-This template is currently configured via the [hardhat.config.ts](./hardhat.config.ts) as follows:
+It's important to understand the features of the ERC7401 standard. When a child's NFT is minted to the parent's NFT, these children are initially stored as pending. This means that the child NFT cannot be directly assigned to the parent NFT right away. Therefore, the parent NFT must accept the child NFT after the minting process.
 
-```ts
-forking: {
-    url: process.env.ETH_MAINNET_URL || "",
-    // The Hardhat network will by default fork from the latest mainnet block
-    // To pin the block number, specify it below
-    // You will need access to a node with archival data for this to work!
-    // blockNumber: 14743877,
-    // If you want to do some forking, set `enabled` to true
-    enabled: false,
-}
-```
+### Method 1: Manual Minting
+1. **Organization:** First, create an organization token and assign it to a specified address, ensuring the recipient does not already own an organization token.
+2. **Campaign:** Next, mint a campaign token and assign it to the specific organization, ensuring the organization does not already have this campaign token assigned. The organization then accepts the campaign token as a child.
+3. **Ticket:** Then, mint a ticket and assign it to the specified campaign. The campaign accepts the ticket as a child.
 
-## Contract Verification
+### Method 2: Automated Minting with TicketMinter
+The TicketMinter contract automates the minting of tickets and accepting campaign children. It can also mint campaigns to organizations. It is worth noting that if the user doesn't have the required organization or campaign token, TicketMinter will mint it for them. To mint tickets requires specifying the address of the user, the address of the campaign, and the number of tickets.
 
-Change the contract address to your contract after the deployment has been successful. This works for both testnet and mainnet. You will need to get an API key from [etherscan](https://etherscan.io), [snowtrace](https://snowtrace.io) etc.
+## Deploy contracts
 
-**Example:**
+All contracts must be deployed through the KarrotFactory contract (apart from RandomGetter and TicketMiner, which are service contracts and must be deployed once at the start of the project) otherwise, they will be excluded from the system and unable to participate in the lottery, be accepted as children, etc. It's important to note that only accounts with the DEPLOYER_ROLE, assigned during the deployment of the KarrotFactory, can perform deployments.
 
-```bash
-npx hardhat verify --network fantomMain --constructor-args arguments.js <YOUR_CONTRACT_ADDRESS>
-```
+### Organization, Campaign and Ticket:
+To deploy an organization, campaign and tickets, there are three options available:
+1. Deploy only organization contract.
+2. Deploy organization and campaigns contracts.
+3. Deploy campaign and ticket contracts.
 
-## Foundry
+**First option** requires specifying the admin address and the organization's name.
 
-This template repository also includes the [Foundry](https://github.com/foundry-rs/foundry) toolkit.
+**Second option** requires specifying the admin address, the organization's name, the address of the corresponding lottery, and an array of campaign names.
 
-> If you need help getting started with Foundry, I recommend reading the [📖 Foundry Book](https://book.getfoundry.sh).
+**The third option** requires specifying the admin address, the campaign name, the address of the associated lottery, and the organization address.
 
-### Dependencies
+### Lottery and Redemption:
+To deploy a lottery and redemption, requires specifying admin address, mint deadline (for ticket minting), burn deadline (for ticket burning), and lottery time (to run the lottery).
 
-```bash
-make update
-```
+## Contracts
 
-or
-
-```
-forge update
-```
-
-### Compilation
-
-```bash
-make build
-```
-
-or
-
-```
-forge build
-```
-
-### Testing
-
-To run only TypeScript tests:
-
-```bash
-yarn test:hh
-```
-
-To run only Solidity tests:
-
-```bash
-yarn test:forge
-```
-
-or
-
-```bash
-make test
-```
-
-To additionally display the gas report, you can run:
-
-```bash
-make test-gasreport
-```
-
-### Deployment and Etherscan Verification
-
-Inside the [`scripts/`](./scripts) folder are a few preconfigured scripts that can be used to deploy and verify contracts via Foundry. These scripts are required to be _executable_ meaning they must be made executable by running:
-
-```bash
-make scripts
-```
+- [KarrotFactory.sol](./contracts/KarrotFactory.sol)
+- [KarrotOrganization.sol](./contracts/KarrotOrganization.sol)
+- [KarrotCampaign.sol](./contracts/KarrotCampaign.sol)
+- [KarrotTicket.sol](./contracts/KarrotTicket.sol)
+- [TicketMinter.sol](./contracts/TicketMinter.sol)
+- [Lottery.sol](./contracts/Lottery.sol)
+- [TicketRedemption.sol](./contracts/TicketRedemption.sol)
+- [RandomGetter.sol](./contracts/RandomGetter.sol)
