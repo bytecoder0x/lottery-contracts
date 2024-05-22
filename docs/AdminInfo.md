@@ -15,7 +15,7 @@
 
 ## Lottery
 
-- [registerTicketContract](./Lottery.md#registerticketcontract)
+- [registerTicketContract](./interface/ILottery.md#registerticketcontract-1)
 - [setupLottery](./interface/ILottery.md#setuplottery)
 - [initializeLottery](./interface/ILottery.md#initializelottery)
 - [runLottery](./interface/ILottery.md#runlottery)
@@ -27,9 +27,9 @@
 
 ## TicketRedemption
 
-- [setRewardToken](./TicketRedemption.md#setrewardtoken)
-- [setRedemptionPrice](./TicketRedemption.md#setredemptionprice)
-- [setRedemptionCap](./TicketRedemption.md#setredemptioncap)
+- [setRewardToken](./interface/ITicketRedemption.md#setrewardtoken)
+- [setRedemptionPrice](./interface/ITicketRedemption.md#setredemptionprice-1)
+- [setRedemptionCap](./interface/ITicketRedemption.md#setredemptioncap-1)
 
 
 
