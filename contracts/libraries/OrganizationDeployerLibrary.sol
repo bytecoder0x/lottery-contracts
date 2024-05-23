@@ -20,13 +20,14 @@ library OrganizationDeployerLibrary {
     function deployOrganizationContract(
         address defaultAdmin,
         address minter,
-        uint organizationsCount,
+        address passportContract,
+        uint256 organizationsCount,
         string memory organizationName
     ) external returns (address) {
         address newOrganization = address(
             new KarrotOrganization{
                 salt: keccak256(abi.encodePacked(organizationsCount))
-            }(defaultAdmin, minter, organizationName)
+            }(defaultAdmin, minter, passportContract, organizationName)
         );
         return newOrganization;
     }
