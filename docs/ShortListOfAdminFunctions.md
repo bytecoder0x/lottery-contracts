@@ -1,21 +1,18 @@
+# Short list of Admin functions
+
+This is a list of the most used functions for admins. A detailed description of each function can be found in another file.
+
 ## KarrotFactory
 
 - [enableOrganization](./KarrotFactory.md#enableorganization)
 - [disableOrganization](./KarrotFactory.md#disableorganization)
-- [setMinterContract](./KarrotFactory.md#setmintercontract)
-- [setRandomGetterContract](./KarrotFactory.md#setrandomgettercontract)
 - [deployLotteryAndRedemptionContract](./KarrotFactory.md#deploylotteryandredemptioncontract)
 - [deployOrganizationContract](./KarrotFactory.md#deployorganizationcontract)
 - [deployCampaignAndTicketContract](./KarrotFactory.md#deploycampaignandticketcontract)
 - [deployOrganizationAndCampaigns](./KarrotFactory.md#deployorganizationandcampaigns)
 
-## KarrotCampaign
-
-- [setTicketContract](./KarrotCampaign.md#setticketcontract)
-
 ## Lottery
 
-- [registerTicketContract](./Lottery.md#registerticketcontract)
 - [setupLottery](./Lottery.md#setuplottery)
 - [initializeLottery](./Lottery.md#initializelottery)
 - [runLottery](./Lottery.md#runlottery)
