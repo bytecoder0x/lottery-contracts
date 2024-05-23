@@ -20,10 +20,13 @@ export async function deployFactoryAndMinter() {
         }
     })).deploy(owner.address);
     const ticketMinter = await (await ethers.getContractFactory("TicketMinter")).deploy(owner.address, minter.address, karrotFactory.address);
+    const karrotPassport = await (await ethers.getContractFactory("KarrotPassport")).deploy(owner.address, ticketMinter.address, "Test Passport");
     const { coordinator, wrapper, randomGetter, linkToken } = await deployRandomGetter(karrotFactory, owner);
 
     await karrotFactory.setMinterContract(ticketMinter.address);
     await karrotFactory.setRandomGetterContract(randomGetter.address);
+    await karrotFactory.setPassportContract(karrotPassport.address);
+
 
     return { karrotFactory, ticketMinter, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 };
 }

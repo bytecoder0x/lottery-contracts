@@ -153,7 +153,7 @@ contract KarrotCampaign is
 
     /// @inheritdoc IKarrotCampaign
     function getUserCampaignId(address _owner) external view returns (uint256) {
-        uint organizationId = IKarrotOrganization(organization).ownerToken(_owner);
+        uint256 organizationId = IKarrotOrganization(organization).getUserOrganizationId(_owner);
         return ownerToken[organizationId];
     }
 
@@ -248,7 +248,7 @@ contract KarrotCampaign is
      * @dev Reverts if the caller is not the owner of any organization.
      */
     function _getUserCampaignId() private view returns (uint256) {
-        uint organizationId = IKarrotOrganization(organization).ownerToken(msg.sender);
+        uint organizationId = IKarrotOrganization(organization).getUserOrganizationId(msg.sender);
         if (organizationId == 0) revert IncorrectValue("User is not an owner of any organization");
         return ownerToken[organizationId];
     }

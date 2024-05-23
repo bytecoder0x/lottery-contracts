@@ -7,6 +7,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {IKarrotPassport} from "./interface/IKarrotPassport.sol";
 import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
@@ -67,6 +68,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
         address campaignAddress = IKarrotTicket(ticketContract).campaign();
         address organizationAddress = IKarrotCampaign(campaignAddress).organization();
+        address passportAddress = IKarrotOrganization(organizationAddress).passport();
         uint32 burnDeadline = ILottery(lottery).burnDeadline();
 
         if (block.timestamp > burnDeadline) {
@@ -79,9 +81,9 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         if (redemptionCap > 0 && redeemed + redemptionAmount > redemptionCap) {
             revert IncorrectValue("Redemption cap reached");
         }
-        uint organizationId = IKarrotOrganization(organizationAddress).ownerToken(msg.sender);
+        uint organizationId = IKarrotPassport(passportAddress).ownerToken(msg.sender);
         if (organizationId == 0) {
-            revert IncorrectValue("User is not an owner of any organization");
+            revert IncorrectValue("User is not an owner of any passport");
         }
         bool isRegisteredTicket = ILottery(lottery).isRegisteredTicket(ticketContract);
         if (!isRegisteredTicket) {
