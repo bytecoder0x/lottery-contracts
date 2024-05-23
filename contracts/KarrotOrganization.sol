@@ -7,6 +7,7 @@ import {RMRKNestable} from "@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMR
 
 import {KarrotErc7401Base} from "./base/KarrotErc7401Base.sol";
 
+import {IKarrotPassport} from "./interface/IKarrotPassport.sol";
 import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 
@@ -17,33 +18,46 @@ import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
  */
 contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     /// @inheritdoc IKarrotOrganization
-    mapping(address => uint256) public ownerToken;
+    address public passport;
+
+    /// @inheritdoc IKarrotOrganization
+    mapping(uint256 => uint256) public ownerToken;
 
     /**
      * @notice Constructor function to initialize the KarrotOrganization contract.
      * @param _defaultAdmin The address of the admin this contract.
      * @param _minter The address of the minter role.
+     * @param _passport The address of the passport contract that is the parent of this organization.
      * @param _name The name of the contract.
      */
-    constructor(address _defaultAdmin, address _minter, string memory _name) 
-        KarrotErc7401Base(_defaultAdmin, _minter, _name) { }
+    constructor(
+        address _defaultAdmin,
+        address _minter,
+        address _passport,
+        string memory _name
+    ) KarrotErc7401Base(_defaultAdmin, _minter, _name) {
+        passport = _passport;
+    }
 
     /// @inheritdoc IKarrotOrganization
-    function mintTo(
-        address to,
+    function mintToPassport(
+        uint256 parentId,
         bytes memory data
-    ) public onlyRole(MINTER_ROLE) returns (uint256) {
-        if (ownerToken[to] != 0) {
-            revert IncorrectCondition("Owner already has organization token");
+    ) public onlyRole(MINTER_ROLE) returns (uint256 mintedTokenId) {
+        if (ownerToken[parentId] != 0) {
+            revert IncorrectCondition("Passport already has organization token");
         }
-        _lastTokenId++;
-        _safeMint(to, _lastTokenId, data);
-        _approve(msg.sender, _lastTokenId);
-        ownerToken[to] = _lastTokenId;
-        
-        emit OrganizationTokenMinted(to, _lastTokenId); 
 
-        return _lastTokenId;
+        mintedTokenId = ++_lastTokenId;
+        _nestMint(passport, mintedTokenId, parentId, data);
+        ownerToken[parentId] = mintedTokenId;
+        _approve(msg.sender, mintedTokenId);
+        emit OrganizationTokenMintedToPassport(mintedTokenId, msg.sender, parentId); 
+    }
+
+    function getUserOrganizationId(address _owner) external view returns (uint256) {
+        uint256 passportId = IKarrotPassport(passport).ownerToken(_owner);
+        return ownerToken[passportId];
     }
 
     /// @inheritdoc IERC7401

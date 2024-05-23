@@ -11,26 +11,41 @@ import {IKarrotErc7401Base} from "./IKarrotErc7401Base.sol";
  * @dev KarrotOrganization allows minting new tokens for specific addresses and ensures each address can own only one organization token.
  */
 interface IKarrotOrganization is IERC7401, IKarrotErc7401Base {
-    /**
-     * @notice Emitted when a new organization token is minted.
-     * @param to The address to which the token is minted.
-     * @param tokenId The ID of the minted token.
-     */
-    event OrganizationTokenMinted(address indexed to, uint256 indexed tokenId);
 
     /**
-     * @notice Mints a new organization token to the specified address.
-     * @param to The address to mint the token to.
+     * @notice Emitted when a organization token is minted to parent passport.
+     * @param tokenId The ID of the newly minted organization token.
+     * @param minter The address that minted the organization token.
+     * @param passportTokenParentId The ID of the parent passport token associated with the campaign token.
+     */
+    event OrganizationTokenMintedToPassport(uint256 indexed tokenId, address indexed minter, uint256 indexed passportTokenParentId);
+
+    /**
+     * @notice Retrieves address of the passport contract, which can mint tokens that owns organizations.
+     * @return KarrotPassport contract address.
+     */
+    function passport() external returns(address);
+
+    /**
+     * @notice Mints a new organization token to the specified parent passport.
+     * @param parentId The ID of the parent passport.
      * @param data Additional data to include in the minted token.
      * @return The ID of the newly minted token.
-     * @dev Reverts if the recipient already owns an organization token.
+     * @dev Reverts if the parent passport already owns an organization token.
      */
-    function mintTo(address to, bytes memory data) external returns (uint256);
+    function mintToPassport(uint256 parentId, bytes memory data) external returns (uint256);
 
     /**
-     * @notice Retrieves the token ID owned by the specified address.
-     * @param owner The address of the token owner.
-     * @return The ID of the token owned by the specified address.
+     * @notice Returns the organization token ID of the specified parent passport ID.
+     * @param tokenId The ID of the parent passport token.
+     * @return The organization token ID.
      */
-    function ownerToken(address owner) external view returns (uint256);
+    function ownerToken(uint256 tokenId) external view returns (uint256);
+
+    /**
+     * @notice Retrieves the organization ID associated with a specific user.
+     * @param _owner The address of the owner who has a passport token that owns this organization.
+     * @return The organization ID associated with the specified user.
+     */
+    function getUserOrganizationId(address _owner) external view returns (uint256);
 }
