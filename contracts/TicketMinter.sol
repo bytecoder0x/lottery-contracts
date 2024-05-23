@@ -6,8 +6,9 @@ import {IERC7401} from "@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC740
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
+import {IKarrotPassport} from "./interface/IKarrotPassport.sol";
 import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
+import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ITicketMinter} from "./interface/ITicketMinter.sol";
@@ -76,27 +77,31 @@ contract TicketMinter is
         onlyRole(MINTER_ROLE)
         returns (uint256[] memory ticketsTokenIds)
     {
+        address passport = factory.passportContract();
         address organization = _getOrganizationFromFactory(campaign);
         address ticket = _getTicketFromCampaign(campaign);
 
-        uint256 organizationTokenId = IKarrotOrganization(organization)
-            .ownerToken(endOwner);
-
-        if (organizationTokenId == 0) {
-            organizationTokenId = IKarrotOrganization(organization).mintTo(
+        uint256 passportTokenId = IKarrotPassport(passport).ownerToken(endOwner);
+        if (passportTokenId == 0) {
+            passportTokenId = IKarrotPassport(passport).mintTo(
                 endOwner,
                 new bytes(0)
             );
         }
 
-        IERC7401.Child[] memory organizationChildren = 
-            IKarrotOrganization(organization).childrenOf(organizationTokenId);
-        
-        uint256 campaignTokenId = _getCampaignTokenId(
-            organizationChildren,
-            campaign
-        );
+        uint256 organizationTokenId = IKarrotOrganization(organization).ownerToken(passportTokenId);
+        if (organizationTokenId == 0) {
+            organizationTokenId = _mintOrganizationToPassportAndAccept(
+                organization,
+                passport,
+                passportTokenId
+            );
+        }
 
+        // IERC7401.Child[] memory organizationChildren = 
+        //     IKarrotOrganization(organization).childrenOf(organizationTokenId);
+        
+        uint256 campaignTokenId = IKarrotCampaign(campaign).ownerToken(organizationTokenId);
         if (campaignTokenId == 0) {
             campaignTokenId = _mintCampaignToOrganizationAndAccept(
                 campaign,
@@ -164,6 +169,27 @@ contract TicketMinter is
         }
 
         return campaignTokenId;
+    }
+
+    function _mintOrganizationToPassportAndAccept(
+        address organization,
+        address passport,
+        uint256 passportTokenId
+    ) private returns (uint256 organizationTokenId) {
+        organizationTokenId = IKarrotOrganization(organization).mintToPassport(
+            passportTokenId,
+            new bytes(0)
+        );
+
+        IERC7401.Child[] memory pendingChildren = IKarrotPassport(passport)
+            .pendingChildrenOf(passportTokenId);
+
+        IKarrotPassport(passport).acceptChild(
+            passportTokenId,
+            pendingChildren.length - 1,
+            organization,
+            organizationTokenId
+        );
     }
 
     /**
