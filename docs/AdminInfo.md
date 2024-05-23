@@ -1,35 +1,35 @@
 ## KarrotFactory
 
-- [enableOrganization](./interface/IKarrotFactory.md#enableorganization)
-- [disableOrganization](./interface/IKarrotFactory.md#disableorganization)
-- [setMinterContract](./interface/IKarrotFactory.md#setmintercontract)
-- [setRandomGetterContract](./interface/IKarrotFactory.md#setrandomgettercontract)
-- [deployLotteryAndRedemptionContract](./interface/IKarrotFactory.md#deploylotteryandredemptioncontract)
-- [deployOrganizationContract](./interface/IKarrotFactory.md#deployorganizationcontract)
-- [deployCampaignAndTicketContract](./interface/IKarrotFactory.md#deploycampaignandticketcontract)
-- [deployOrganizationAndCampaigns](./interface/IKarrotFactory.md#deployorganizationandcampaigns)
+- [enableOrganization](./KarrotFactory.md#enableorganization)
+- [disableOrganization](./KarrotFactory.md#disableorganization)
+- [setMinterContract](./KarrotFactory.md#setmintercontract)
+- [setRandomGetterContract](./KarrotFactory.md#setrandomgettercontract)
+- [deployLotteryAndRedemptionContract](./KarrotFactory.md#deploylotteryandredemptioncontract)
+- [deployOrganizationContract](./KarrotFactory.md#deployorganizationcontract)
+- [deployCampaignAndTicketContract](./KarrotFactory.md#deploycampaignandticketcontract)
+- [deployOrganizationAndCampaigns](./KarrotFactory.md#deployorganizationandcampaigns)
 
 ## KarrotCampaign
 
-- [setTicketContract](./interface/IKarrotCampaign.md#setticketcontract)
+- [setTicketContract](./KarrotCampaign.md#setticketcontract)
 
 ## Lottery
 
-- [registerTicketContract](./interface/ILottery.md#registerticketcontract-1)
-- [setupLottery](./interface/ILottery.md#setuplottery)
-- [initializeLottery](./interface/ILottery.md#initializelottery)
-- [runLottery](./interface/ILottery.md#runlottery)
-- [rewardWinners](./interface/ILottery.md#rewardwinners)
+- [registerTicketContract](./Lottery.md#registerticketcontract)
+- [setupLottery](./Lottery.md#setuplottery)
+- [initializeLottery](./Lottery.md#initializelottery)
+- [runLottery](./Lottery.md#runlottery)
+- [rewardWinners](./Lottery.md#rewardwinners)
 
 ## RandomGetter
 
-- [withdraw](./interface/IRandomGetter.md#withdraw)
+- [withdraw](./RandomGetter.md#withdraw)
 
 ## TicketRedemption
 
-- [setRewardToken](./interface/ITicketRedemption.md#setrewardtoken)
-- [setRedemptionPrice](./interface/ITicketRedemption.md#setredemptionprice-1)
-- [setRedemptionCap](./interface/ITicketRedemption.md#setredemptioncap-1)
+- [setRewardToken](./TicketRedemption.md#setrewardtoken)
+- [setRedemptionPrice](./TicketRedemption.md#setredemptionprice)
+- [setRedemptionCap](./TicketRedemption.md#setredemptioncap)
 
 
 

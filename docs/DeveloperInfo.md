@@ -2,48 +2,50 @@
 
 - [ticketsCampaign](./interface/IKarrotFactory.md#ticketscampaign)
 - [campaignOrganization](./interface/IKarrotFactory.md#campaignorganization)
-- [getAllLotteries](./interface/IKarrotFactory.md#getalllotteries)
-- [getAllRedemptions](./interface/IKarrotFactory.md#getallredemptions)
-- [getAllOrganizations](./interface/IKarrotFactory.md#getallorganizations)
-- [getAllCampaigns](./interface/IKarrotFactory.md#getallcampaigns)
-- [getAllTickets](./interface/IKarrotFactory.md#getalltickets)
-- [getLotteriesCount](./interface/IKarrotFactory.md#getlotteriescount)
-- [getRedemptionsCount](./interface/IKarrotFactory.md#getredemptionscount)
-- [getOrganizationsCount](./interface/IKarrotFactory.md#getorganizationscount)
-- [getCampaignsCount](./interface/IKarrotFactory.md#getcampaignscount)
-- [getTicketsCount](./interface/IKarrotFactory.md#getticketscount)
+- [getAllLotteries](./KarrotFactory.md#getalllotteries)
+- [getAllRedemptions](./KarrotFactory.md#getallredemptions)
+- [getAllOrganizations](./KarrotFactory.md#getallorganizations)
+- [getAllCampaigns](./KarrotFactory.md#getallcampaigns)
+- [getAllTickets](./KarrotFactory.md#getalltickets)
+- [getLotteriesCount](./KarrotFactory.md#getlotteriescount)
+- [getRedemptionsCount](./KarrotFactory.md#getredemptionscount)
+- [getOrganizationsCount](./KarrotFactory.md#getorganizationscount)
+- [getCampaignsCount](./KarrotFactory.md#getcampaignscount)
+- [getTicketsCount](./KarrotFactory.md#getticketscount)
 
 ## KarrotOrganization
 
 - [ownerToken](./interface/IKarrotOrganization.md#ownertoken)
-- [mintTo](./interface/IKarrotOrganization.md#mintto)
+- [mintTo](./KarrotOrganization.md#mintto)
 - [ownerOf](./KarrotOrganization.md#ownerof)
 
 ## KarrotCampaign
 
 - [ownerToken](./interface/IKarrotCampaign.md#ownertoken)
-- [mintToOrganization](./interface/IKarrotCampaign.md#minttoorganization)
-- [burnTicket](./interface/IKarrotCampaign.md#burnticket) (two functions)
-- [burnTicketBatch](./interface/IKarrotCampaign.md#burnticketbatch) (two functions)
+- [mintToOrganization](./KarrotCampaign.md#minttoorganization)
+- [burnTicket](./KarrotCampaign.md#burnticket) 
+- [burnTicket](./KarrotCampaign.md#burnticket-1) (by campaign id)
+- [burnTicketBatch](./KarrotCampaign.md#burnticketbatch)
+- [burnTicketBatch](./KarrotCampaign.md#burnticketbatch-1) (by campaign id)
 - [ownerOf](./KarrotCampaign.md#ownerof)
-- [getLotteryContract](./interface/IKarrotCampaign.md#getlotterycontract)
-- [getUserCampaignId](./interface/IKarrotCampaign.md#getusercampaignid)
+- [getLotteryContract](./KarrotCampaign.md#getlotterycontract)
+- [getUserCampaignId](./KarrotCampaign.md#getusercampaignid)
 
 ## KarrotTicket
 
-- [mintToCampaign](./interface/IKarrotTicket.md#minttocampaign)
-- [mintToCampaignBatch](./interface/IKarrotTicket.md#minttocampaignbatch)
-- [burnLastTicket](./interface/IKarrotTicket.md#burnlastticket)
-- [getLotteryContract](./interface/IKarrotTicket.md#getlotterycontract)
+- [mintToCampaign](./KarrotTicket.md#minttocampaign)
+- [mintToCampaignBatch](./KarrotTicket.md#minttocampaignbatch)
+- [burnLastTicket](./KarrotTicket.md#burnlastticket)
+- [getLotteryContract](./KarrotTicket.md#getlotterycontract)
 - [ownerOf](./KarrotTicket.md#ownerof)
-- [getOrganisation](./interface/IKarrotTicket.md#getorganisation)
-- [getUserTicketIds](./interface/IKarrotTicket.md#getuserticketids)
+- [getOrganisation](./KarrotTicket.md#getorganisation)
+- [getUserTicketIds](./KarrotTicket.md#getuserticketids)
 
 ## TicketMinter
 
 - [MINTER_ROLE](./base/KarrotErc7401Base.md#minter_role)
-- [mintTicketsBatch](./interface/ITicketMinter.md#mintticketsbatch)
-- [mintTickets](./interface/ITicketMinter.md#minttickets)
+- [mintTicketsBatch](./TicketMinter.md#mintticketsbatch)
+- [mintTickets](./TicketMinter.md#minttickets)
 
 ## Lottery
 
@@ -56,23 +58,24 @@
 - [organizationTicketsRange](./interface/ILottery.md#organizationticketsrange)
 - [winnerAmount](./interface/ILottery.md#winneramount)
 - [tierWinners](./interface/ILottery.md#tierwinners)
-- [getUnderlyingTicket](./interface/ILottery.md#getunderlyingticket)
-- [getTier](./interface/ILottery.md#gettier)
-- [getAllTiers](./interface/ILottery.md#getalltiers)
-- [getAllOrganizations](./interface/ILottery.md#getallorganizations)
-- [getTiersCount](./interface/ILottery.md#gettierscount)
-- [getOrganizationsCount](./interface/ILottery.md#getorganizationscount)
-- [getOrganizationTicketsContracts](./interface/ILottery.md#getorganizationticketscontracts)
-- [getOrganizationSharesForFixedTiers](./interface/ILottery.md#getorganizationsharesforfixedtiers)
-- [getAllCampaignTickets](./interface/ILottery.md#getallcampaigntickets)
+- [getUnderlyingTicket](./Lottery.md#getunderlyingticket)
+- [getTier](./Lottery.md#gettier)
+- [getAllTiers](./Lottery.md#getalltiers)
+- [getAllOrganizations](./Lottery.md#getallorganizations)
+- [getTiersCount](./Lottery.md#gettierscount)
+- [getOrganizationsCount](./Lottery.md#getorganizationscount)
+- [getOrganizationTicketsContracts](./Lottery.md#getorganizationticketscontracts)
+- [getOrganizationSharesForFixedTiers](./Lottery.md#getorganizationsharesforfixedtiers)
+- [getAllCampaignTickets](./Lottery.md#getallcampaigntickets)
 
 ## RandomGetter
 
 - [requestIds](./interface/IRandomGetter.md#requestids)
 - [randomNumbersByRequestId](./interface/IRandomGetter.md#randomnumbersbyrequestid)
-- [requestRandomNumber](./interface/IRandomGetter.md#requestrandomnumber)
-- [getRandomNumber](./interface/IRandomGetter.md#getrandomnumber) (two functions)
+- [requestRandomNumber](./RandomGetter.md#requestrandomnumber)
+- [getRandomNumber](./RandomGetter.md#getrandomnumber) (by id)
+- [getRandomNumber](./RandomGetter.md#getrandomnumber-1) (by address)
 
 ## TicketRedemption
 
-- [redeem](./interface/ITicketRedemption.md#redeem)
+- [redeem](./TicketRedemption.md#redeem)
