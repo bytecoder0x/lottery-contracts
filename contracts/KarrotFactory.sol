@@ -65,13 +65,19 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     /// @inheritdoc IKarrotFactory
     mapping(address => address) public ticketsCampaign;
 
-    /// @notice The modifier checks whether the function is without set minter contract.
+    /// @notice The modifier checks whether the KarrotPassport contract is set when the function is called.
+    modifier withSetupPassportContract() {
+        if (passportContract == address(0)) revert IncorrectCondition("Passport contract not set");
+        _;
+    }
+
+    /// @notice The modifier checks whether the TicketMinter contract is set when the function is called.
     modifier withSetupMinterContract() {
         if (minterContract == address(0)) revert IncorrectCondition("Minter contract not set");
         _;
     }
 
-    /// @notice The modifier checks whether the function is without set randomGetter contract.
+    /// @notice The modifier checks whether the randomGetter contract is set when the function is called.
     modifier withSetupRandomGetterContract() {
         if (randomGetterContract == address(0)) revert IncorrectCondition("RandomGetter contract not set");
         _;
@@ -179,7 +185,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     function deployOrganizationContract(
         address defaultAdmin,
         string memory organizationName
-    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address deployedOrganization) {
+    ) public withSetupMinterContract withSetupPassportContract onlyRole(DEPLOYER_ROLE) returns (address deployedOrganization) {
         deployedOrganization = _deployOrganizationContract(defaultAdmin, organizationName);
         emit OrganizationContractDeployed(deployedOrganization);
     }
@@ -202,7 +208,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address lottery,
         string memory organizationName,
         string[] memory campaignNames
-    ) external withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns(
+    ) external withSetupMinterContract withSetupPassportContract onlyRole(DEPLOYER_ROLE) returns(
         address deployedOrganization,
         address[] memory deployedCampaigns,
         address[] memory deployedTickets
