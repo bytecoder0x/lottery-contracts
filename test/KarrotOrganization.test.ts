@@ -49,7 +49,7 @@ describe("KarrotOrganization", async () => {
       expect(await organization.ownerOf(tokenId)).to.equal(user1.address);
     });
 
-    it("Should prevents minting to the owner who already has a token", async function () {
+    it("Should prevents minting to the passport who already has a token", async function () {
       await organization.connect(minter).mintToPassport(1, []);
       await expect(organization.connect(minter).mintToPassport(1, [])).to.be.revertedWith("IncorrectCondition");
     });
@@ -59,6 +59,13 @@ describe("KarrotOrganization", async () => {
       await expect(organization.connect(user2).mintToPassport(user1.address, [])).to.be.revertedWith(
         "AccessControl: account " + user2.address.toLowerCase() + " is missing role " + minterRole
       );
+    });
+
+    it("Should not allow to deploy with wrong passport", async function () {
+      const [owner, minter] = await ethers.getSigners();
+
+      await expect((await ethers.getContractFactory("KarrotOrganization")).deploy(owner.address, minter.address, organization.address, "Test Organization"))
+          .to.be.revertedWith("InterfaceNotSupported");
     });
 
     it("Should revokes minter role and prevents token minting", async function () {

@@ -36,6 +36,14 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
         address _passport,
         string memory _name
     ) KarrotErc7401Base(_defaultAdmin, _minter, _name) {
+        if (
+            !IKarrotPassport(_passport).supportsInterface(
+                type(IKarrotPassport).interfaceId
+            )
+        ) {
+            revert InterfaceNotSupported();
+        }
+
         passport = _passport;
     }
 
