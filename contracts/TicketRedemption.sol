@@ -81,8 +81,8 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         if (redemptionCap > 0 && redeemed + redemptionAmount > redemptionCap) {
             revert IncorrectValue("Redemption cap reached");
         }
-        uint organizationId = IKarrotPassport(passportAddress).ownerToken(msg.sender);
-        if (organizationId == 0) {
+        uint passportId = IKarrotPassport(passportAddress).ownerToken(msg.sender);
+        if (passportId == 0) {
             revert IncorrectValue("User is not an owner of any passport");
         }
         bool isRegisteredTicket = ILottery(lottery).isRegisteredTicket(ticketContract);
@@ -90,6 +90,7 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
             revert IncorrectValue("The ticket is not registered");
         }
 
+        uint organizationId = IKarrotOrganization(organizationAddress).ownerToken(passportId);
         uint campaignId = IKarrotCampaign(campaignAddress).ownerToken(organizationId);
         IKarrotCampaign(campaignAddress).burnTicketBatch(campaignId, amountOfTicketsToBurn);
         IERC20(rewardToken).safeTransfer(msg.sender, redemptionAmount);
