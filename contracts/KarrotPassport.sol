@@ -29,6 +29,8 @@ contract KarrotPassport is KarrotErc7401Base, IKarrotPassport {
         _approve(msg.sender, _lastTokenId);
         ownerToken[to] = _lastTokenId;
 
+        emit PassportTokenMinted(to, _lastTokenId);
+
         return _lastTokenId;
     }
 
