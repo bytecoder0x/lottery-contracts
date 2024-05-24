@@ -124,13 +124,13 @@ describe("TicketRedemption", async () => {
     await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Redemption cap reached");
   });
 
-  it("Should prevents ticket redemption if sender does not own any organization", async function () {
+  it("Should prevents ticket redemption if sender does not own any passport", async function () {
     const redemptionPrice = ethers.utils.parseEther("100");
     const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
     const ticketAddress = await campaign.ticketsContract();
     await redemption.setRedemptionPrice(redemptionPrice);
     await redemption.setRedemptionCap(redemptionPrice);
-    await expect(redemption.connect(minter).redeem(ticketAddress, 1)).to.be.revertedWith("User is not an owner of any organization");
+    await expect(redemption.connect(minter).redeem(ticketAddress, 1)).to.be.revertedWith("User is not an owner of any passport");
   });
 
   it("Should prevents ticket redemption if ticket is not registered", async function () {

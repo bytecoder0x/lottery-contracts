@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { KarrotFactory, RandomGetter } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-export async function deployFactoryAndMinter() {
+export async function deployFactory() {
     const [owner, minter, user1, user2] = await ethers.getSigners();
 
     const lotteryDeployerLibrary = await (await ethers.getContractFactory("LotteryDeployerLibrary")).deploy();
@@ -28,11 +28,11 @@ export async function deployFactoryAndMinter() {
     await karrotFactory.setPassportContract(karrotPassport.address);
 
 
-    return { karrotFactory, ticketMinter, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 };
+    return { karrotFactory, karrotPassport, ticketMinter, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 };
 }
 
 export async function deployBasicContracts() {
-    const { karrotFactory, ticketMinter, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 } = await deployFactoryAndMinter();
+    const { karrotFactory, karrotPassport, ticketMinter, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 } = await deployFactory();
 
     await karrotFactory.deployLotteryAndRedemptionContract(
         owner.address,
@@ -49,6 +49,7 @@ export async function deployBasicContracts() {
         "Test Organization 1",
         ["Campaign 1", "Campaign 1"]
     );
+    const passportAddress = await karrotFactory.passportContract();
     const organizationAddress = await karrotFactory.organizations(0);
     const campaignsAddresses = await karrotFactory.getAllCampaigns();
 
@@ -59,6 +60,7 @@ export async function deployBasicContracts() {
       wrapper,
       randomGetter,
       linkToken,
+      passportAddress,
       organizationAddress,
       campaignsAddresses,
       lotteryAddress,

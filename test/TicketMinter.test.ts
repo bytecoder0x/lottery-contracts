@@ -9,8 +9,10 @@ describe("TicketMinter", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory
   let ticketMinter: TicketMinter;
+  let passportAddress: string;
   let organizationAddress: string;
   let campaignsAddresses: string[];
+  let lotteryAddress: string;
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
   let organization: KarrotOrganization;
   let rewardTokenMintableMock: RewardTokenMintableMock;
@@ -25,8 +27,10 @@ describe("TicketMinter", async () => {
     ticketMinter = fixture.ticketMinter;
     owner = fixture.owner;
     minter = fixture.minter;
+    passportAddress = fixture.passportAddress;
     organizationAddress = fixture.organizationAddress;
     campaignsAddresses = fixture.campaignsAddresses;
+    lotteryAddress = fixture.lotteryAddress;
     user1 = fixture.user1;
     user2 = fixture.user2;
   });
@@ -36,11 +40,15 @@ describe("TicketMinter", async () => {
       [user1.address, user2.address],
       campaignsAddresses[0],
       [2, 3]);
+    const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
     const organization = await ethers.getContractAt("KarrotOrganization", organizationAddress);
-    expect(await organization.balanceOf(user1.address)).to.equal(1);
-    expect(await organization.balanceOf(user2.address)).to.equal(1);
-    const user1OrganizationNft = await organization.ownerToken(user1.address);
-    const user2OrganizationNft = await organization.ownerToken(user2.address);
+    expect(await passport.balanceOf(user1.address)).to.equal(1);
+    expect(await passport.balanceOf(user2.address)).to.equal(1);
+    const user1PassportNft = await passport.ownerToken(user1.address);
+    const user2PassportNft = await passport.ownerToken(user2.address);
+
+    const user1OrganizationNft = await organization.ownerToken(user1PassportNft);
+    const user2OrganizationNft = await organization.ownerToken(user2PassportNft);
     const user1CampaignNfts = await organization.childrenOf(user1OrganizationNft);
     const user2CampaignNfts = await organization.childrenOf(user2OrganizationNft);
     expect(user1CampaignNfts.length).to.equal(1);
@@ -72,7 +80,7 @@ describe("TicketMinter", async () => {
 
   it("Should not allow to deploy with wrong factory", async function () {
     const [owner, minter] = await ethers.getSigners();
-    const organization = await (await ethers.getContractFactory("KarrotOrganization")).deploy(owner.address, minter.address, "Test Organization");
+    const organization = await (await ethers.getContractFactory("KarrotOrganization")).deploy(owner.address, minter.address, passportAddress, "Test Organization");
 
     await expect((await ethers.getContractFactory("TicketMinter")).deploy(owner.address, minter.address, organization.address))
       .to.be.revertedWith("InterfaceNotSupported");
@@ -86,11 +94,11 @@ describe("TicketMinter", async () => {
       [2])).to.be.revertedWith("endOwners and ticketsCounts length mismatch");
   });
 
-  it("Should mint tickets to an existing organization token", async function () {
+  it("Should mint tickets to an existing passport token", async function () {
 
-    const organization = await ethers.getContractAt("KarrotOrganization", organizationAddress);
+    const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
     const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
-    await organization.grantRole(minterRole, minter.address);
+    await passport.grantRole(minterRole, minter.address);
 
     await ticketMinter.connect(minter).mintTickets(
       user1.address,
@@ -102,8 +110,47 @@ describe("TicketMinter", async () => {
       campaignsAddresses[0],
       2
     );
-    expect(await organization.balanceOf(user1.address)).to.equal(1);
+    expect(await passport.balanceOf(user1.address)).to.equal(1);
   });
+
+  it("Should mint tickets to to the specified user if the user has more than one organization or campaign", async function () {
+    await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization 2", ["Campaign 3", "Campaign 4"]);
+    const campaignsAddresses = await karrotFactory.getAllCampaigns();
+    const organizationAddresses = await karrotFactory.getAllOrganizations(); 
+    const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
+    const organization = await ethers.getContractAt("KarrotPassport", organizationAddresses[1]);
+
+    await ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      campaignsAddresses[0],
+      2
+    );
+
+    await ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      campaignsAddresses[2],
+      2
+    );
+
+    await ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      campaignsAddresses[3],
+      2
+    );
+
+    const allCampaigns = [campaignsAddresses[0], campaignsAddresses[2], campaignsAddresses[3]]
+    for (let i = 0; i < 3; i++){
+      const campaignAddress = allCampaigns[i];
+      const campaign = await ethers.getContractAt("KarrotCampaign", campaignAddress);
+      const ticket = await ethers.getContractAt("KarrotTicket", await campaign.ticketsContract());
+
+      expect(await ticket.balanceOf(campaign.address)).to.be.equal(2);
+    }
+
+    expect((await passport.childrenOf(1)).length).to.be.equal(2);
+    expect((await organization.childrenOf(1)).length).to.be.equal(2);
+    expect(await passport.balanceOf(user1.address)).to.equal(1);
+  })
 
   it("Should revert if no organization found for campaign", async function () {
     let randomCompany = ethers.Wallet.createRandom().address;
