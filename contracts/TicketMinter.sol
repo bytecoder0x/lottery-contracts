@@ -89,7 +89,11 @@ contract TicketMinter is
             );
         }
 
-        uint256 organizationTokenId = IKarrotOrganization(organization).ownerToken(passportTokenId);
+        
+        IERC7401.Child[] memory passportChildren = 
+            IKarrotPassport(passport).childrenOf(passportTokenId);
+
+        uint256 organizationTokenId = _getOrganizationTokenId(passportChildren, organization);
         if (organizationTokenId == 0) {
             organizationTokenId = _mintOrganizationToPassportAndAccept(
                 organization,
@@ -98,10 +102,10 @@ contract TicketMinter is
             );
         }
 
-        // IERC7401.Child[] memory organizationChildren = 
-        //     IKarrotOrganization(organization).childrenOf(organizationTokenId);
+        IERC7401.Child[] memory organizationChildren = 
+            IKarrotOrganization(organization).childrenOf(organizationTokenId);
         
-        uint256 campaignTokenId = IKarrotCampaign(campaign).ownerToken(organizationTokenId);
+        uint256 campaignTokenId = _getCampaignTokenId(organizationChildren, campaign);
         if (campaignTokenId == 0) {
             campaignTokenId = _mintCampaignToOrganizationAndAccept(
                 campaign,
@@ -145,6 +149,30 @@ contract TicketMinter is
         address ticket = IKarrotCampaign(campaign).ticketsContract();
         // There is no need to check if ticket == address(0) because this is an impossible scenario.
         return ticket;
+    }
+
+    /**
+     * @notice Finds the token ID a organization.
+     * @param passportChildren The list of children tokens owned by the passport.
+     * @param organization The address of the organization.
+     * @return organizationTokenId The token ID associated with the campaign, or 0 if not found.
+     */
+    function _getOrganizationTokenId(
+        IERC7401.Child[] memory passportChildren,
+        address organization
+    ) private pure returns (uint256) {
+        uint256 organizationTokenId;
+
+        if (passportChildren.length != 0) {
+            for (uint256 i = 0; i < passportChildren.length; i++) {
+                if (passportChildren[i].contractAddress == organization) {
+                    organizationTokenId = passportChildren[i].tokenId;
+                    break;
+                }
+            }
+        }
+
+        return organizationTokenId;
     }
 
     /**
