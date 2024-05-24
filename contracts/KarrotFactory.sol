@@ -148,7 +148,6 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     function setPassportContract(
         address _passportContract
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (passportContract != address(0)) revert IncorrectCondition("Passport contract is already set");
         if (
             !IKarrotPassport(_passportContract).supportsInterface(
                 type(IKarrotPassport).interfaceId
@@ -156,6 +155,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         ) {
             revert InterfaceNotSupported();
         }
+        if (passportContract != address(0)) revert IncorrectCondition("Passport contract is already set");
         passportContract = _passportContract;
         
         emit PassportContractSet(_passportContract);
