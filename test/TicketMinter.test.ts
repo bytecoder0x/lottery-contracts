@@ -12,6 +12,7 @@ describe("TicketMinter", async () => {
   let passportAddress: string;
   let organizationAddress: string;
   let campaignsAddresses: string[];
+  let lotteryAddress: string;
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
   let organization: KarrotOrganization;
   let rewardTokenMintableMock: RewardTokenMintableMock;
@@ -29,6 +30,7 @@ describe("TicketMinter", async () => {
     passportAddress = fixture.passportAddress;
     organizationAddress = fixture.organizationAddress;
     campaignsAddresses = fixture.campaignsAddresses;
+    lotteryAddress = fixture.lotteryAddress;
     user1 = fixture.user1;
     user2 = fixture.user2;
   });
@@ -110,6 +112,45 @@ describe("TicketMinter", async () => {
     );
     expect(await passport.balanceOf(user1.address)).to.equal(1);
   });
+
+  it("Should mint tickets to to the specified user if the user has more than one organization or campaign", async function () {
+    await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization 2", ["Campaign 3", "Campaign 4"]);
+    const campaignsAddresses = await karrotFactory.getAllCampaigns();
+    const organizationAddresses = await karrotFactory.getAllOrganizations(); 
+    const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
+    const organization = await ethers.getContractAt("KarrotPassport", organizationAddresses[1]);
+
+    await ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      campaignsAddresses[0],
+      2
+    );
+
+    await ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      campaignsAddresses[2],
+      2
+    );
+
+    await ticketMinter.connect(minter).mintTickets(
+      user1.address,
+      campaignsAddresses[3],
+      2
+    );
+
+    const allCampaigns = [campaignsAddresses[0], campaignsAddresses[2], campaignsAddresses[3]]
+    for (let i = 0; i < 3; i++){
+      const campaignAddress = allCampaigns[i];
+      const campaign = await ethers.getContractAt("KarrotCampaign", campaignAddress);
+      const ticket = await ethers.getContractAt("KarrotTicket", await campaign.ticketsContract());
+
+      expect(await ticket.balanceOf(campaign.address)).to.be.equal(2);
+    }
+
+    expect((await passport.childrenOf(1)).length).to.be.equal(2);
+    expect((await organization.childrenOf(1)).length).to.be.equal(2);
+    expect(await passport.balanceOf(user1.address)).to.equal(1);
+  })
 
   it("Should revert if no organization found for campaign", async function () {
     let randomCompany = ethers.Wallet.createRandom().address;

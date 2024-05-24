@@ -233,7 +233,7 @@ describe("KarrotTicket", async () => {
         });
     });
 
-    it("Should not allow to deploy with wrong factory", async function () {
+    it("Should not allow to deploy with wrong campaign", async function () {
         const [owner, minter] = await ethers.getSigners();
         const organization = await (await ethers.getContractFactory("KarrotOrganization")).deploy(owner.address, minter.address, passportAddress, "Test Organization");
 
