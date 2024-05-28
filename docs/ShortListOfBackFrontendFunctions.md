@@ -12,6 +12,11 @@ This is a list of the most used functions for frontend and backend developers. A
 - [getAllCampaigns](./KarrotFactory.md#getallcampaigns)
 - [getAllTickets](./KarrotFactory.md#getalltickets)
 
+## KarrotPassport
+
+- [ownerToken](./interface/IKarrotPassport.md#ownertoken)
+- [ownerOf](./KarrotPassport.md#ownerof)
+
 ## KarrotOrganization
 
 - [ownerToken](./interface/IKarrotOrganization.md#ownertoken)

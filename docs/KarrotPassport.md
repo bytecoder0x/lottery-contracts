@@ -1,34 +1,25 @@
 # Solidity API
 
-## KarrotOrganization
+## KarrotPassport
 
-The KarrotOrganization contract handles the creation and ownership of organization tokens in Karrot.
-
-_KarrotOrganization allows minting new tokens for specific parent passport and ensures each passport can own only one organization token._
-
-### passport
-
-```solidity
-address passport
-```
-
-Retrieves address of the passport contract, which can mint tokens that owns organizations.
+_KarrotPassport contract handles the creation and ownership of passport tokens which own organizations.
+KarrotPassport allows minting new tokens for specific addresses and ensures each address can own only one passport token._
 
 ### ownerToken
 
 ```solidity
-mapping(uint256 => uint256) ownerToken
+mapping(address => uint256) ownerToken
 ```
 
-Returns the organization token ID of the specified parent passport ID.
+Get the token ID owned by an address.
 
 ### constructor
 
 ```solidity
-constructor(address _defaultAdmin, address _minter, address _passport, string _name) public
+constructor(address _defaultAdmin, address _minter, string _name) public
 ```
 
-Constructor function to initialize the KarrotOrganization contract.
+Constructor function to initialize the KarrotPassport contract.
 
 #### Parameters
 
@@ -36,51 +27,28 @@ Constructor function to initialize the KarrotOrganization contract.
 | ---- | ---- | ----------- |
 | _defaultAdmin | address | The address of the admin this contract. |
 | _minter | address | The address of the minter role. |
-| _passport | address | The address of the passport contract that is the parent of this organization. |
 | _name | string | The name of the contract. |
 
-### mintToPassport
+### mintTo
 
 ```solidity
-function mintToPassport(uint256 parentId, bytes data) public returns (uint256 mintedTokenId)
+function mintTo(address to, bytes data) public returns (uint256)
 ```
 
-Mints a new organization token to the specified parent passport.
-
-_Reverts if the parent passport already owns an organization token._
+Mint a new passport token to a specified address.
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| parentId | uint256 | The ID of the parent passport. |
+| to | address | The address to mint the token to. |
 | data | bytes | Additional data to include in the minted token. |
 
 #### Return Values
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| mintedTokenId | uint256 | The ID of the newly minted token. |
-
-### getUserOrganizationId
-
-```solidity
-function getUserOrganizationId(address _owner) external view returns (uint256)
-```
-
-Retrieves the organization ID associated with a specific user.
-
-#### Parameters
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _owner | address | The address of the owner who has a passport token that owns this organization. |
-
-#### Return Values
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| [0] | uint256 | The organization ID associated with the specified user. |
+| [0] | uint256 | tokenId The ID of the minted token. |
 
 ### ownerOf
 
@@ -124,14 +92,13 @@ This function call must use less than 30 000 gas._
 function _beforeAcceptChild(uint256, uint256, address childAddress, uint256) internal virtual
 ```
 
-Performs check whether the child has IKarrotCampaign interface before accepting it.
+Performs check whether the child has IKarrotOrganization interface before accepting it.
 
-_Throws an error if the child contract does not support the IKarrotCampaign interface._
+_Throws an error if the child contract does not support the IKarrotOrganization interface._
 
 #### Parameters
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | childAddress | address | The address of the child contract. |
-
 
