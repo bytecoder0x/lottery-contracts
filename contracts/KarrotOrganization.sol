@@ -14,7 +14,7 @@ import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 /**
  * @title KarrotOrganization contract
  * @notice The KarrotOrganization contract handles the creation and ownership of organization tokens in Karrot.
- * @dev KarrotOrganization allows minting new tokens for specific addresses and ensures each address can own only one organization token.
+ * @dev KarrotOrganization allows minting new tokens for specific parent passport and ensures each passport can own only one organization token.
  */
 contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
     /// @inheritdoc IKarrotOrganization
@@ -73,7 +73,7 @@ contract KarrotOrganization is KarrotErc7401Base, IKarrotOrganization {
         return super.ownerOf(tokenId);
     }
 
-     /// @inheritdoc IERC165
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {

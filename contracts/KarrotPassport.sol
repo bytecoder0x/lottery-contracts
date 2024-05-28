@@ -10,12 +10,25 @@ import {KarrotErc7401Base} from "./base/KarrotErc7401Base.sol";
 import {IKarrotPassport} from "./interface/IKarrotPassport.sol";
 import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
 
+/**
+ * @title KarrotPassport contract
+ * @dev KarrotPassport contract handles the creation and ownership of passport tokens which own organizations.
+ * @dev KarrotPassport allows minting new tokens for specific addresses and ensures each address can own only one passport token.
+ */
 contract KarrotPassport is KarrotErc7401Base, IKarrotPassport {
     mapping(address => uint256) public ownerToken;
 
+    /**
+     * @notice Constructor function to initialize the KarrotPassport contract.
+     * @param _defaultAdmin The address of the admin this contract.
+     * @param _minter The address of the minter role.
+     * @param _name The name of the contract.
+     */
     constructor(address _defaultAdmin, address _minter, string memory _name) 
         KarrotErc7401Base(_defaultAdmin, _minter, _name) { }
 
+    
+    /// @inheritdoc IKarrotPassport
     function mintTo(
         address to,
         bytes memory data
@@ -34,12 +47,12 @@ contract KarrotPassport is KarrotErc7401Base, IKarrotPassport {
         return _lastTokenId;
     }
 
-    function ownerOf(
-        uint256 tokenId
-    ) public view override(RMRKNestable, IERC7401) returns (address owner_) {
+    /// @inheritdoc IERC7401
+    function ownerOf(uint256 tokenId) public view override(RMRKNestable, IERC7401) returns (address owner_) {
         return super.ownerOf(tokenId);
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(KarrotErc7401Base, IERC165) returns (bool) {
@@ -47,6 +60,11 @@ contract KarrotPassport is KarrotErc7401Base, IKarrotPassport {
             super.supportsInterface(interfaceId);
     }
 
+    /**
+     * @notice Performs check whether the child has IKarrotOrganization interface before accepting it.
+     * @param childAddress The address of the child contract.
+     * @dev Throws an error if the child contract does not support the IKarrotOrganization interface.
+     */
     function _beforeAcceptChild(
         uint256,
         uint256,

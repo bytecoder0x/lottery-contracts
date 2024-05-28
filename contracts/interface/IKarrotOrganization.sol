@@ -8,7 +8,7 @@ import {IKarrotErc7401Base} from "./IKarrotErc7401Base.sol";
 /**
  * @title KarrotOrganization contract
  * @notice The KarrotOrganization contract handles the creation and ownership of organization tokens in Karrot.
- * @dev KarrotOrganization allows minting new tokens for specific addresses and ensures each address can own only one organization token.
+ * @dev KarrotOrganization allows minting new tokens for specific parent passport and ensures each passport can own only one organization token.
  */
 interface IKarrotOrganization is IERC7401, IKarrotErc7401Base {
 
