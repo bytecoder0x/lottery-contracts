@@ -25,20 +25,24 @@ The Karrot project is built on the NFT standard, ERC-7401. The core concept behi
 - Regular ERC-721 contracts lack interoperability with ERC-7401 collections, preventing the nesting of existing NFTs.
 
 ### How do we use ERC-7401 standard in Karrot?
-We use a 3-level NFT system:
+We use a 4-level NFT system:
+0. Passport
 1. Organization
 2. Campaign
 3. Ticket
 
-Each EOA (user) can have only one NFT of the first level (organization). As mentioned, each "parent" NFT can contain multiple "child" NFTs. Therefore, the organization owns the campaigns, and the campaigns own the tickets. Accounts with the minter role can mint multiple campaigns to their organization. Similarly, accounts with the minter role can mint multiple tickets for each campaign.
+Each EOA (user) can have only one NFT of the zero level (passport). As mentioned, each "parent" NFT can contain multiple "child" NFTs. Therefore, the passport owns the organization, the organization owns the campaigns, and the campaigns own the tickets. Accounts with the minter role can mint multiple campaigns to their organization. Similarly, accounts with the minter role can mint multiple tickets for each campaign.
 
 ## Smart contracts
 
 ### KarrotFactory
 The KarrotFactory contract serves as a factory for deploying various contracts related to the Karrot platform, such as organizations, campaigns, lotteries, redemptions, and tickets. It manages the deployment process and keeps track of deployed contracts.
 
+### KarrotPassport
+The KarrotPassport is the main contract in the our NFT system which is deployed once. It allows minting new tokens for specific address and ensures each address can own only one passport token. Only the owners of this token can create and mint organizations. 
+
 ### KarrotOrganization
-The KarrotOrganization contract handles the creation and ownership of organization tokens in Karrot. It allows minting new tokens for specific addresses and ensures each address can own only one organization token.
+The KarrotOrganization contract handles the creation and ownership of organization tokens in Karrot. It allows minting new tokens for specific parent passport and ensures each parent can own only one organization token.
 
 ### KarrotCampaign
 The KarrotCampaign contract manages the creation and ownership of campaign tokens within the Karrot platform. It allows minting campaign tokens for specific organizations, setting ticket contracts, burning tickets, and retrieving campaign-related information.
@@ -96,7 +100,7 @@ All ticket holders have the option to burn their ticket for a fixed reward until
 
 Before redeeming, the admin should set the necessary parameters, including the reward token, ticket redemption price, and maximum redemption cap. After this cap is reached, the redemption process stops.
 
-It is worth noting that to redeem a ticket, the TicketRedemption contract must be approved by the owner of the organization associated with the campaign to which the ticket belongs. Only these owners can redeem their tickets.
+It is worth noting that to redeem a ticket, the TicketRedemption contract must be approved by owner of the passport that owns organization, which associated with the campaign to which the ticket belongs. Only these owners can redeem their tickets.
 
 After redeeming the tickets, the owner receives a fixed reward on the wallet.
 
@@ -124,16 +128,16 @@ As a result of this operation:
 It's important to understand the features of the ERC7401 standard. When a child's NFT is minted to the parent's NFT, these children are initially stored as pending. This means that the child NFT cannot be directly assigned to the parent NFT right away. Therefore, the parent NFT must accept the child NFT after the minting process.
 
 ### Method 1: Manual Minting
-1. **Organization:** First, create an organization token and assign it to a specified address, ensuring the recipient does not already own an organization token.
+1. **Organization:** First, create an organization token and assign it to a specified parent passport, ensuring the passport does not already own an organization token.
 2. **Campaign:** Next, mint a campaign token and assign it to the specific organization, ensuring the organization does not already have this campaign token assigned. The organization then accepts the campaign token as a child.
 3. **Ticket:** Then, mint a ticket and assign it to the specified campaign. The campaign accepts the ticket as a child.
 
 ### Method 2: Automated Minting with TicketMinter
-The TicketMinter contract automates the minting of tickets and accepting campaign children. It can also mint campaigns to organizations. It is worth noting that if the user doesn't have the required organization or campaign token, TicketMinter will mint it for them. To mint tickets requires specifying the address of the user, the address of the campaign, and the number of tickets.
+The TicketMinter contract automates the minting of tickets and accepting campaign children. It can also mint campaigns to organizations and organizations to passports. It is worth noting that if the user doesn't have the required passport, organization or campaign token, TicketMinter will mint it for them. To mint tickets requires specifying the address of the user, the address of the campaign, and the number of tickets.
 
 ## Deploy contracts
 
-All contracts must be deployed through the KarrotFactory contract (apart from RandomGetter and TicketMiner, which are service contracts and must be deployed once at the start of the project) otherwise, they will be excluded from the system and unable to participate in the lottery, be accepted as children, etc. It's important to note that only accounts with the DEPLOYER_ROLE, assigned during the deployment of the KarrotFactory, can perform deployments.
+All contracts must be deployed through the KarrotFactory contract (apart from RandomGetter and TicketMiner, which are service contracts and KarrotPassport that is the main in the our NFT system. These contracts must be deployed once at the start of the project) otherwise, they will be excluded from the system and unable to participate in the lottery, be accepted as children, etc. It's important to note that only accounts with the DEPLOYER_ROLE, assigned during the deployment of the KarrotFactory, can perform deployments.
 
 ### Organization, Campaign and Ticket:
 To deploy an organization, campaign and tickets, there are three options available:
@@ -153,6 +157,7 @@ To deploy a lottery and redemption, requires specifying admin address, mint dead
 ## Contracts
 
 - [KarrotFactory.sol](./contracts/KarrotFactory.sol)
+- [KarrotPassport.sol](./contracts/KarrotPassport.sol)
 - [KarrotOrganization.sol](./contracts/KarrotOrganization.sol)
 - [KarrotCampaign.sol](./contracts/KarrotCampaign.sol)
 - [KarrotTicket.sol](./contracts/KarrotTicket.sol)
