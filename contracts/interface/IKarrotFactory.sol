@@ -23,6 +23,11 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
      */
     event RandomGetterContractUpdated(address indexed randomGetterContract);
     /**
+     * @notice Emitted when the KarrotPassport contract address is set.
+     * @param passportContract The address of the passport contract.
+     */
+    event PassportContractSet(address indexed passportContract);
+    /**
      * @notice Emitted when a lottery contract is deployed.
      * @param lotteryContract The address of the deployed lottery contract.
      */
@@ -60,6 +65,11 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
      */
     event DisabledOrganization(address indexed organization);
     
+    /**
+     * @notice Retrieves address of the passport contract, which can mint tokens that owns organizations.
+     * @return KarrotPassport contract address.
+     */
+    function passportContract() external returns(address);
     /**
      * @notice Checks if an address is an organization.
      * @param organization The address to check.
@@ -169,6 +179,14 @@ interface IKarrotFactory is IERC165, IKarrotErrors {
      * @dev Reverts if the randomGetter contract does not support the required interface.
      */
     function setRandomGetterContract(address _randomGetterContract) external;
+    /**
+     * @notice Sets the KarrotPassport contract, which can mint tokens that owns organizations.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @param _passportContract The address of the KarrotPassport contract to be set.
+     * @dev Reverts if the KarrotPassport is already set.
+     * @dev Reverts if the KarrotPassport contract does not support the required interface.
+     */
+    function setPassportContract(address _passportContract) external;
 
     /**
      * @notice Deploys a new lottery and redemption contract.

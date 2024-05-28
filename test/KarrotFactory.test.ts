@@ -7,8 +7,9 @@ import { deployBasicContracts } from "./utis";
 
 describe("KarrotFactory", async () => {
     let hardhatSnapshotId: string;
-    let karrotFactory: KarrotFactory
+    let karrotFactory: KarrotFactory;
     let ticketMinter: TicketMinter;
+    let passportAddress: string;
     let organizationAddress: string;
     let campaignsAddresses: string[];
     let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
@@ -24,6 +25,7 @@ describe("KarrotFactory", async () => {
         karrotFactory = fixture.karrotFactory;
         owner = fixture.owner;
         minter = fixture.minter;
+        passportAddress = fixture.passportAddress;
         organizationAddress = fixture.organizationAddress;
         campaignsAddresses = fixture.campaignsAddresses;
         user1 = fixture.user1;
@@ -74,15 +76,18 @@ describe("KarrotFactory", async () => {
     it("Should not allow disable the same organization twice", async function () {
         await karrotFactory.connect(owner).disableOrganization(organizationAddress);
         await expect(karrotFactory.connect(owner).disableOrganization(organizationAddress)).to.be.revertedWith("Non Karrot organization or organization is already disabled");
-
     });
 
     it("Should not allow enable the same organization twice", async function () {
         await karrotFactory.connect(owner).disableOrganization(organizationAddress);
         await karrotFactory.connect(owner).enableOrganization(organizationAddress);
         await expect(karrotFactory.connect(owner).enableOrganization(organizationAddress)).to.be.revertedWith("Organization is already enabled");
-
     });
+
+    it("Should not allow set KarrotPassport contract twice", async function () {
+        await expect(karrotFactory.setPassportContract(passportAddress)).to.be.revertedWith("Passport contract is already set");
+    });
+
 
     it("Should not allow to deploy Campaign And Ticket Contracts with invalid values", async function () {
 
@@ -100,6 +105,7 @@ describe("KarrotFactory", async () => {
         const DEFAULT_ADMIN_ROLE = ethers.constants.HashZero;
         await expect(karrotFactory.connect(user1).setMinterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
         await expect(karrotFactory.connect(user1).setRandomGetterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
+        await expect(karrotFactory.connect(user1).setPassportContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
         await expect(karrotFactory.connect(user1).disableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
         await expect(karrotFactory.connect(user1).enableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
     });
@@ -120,9 +126,10 @@ describe("KarrotFactory", async () => {
     it("Should not support incorrect interface", async function () {
         await expect(karrotFactory.connect(owner).setMinterContract(organizationAddress)).to.be.revertedWith("InterfaceNotSupported");
         await expect(karrotFactory.connect(owner).setRandomGetterContract(organizationAddress)).to.be.revertedWith("InterfaceNotSupported");
+        await expect(karrotFactory.connect(owner).setPassportContract(organizationAddress)).to.be.revertedWith("InterfaceNotSupported");
     });
 
-    it("Should test all functions with 'withSetupMinterContract' and 'withSetupRandomGetterContract' modifier with negative scenario", async function () {
+    it("Should test all functions with 'withSetupMinterContract', 'withSetupRandomGetterContract' and 'withSetupPassportContract' modifier with negative scenario", async function () {
         const lotteryDeployerLibrary = await (await ethers.getContractFactory("LotteryDeployerLibrary")).deploy();
         const redemptionDeployerLibrary = await (await ethers.getContractFactory("RedemptionDeployerLibrary")).deploy();
         const organizationDeployerLibrary = await (await ethers.getContractFactory("OrganizationDeployerLibrary")).deploy();
@@ -146,6 +153,10 @@ describe("KarrotFactory", async () => {
         await expect(karrotFactory1.connect(owner).deployOrganizationContract(owner.address, "Test Organization")).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, organizationAddress, "Test Campaign")).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("Minter contract not set");
+        await karrotFactory1.setMinterContract(ticketMinter.address);
+        await expect(karrotFactory1.connect(owner).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("Passport contract not set");
+        await expect(karrotFactory1.connect(owner).deployOrganizationContract(owner.address, "Test Organization")).to.be.revertedWith("Passport contract not set");
+
     });
 
     it("Should support AccessControl and IKarrotFactory interfaces", async function () {

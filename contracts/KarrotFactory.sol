@@ -11,10 +11,10 @@ import {TicketRedemption} from "./TicketRedemption.sol";
 import {KarrotTicket} from "./KarrotTicket.sol";
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {ILottery} from "./interface/ILottery.sol";
-import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
+import {IKarrotPassport} from "./interface/IKarrotPassport.sol";
+import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {ITicketMinter} from "./interface/ITicketMinter.sol";
 import {IRandomGetter} from "./interface/IRandomGetter.sol";
 
@@ -35,10 +35,12 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /// @notice Сonstant that contains the DEPLOYER role. Owner of this role can deploy contracts.
     bytes32 public constant DEPLOYER_ROLE = keccak256("DEPLOYER");
-    /// @notice Address of the minterContract that can mint organization, campaigns and tickets. Expected to be the TicketMinter contract.
+    /// @notice Address of the minterContract that can mint passport, organization, campaigns and tickets. Expected to be the TicketMinter contract.
     address public minterContract;
     /// @notice Address of the randomGetterContract providing random numbers. Expected to be the RandomGetter contract.
     address public randomGetterContract;
+    /// @inheritdoc IKarrotFactory
+    address public passportContract;    
 
     /// @notice Stores addresses of active organizations.
     EnumerableSet.AddressSet private activeOrganizations;
@@ -63,13 +65,19 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     /// @inheritdoc IKarrotFactory
     mapping(address => address) public ticketsCampaign;
 
-    /// @notice The modifier checks whether the function is without set minter contract.
+    /// @notice The modifier checks whether the KarrotPassport contract is set when the function is called.
+    modifier withSetupPassportContract() {
+        if (passportContract == address(0)) revert IncorrectCondition("Passport contract not set");
+        _;
+    }
+
+    /// @notice The modifier checks whether the TicketMinter contract is set when the function is called.
     modifier withSetupMinterContract() {
         if (minterContract == address(0)) revert IncorrectCondition("Minter contract not set");
         _;
     }
 
-    /// @notice The modifier checks whether the function is without set randomGetter contract.
+    /// @notice The modifier checks whether the randomGetter contract is set when the function is called.
     modifier withSetupRandomGetterContract() {
         if (randomGetterContract == address(0)) revert IncorrectCondition("RandomGetter contract not set");
         _;
@@ -137,6 +145,23 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     }
 
     /// @inheritdoc IKarrotFactory
+    function setPassportContract(
+        address _passportContract
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (
+            !IKarrotPassport(_passportContract).supportsInterface(
+                type(IKarrotPassport).interfaceId
+            )
+        ) {
+            revert InterfaceNotSupported();
+        }
+        if (passportContract != address(0)) revert IncorrectCondition("Passport contract is already set");
+        passportContract = _passportContract;
+        
+        emit PassportContractSet(_passportContract);
+    }
+
+    /// @inheritdoc IKarrotFactory
     function deployLotteryAndRedemptionContract(
         address defaultAdmin,
         uint32 mintDeadline,
@@ -160,7 +185,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
     function deployOrganizationContract(
         address defaultAdmin,
         string memory organizationName
-    ) public withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns (address deployedOrganization) {
+    ) public withSetupMinterContract withSetupPassportContract onlyRole(DEPLOYER_ROLE) returns (address deployedOrganization) {
         deployedOrganization = _deployOrganizationContract(defaultAdmin, organizationName);
         emit OrganizationContractDeployed(deployedOrganization);
     }
@@ -183,7 +208,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address lottery,
         string memory organizationName,
         string[] memory campaignNames
-    ) external withSetupMinterContract onlyRole(DEPLOYER_ROLE) returns(
+    ) external withSetupMinterContract withSetupPassportContract onlyRole(DEPLOYER_ROLE) returns(
         address deployedOrganization,
         address[] memory deployedCampaigns,
         address[] memory deployedTickets
@@ -274,6 +299,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address newOrganization = OrganizationDeployerLibrary.deployOrganizationContract(
             defaultAdmin,
             minterContract,
+            passportContract,
             organizations.length,
             _organizationName
         );

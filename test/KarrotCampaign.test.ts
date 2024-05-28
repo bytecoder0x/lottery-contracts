@@ -1,5 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { KarrotOrganization, KarrotCampaign, KarrotTicket } from "../typechain-types";
+import { KarrotOrganization, KarrotCampaign, KarrotTicket, KarrotPassport } from "../typechain-types";
 import { ethers } from "hardhat";
 import { assert, expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
@@ -7,16 +7,34 @@ import { deployBasicContracts } from "./utis";
 import { BigNumber } from "ethers";
 
 describe("KarrotCampaign", async () => {
-    let campaign: KarrotCampaign;
+    let passport: KarrotPassport;
     let organization: KarrotOrganization;
+    let campaign: KarrotCampaign;
     let owner: SignerWithAddress;
     let minter: SignerWithAddress;
     let user1: SignerWithAddress;
     let user2: SignerWithAddress;
+    let passportAddress: string;
     let organizationAddress: string;
     let campaignsAddresses: string[];
     let lotteryAddress: string;
-    let minterRole: string;
+
+    async function mintPassportsAndOrganizations() {
+        const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
+        await passport.grantRole(minterRole, minter.address);
+        await organization.grantRole(minterRole, minter.address);
+        await campaign.grantRole(minterRole, minter.address)
+        await passport.connect(minter).mintTo(user1.address, []);
+        await passport.connect(minter).mintTo(user2.address, []);
+        await organization.connect(minter).mintToPassport(1, []);
+        await organization.connect(minter).mintToPassport(2, []);
+        const user1PassportId = await passport.ownerToken(user1.address);
+        const user2PassportId = await passport.ownerToken(user1.address);
+        const user1OrganizationId = await organization.ownerToken(user1PassportId);
+        const user2OrganizationId = await organization.ownerToken(user2PassportId);
+
+        return { user1OrganizationId, user2OrganizationId };
+    }
 
     beforeEach("Init test environment", async () => {
         const fixture = await loadFixture(deployBasicContracts);
@@ -24,39 +42,32 @@ describe("KarrotCampaign", async () => {
         minter = fixture.minter;
         user1 = fixture.user1;
         user2 = fixture.user2;
+        passportAddress = fixture.passportAddress;
         organizationAddress = fixture.organizationAddress;
         campaignsAddresses = fixture.campaignsAddresses;
+        passport = await ethers.getContractAt("KarrotPassport", passportAddress);
         organization = await ethers.getContractAt("KarrotOrganization", organizationAddress);
         campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
         lotteryAddress = fixture.lotteryAddress;
-        minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
-
     });
 
     it("Should mint campaign token", async function () {
-        const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
-        await organization.grantRole(minterRole, minter.address);
-        await campaign.grantRole(minterRole, minter.address);
-
-        await organization.connect(minter).mintTo(user1.address, []);
-        const organizationId = await organization.ownerToken(user1.address);
-        await campaign.connect(minter).mintToOrganization(organizationId, []);
+        const { user1OrganizationId } = await mintPassportsAndOrganizations();
+        await campaign.connect(minter).mintToOrganization(user1OrganizationId, []);
         const mintedTokenCampaignId = await campaign.getUserCampaignId(user1.address);
 
         expect(await campaign.balanceOf(organization.address)).to.be.eq(1);
         const directOwner = await campaign.directOwnerOf(mintedTokenCampaignId);
         expect(directOwner.isNFT).to.be.eq(true);
         expect(directOwner.owner_).to.be.eq(organization.address);
-        expect(directOwner.parentId).to.be.eq(organizationId);
+        expect(directOwner.parentId).to.be.eq(user1OrganizationId);
     });
 
     it("Should prevent mint campaign if organization already has this campaign", async function () {
-        const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
-        await organization.grantRole(minterRole, minter.address);
-        await campaign.grantRole(minterRole, minter.address);
-        await organization.connect(minter).mintTo(user1.address, []);
-        await campaign.connect(minter).mintToOrganization(1, []); 
-        await expect(campaign.connect(minter).mintToOrganization(1, [])).to.be.revertedWith("Organization already has this campaign");
+        const { user1OrganizationId } = await mintPassportsAndOrganizations();
+        
+        await campaign.connect(minter).mintToOrganization(user1OrganizationId, [])
+        await expect(campaign.connect(minter).mintToOrganization(user1OrganizationId, [])).to.be.revertedWith("Organization already has this campaign");
     });
 
     it("Should set ticket contracts", async function () {
@@ -67,27 +78,22 @@ describe("KarrotCampaign", async () => {
 
     it("Should burn a single ticket", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+
         campaign.connect(owner).setTicketContract(karrotTicket.address);
-        await organization.grantRole(minterRole, minter.address);
-        await organization.connect(minter).mintTo(user1.address, []);
-        await organization.connect(minter).mintTo(user2.address, []);
-        await campaign.grantRole(minterRole, minter.address);
+        await mintPassportsAndOrganizations();
+
         let user1Data = await mintTickets(karrotTicket, user1, 5);
         expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(5);
         await campaign.connect(user1)["burnTicket(uint256)"](user1Data.userCampaignId);
         expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(4);
         await campaign.connect(user1)["burnTicket()"]();
         expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(3);
-
     });
 
     it("Should burn multiple tickets at once", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
         await campaign.setTicketContract(karrotTicket.address);
-        await organization.grantRole(minterRole, minter.address);
-        await organization.connect(minter).mintTo(user1.address, []);
-        await organization.connect(minter).mintTo(user2.address, []);
-        await campaign.grantRole(minterRole, minter.address);
+        await mintPassportsAndOrganizations();
 
         let user1Data = await mintTickets(karrotTicket, user1, 5);
         let user2Data = await mintTickets(karrotTicket, user2, 3);
@@ -113,10 +119,7 @@ describe("KarrotCampaign", async () => {
     it("Should burn multiple tickets at once", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
         await campaign.setTicketContract(karrotTicket.address);
-        await organization.grantRole(minterRole, minter.address);
-        await organization.connect(minter).mintTo(user1.address, []);
-        await organization.connect(minter).mintTo(user2.address, []);
-        await campaign.grantRole(minterRole, minter.address);
+        await mintPassportsAndOrganizations();
 
         let user1Data = await mintTickets(karrotTicket, user1, 5);
         let user2Data = await mintTickets(karrotTicket, user2, 3);
@@ -142,10 +145,7 @@ describe("KarrotCampaign", async () => {
     it("Should prevents burn tickets if sender is not owner or aprroved", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
         await campaign.setTicketContract(karrotTicket.address);
-        await organization.grantRole(minterRole, minter.address);
-        await organization.connect(minter).mintTo(user1.address, []);
-        await organization.connect(minter).mintTo(user2.address, []);
-        await campaign.grantRole(minterRole, minter.address);
+        await mintPassportsAndOrganizations();
         await mintTickets(karrotTicket, user1, 5);
         await mintTickets(karrotTicket, user2, 5);
 
@@ -159,10 +159,7 @@ describe("KarrotCampaign", async () => {
     it("Should test all burn minor scenarios", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
         await campaign.setTicketContract(karrotTicket.address);
-        await organization.grantRole(minterRole, minter.address);
-        await organization.connect(minter).mintTo(user1.address, []);
-        await organization.connect(minter).mintTo(user2.address, []);
-        await campaign.grantRole(minterRole, minter.address);
+        await mintPassportsAndOrganizations();
 
         let user1Data = await mintTickets(karrotTicket, user1, 5);
         let user2Data = await mintTickets(karrotTicket, user2, 3);
@@ -183,8 +180,7 @@ describe("KarrotCampaign", async () => {
         await checkTicketOwnership(karrotTicket, user2NewTicketIds, user2Data.userCampaignId, user2);
         expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(5);
         const ticketsToBurn2 = 6;
-
-        await expect(campaign.connect(owner)["burnTicketBatch(uint256)"](ticketsToBurn)).to.be.revertedWith("User is not an owner of any organization");
+        
         await expect(campaign.connect(user1)["burnTicketBatch(uint256)"](ticketsToBurn2)).to.be.revertedWith("Not enough tickets to burn");
     });
 
@@ -192,9 +188,7 @@ describe("KarrotCampaign", async () => {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
         const ERC7401Mock = await (await ethers.getContractFactory("ERC7401Mock")).deploy(owner.address, minter.address, "Test ERC7401");
         await campaign.setTicketContract(karrotTicket.address);
-        await organization.grantRole(minterRole, minter.address);
-        await organization.connect(minter).mintTo(user1.address, []);
-        await campaign.grantRole(minterRole, minter.address);
+        await mintPassportsAndOrganizations();
         await campaign.connect(minter).mintToOrganization(1, []);
 
         await ERC7401Mock.connect(minter).mintTo(1, campaign.address);
@@ -213,7 +207,8 @@ describe("KarrotCampaign", async () => {
     }
 
     async function mintTickets(karrotTicket: KarrotTicket, user: SignerWithAddress, numberTicketsToMint: number) {
-        const ownerOrganizationNft = await organization.ownerToken(user.address);
+        const ownerPassportNft = await passport.ownerToken(user.address);
+        const ownerOrganizationNft = await organization.ownerToken(ownerPassportNft);
         await campaign.connect(minter).mintToOrganization(ownerOrganizationNft, []);
         const organizationPendingChildren = await organization.pendingChildrenOf(ownerOrganizationNft);
         const campaignToAccept = organizationPendingChildren[0];

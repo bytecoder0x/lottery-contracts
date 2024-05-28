@@ -110,13 +110,13 @@ contract KarrotCampaign is
 
     /// @inheritdoc IKarrotCampaign
     function burnTicket() external {
-        uint campaignId = _getUserCampaignId();
+        uint campaignId = getUserCampaignId(msg.sender);
         _burnTicket(campaignId);
     }
 
     /// @inheritdoc IKarrotCampaign
     function burnTicketBatch(uint256 amountOfTicketsToBurn) public {
-        uint campaignId = _getUserCampaignId();
+        uint campaignId = getUserCampaignId(msg.sender);
         burnTicketBatch(campaignId, amountOfTicketsToBurn);
     }
 
@@ -152,8 +152,8 @@ contract KarrotCampaign is
     }
 
     /// @inheritdoc IKarrotCampaign
-    function getUserCampaignId(address _owner) external view returns (uint256) {
-        uint organizationId = IKarrotOrganization(organization).ownerToken(_owner);
+    function getUserCampaignId(address _owner) public view returns (uint256) {
+        uint256 organizationId = IKarrotOrganization(organization).getUserOrganizationId(_owner);
         return ownerToken[organizationId];
     }
 
@@ -240,17 +240,6 @@ contract KarrotCampaign is
         _pendingChildren[campaignId].pop();
  
         IKarrotTicket(ticketsContract).burnLastTicket();
-    }
-
-    /**
-     * @notice Retrieves the campaign ID of the caller's organization.
-     * @return The ID of the campaign owned by the caller's organization.
-     * @dev Reverts if the caller is not the owner of any organization.
-     */
-    function _getUserCampaignId() private view returns (uint256) {
-        uint organizationId = IKarrotOrganization(organization).ownerToken(msg.sender);
-        if (organizationId == 0) revert IncorrectValue("User is not an owner of any organization");
-        return ownerToken[organizationId];
     }
 
     /**

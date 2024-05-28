@@ -35,6 +35,20 @@ Emitted when the randomGetter contract address is updated.
 | ---- | ---- | ----------- |
 | randomGetterContract | address | The new address of the randomGetter contract. |
 
+### PassportContractSet
+
+```solidity
+event PassportContractSet(address passportContract)
+```
+
+Emitted when the KarrotPassport contract address is set.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| passportContract | address | The address of the passport contract. |
+
 ### LotteryContractDeployed
 
 ```solidity
@@ -134,6 +148,20 @@ Emitted when an organization is disabled.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | organization | address | The address of the disabled organization. |
+
+### passportContract
+
+```solidity
+function passportContract() external returns (address)
+```
+
+Retrieves address of the passport contract, which can mint tokens that owns organizations.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | address | KarrotPassport contract address. |
 
 ### isOrganization
 
@@ -422,6 +450,24 @@ Reverts if the randomGetter contract does not support the required interface._
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _randomGetterContract | address | The address of the randomGetter contract to be set. |
+
+### setPassportContract
+
+```solidity
+function setPassportContract(address _passportContract) external
+```
+
+Sets the KarrotPassport contract, which can mint tokens that owns organizations.
+
+_Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+Reverts if the KarrotPassport is already set.
+Reverts if the KarrotPassport contract does not support the required interface._
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _passportContract | address | The address of the KarrotPassport contract to be set. |
 
 ### deployLotteryAndRedemptionContract
 
