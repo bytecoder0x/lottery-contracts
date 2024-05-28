@@ -9,7 +9,7 @@ _This library provides a function to deploy organization contracts with specific
 ### deployOrganizationContract
 
 ```solidity
-function deployOrganizationContract(address defaultAdmin, address minter, uint256 organizationsCount, string organizationName) external returns (address)
+function deployOrganizationContract(address defaultAdmin, address minter, address passportContract, uint256 organizationsCount, string organizationName) external returns (address)
 ```
 
 Deploys a new organization contract.
@@ -20,6 +20,7 @@ Deploys a new organization contract.
 | ---- | ---- | ----------- |
 | defaultAdmin | address | The address of the admin for the contract. |
 | minter | address | The address that can mint organizations, campaigns and tickets. |
+| passportContract | address |  |
 | organizationsCount | uint256 | The number of organizations deployed so far. |
 | organizationName | string | The name of the organization. |
 

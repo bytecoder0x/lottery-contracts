@@ -21,7 +21,7 @@ bytes32 DEPLOYER_ROLE
 address minterContract
 ```
 
-Address of the minterContract that can mint organization, campaigns and tickets. Expected to be the TicketMinter contract.
+Address of the minterContract that can mint passport, organization, campaigns and tickets. Expected to be the TicketMinter contract.
 
 ### randomGetterContract
 
@@ -30,6 +30,14 @@ address randomGetterContract
 ```
 
 Address of the randomGetterContract providing random numbers. Expected to be the RandomGetter contract.
+
+### passportContract
+
+```solidity
+address passportContract
+```
+
+Retrieves address of the passport contract, which can mint tokens that owns organizations.
 
 ### lotteries
 
@@ -103,13 +111,21 @@ mapping(address => address) ticketsCampaign
 
 Retrieves the campaign associated with a ticket contract.
 
+### withSetupPassportContract
+
+```solidity
+modifier withSetupPassportContract()
+```
+
+The modifier checks whether the KarrotPassport contract is set when the function is called.
+
 ### withSetupMinterContract
 
 ```solidity
 modifier withSetupMinterContract()
 ```
 
-The modifier checks whether the function is without set minter contract.
+The modifier checks whether the TicketMinter contract is set when the function is called.
 
 ### withSetupRandomGetterContract
 
@@ -117,7 +133,7 @@ The modifier checks whether the function is without set minter contract.
 modifier withSetupRandomGetterContract()
 ```
 
-The modifier checks whether the function is without set randomGetter contract.
+The modifier checks whether the randomGetter contract is set when the function is called.
 
 ### constructor
 
@@ -200,6 +216,24 @@ Reverts if the randomGetter contract does not support the required interface._
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _randomGetterContract | address | The address of the randomGetter contract to be set. |
+
+### setPassportContract
+
+```solidity
+function setPassportContract(address _passportContract) external
+```
+
+Sets the KarrotPassport contract, which can mint tokens that owns organizations.
+
+_Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+Reverts if the KarrotPassport is already set.
+Reverts if the KarrotPassport contract does not support the required interface._
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _passportContract | address | The address of the KarrotPassport contract to be set. |
 
 ### deployLotteryAndRedemptionContract
 
