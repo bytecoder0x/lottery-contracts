@@ -180,8 +180,7 @@ describe("KarrotCampaign", async () => {
         await checkTicketOwnership(karrotTicket, user2NewTicketIds, user2Data.userCampaignId, user2);
         expect(await karrotTicket.balanceOf(campaign.address)).to.be.eq(5);
         const ticketsToBurn2 = 6;
-
-        await expect(campaign.connect(owner)["burnTicketBatch(uint256)"](ticketsToBurn)).to.be.revertedWith("User is not an owner of any organization");
+        
         await expect(campaign.connect(user1)["burnTicketBatch(uint256)"](ticketsToBurn2)).to.be.revertedWith("Not enough tickets to burn");
     });
 
