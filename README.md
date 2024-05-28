@@ -26,6 +26,7 @@ The Karrot project is built on the NFT standard, ERC-7401. The core concept behi
 
 ### How do we use ERC-7401 standard in Karrot?
 We use a 4-level NFT system:
+
 0. Passport
 1. Organization
 2. Campaign
