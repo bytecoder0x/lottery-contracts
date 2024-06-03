@@ -6,8 +6,8 @@ import { PromiseOrValue } from "../typechain-types/common";
 async function main() {
   const [signer] = await ethers.getSigners();
 
-  const ADMIN = "0xEa770D20e3bD5fB576776D0797926cA11B44CeCD";
-  const MINTER = "";
+  const ADMIN = "0xAdminAdress";
+  const MINTER = "0xMinterAdress";
   const VRF_WRAPPER = "0x14632CD5c12eC5875D41350B55e825c54406BaaB";
   const LINK_TOKEN = "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4";
 
