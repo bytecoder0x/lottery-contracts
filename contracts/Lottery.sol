@@ -306,6 +306,7 @@ contract Lottery is AccessControl, ILottery {
             address owner = IKarrotTicket(campaignTicketContract).ownerOf(campaignTicketId);
 
             rewardToken.safeTransfer(owner, rewardAmount);
+            delete overCapWinnerAmount[lotteryTicketId];
         }
     }
 
