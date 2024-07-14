@@ -139,6 +139,12 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function winnerAmount(uint256 ticketId) external view returns (uint256);
     /**
+     * @notice Mapping that contains the winners who won more than the lottery cap.
+     * @param ticketId The ID of the ticket.
+     * @return The amount won by the ticket.
+     */
+    function overCapWinnerAmount(uint256 ticketId) external view returns (uint256);
+    /**
      * @notice Mapping that contains array of winners associated with a tier index.
      * @param tierIndex The index of the tier.
      * @param winnerIndex The index of the winner in array.
@@ -159,6 +165,7 @@ interface ILottery is IERC165, IKarrotErrors {
      * @notice This function sets up the lottery with specified parameters such as reward token, tiers and shares of organizations.
      * @notice Part of winners for each organization depends on its shares.
      * @notice The tiers contain information about each tier, such as type, amount of winners, reward amount.
+     * @param _lotteryCap Maximum amount a single winner can receive.
      * @param _rewardToken The address of the token used as rewards.
      * @param _tiers An array containing the configuration of lottery tiers.
      * @param _organizationSharesForFixedTiers An array containing the percentage shares of organizations for fixed tiers.
@@ -173,6 +180,7 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function setupLottery(
         address _rewardToken,
+        uint _lotteryCap,
         Tier[] memory _tiers,
         uint256[] memory _organizationSharesForFixedTiers
     ) external;
@@ -215,6 +223,13 @@ interface ILottery is IERC165, IKarrotErrors {
      * it automatically sets `tiersCount` to the remaining amount of tiers.
     */
     function rewardWinners(uint256 tiersCount) external;
+
+    /**
+     * @notice This function rewards the over cap winners based on the provided lottery ticket IDs.
+     * @dev This function only can be called by an admin.
+     * @param lotteryTicketIds An array of lottery ticket IDs for which the rewards are to be distributed.
+     */
+    function rewardOverCapWinners(uint256[] memory lotteryTicketIds) external;
 
     /**
      * @notice Retrieves the underlying ticket information for a given lottery ticket ID.
