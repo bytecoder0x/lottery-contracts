@@ -339,10 +339,13 @@ describe("Lottery", async () => {
       await expect(lottery.rewardOverCapWinners([1])).to.be.revertedWith("Token ID does not exist");
     });
 
-    it("Should prevents if non-admin reward over cap winners", async function () {
-      const adminRole = ethers.constants.HashZero;
+    it("Should prevents if non-rewarder reward over cap winners", async function () {
+      const rewarderRole = await lottery.REWARDER_ROLE();
       await expect(lottery.connect(user1).rewardOverCapWinners([1])).to.be.revertedWith(
-        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + adminRole
+        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + rewarderRole
+      );
+      await expect(lottery.connect(user1).rewardOverCapWinner(1)).to.be.revertedWith(
+        "AccessControl: account " + user1.address.toLowerCase() + " is missing role " + rewarderRole
       );
     });
 
@@ -389,7 +392,7 @@ describe("Lottery", async () => {
 
       const receipt = await tx.wait();
       const ticketId = receipt.events?.[0].args?.[1]; // first event must be jackpot
-      await lottery.rewardOverCapWinners([ticketId]);
+      await lottery.rewardOverCapWinner(ticketId);
 
       await processTierWinners(winners, 0, 1);
       await processTierWinners(winners, 1, totalWinnersTier1);

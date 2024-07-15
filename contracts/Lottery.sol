@@ -24,6 +24,8 @@ contract Lottery is AccessControl, ILottery {
 
     /// @notice Сonstant that contains the REGISTRAR role. Owner of this role can registet ticket contracts.
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR");
+    /// @notice Сonstant that contains the REWARDER role. Owner of this role can reward winners who exceeded the lottery cap.
+    bytes32 public constant REWARDER_ROLE = keccak256("REWARDER_ROLE");
     /// @notice Basis points. Used to calculate the amount of winners.
     uint256 public constant BIPS = 100_00;
 
@@ -109,6 +111,7 @@ contract Lottery is AccessControl, ILottery {
         randomGetter = IRandomGetter(_randomGetter);
 
         _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
+        _setupRole(REWARDER_ROLE, _defaultAdmin);
         _setupRole(REGISTRAR_ROLE, _registrar); //expected to be factory contract
     }
 
@@ -291,24 +294,19 @@ contract Lottery is AccessControl, ILottery {
             emit LotteryFinished();
         }
     }
-    
+
     /// @inheritdoc ILottery
-    function rewardOverCapWinners(uint256[] memory lotteryTicketIds) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function rewardOverCapWinners(uint256[] memory lotteryTicketIds) external onlyRole(REWARDER_ROLE) {
         for (uint256 w = 0; w < lotteryTicketIds.length; w++) {
-            uint256 lotteryTicketId = lotteryTicketIds[w];
-            uint256 rewardAmount = overCapWinnerAmount[lotteryTicketId];
-
-            if (rewardAmount == 0) {
-                revert IncorrectValue("Token ID does not exist");
-            }
-
-            (address campaignTicketContract, uint campaignTicketId) = getUnderlyingTicket(lotteryTicketId);
-            address owner = IKarrotTicket(campaignTicketContract).ownerOf(campaignTicketId);
-
-            rewardToken.safeTransfer(owner, rewardAmount);
-            delete overCapWinnerAmount[lotteryTicketId];
+            _rewardOverCapWinner(lotteryTicketIds[w]);
         }
     }
+
+    /// @inheritdoc ILottery
+    function rewardOverCapWinner(uint256 lotteryTicketId) external onlyRole(REWARDER_ROLE) {
+        _rewardOverCapWinner(lotteryTicketId);
+    }
+
 
     /// @inheritdoc ILottery
     function getUnderlyingTicket(uint lotteryTicketId) public view returns (address, uint256) {
@@ -423,6 +421,24 @@ contract Lottery is AccessControl, ILottery {
             emit WinnerDefined(owner, lotteryTicketId, campaignTicketContract, campaignTicketId, uint256(tier.tierType), tier.rewardAmount);
             tierTotalRewardAmount += tier.rewardAmount;
         }
+    }
+
+    /**
+     * @notice Private function to reward a single over-cap winner.
+     * @param lotteryTicketId The ID of the lottery ticket to reward.
+     */
+    function _rewardOverCapWinner(uint256 lotteryTicketId) private {
+        uint256 rewardAmount = overCapWinnerAmount[lotteryTicketId];
+
+        if (rewardAmount == 0) {
+            revert IncorrectValue("Token ID does not exist");
+        }
+
+        (address campaignTicketContract, uint campaignTicketId) = getUnderlyingTicket(lotteryTicketId);
+        address owner = IKarrotTicket(campaignTicketContract).ownerOf(campaignTicketId);
+
+        rewardToken.safeTransfer(owner, rewardAmount);
+        delete overCapWinnerAmount[lotteryTicketId];
     }
 
      /// @inheritdoc IERC165

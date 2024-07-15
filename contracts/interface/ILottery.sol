@@ -227,10 +227,17 @@ interface ILottery is IERC165, IKarrotErrors {
 
     /**
      * @notice This function rewards the over cap winners based on the provided lottery ticket IDs.
-     * @dev This function only can be called by an admin.
+     * @dev This function only can be called by accounts with the REWARDER_ROLE.
      * @param lotteryTicketIds An array of lottery ticket IDs whose holders will receive rewards.
      */
     function rewardOverCapWinners(uint256[] memory lotteryTicketIds) external;
+
+    /**
+     * @notice This function rewards the over cap winner based on the provided lottery ticket ID.
+     * @dev This function only can be called by accounts with the REWARDER_ROLE.
+     * @param lotteryTicketId lottery ticket IDs who holder will receive reward.
+     */
+    function rewardOverCapWinner(uint256 lotteryTicketId) external;
 
     /**
      * @notice Retrieves the underlying ticket information for a given lottery ticket ID.
