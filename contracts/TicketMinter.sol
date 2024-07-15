@@ -51,18 +51,18 @@ contract TicketMinter is
     /// @inheritdoc ITicketMinter
     function mintTicketsBatch(
         address[] memory endOwners,
-        address campaign,
+        address[] memory campaigns,
         uint256[] memory ticketsCounts
     )
         public
         returns (uint256[][] memory ticketsTokenIds)
     {
-        if(endOwners.length != ticketsCounts.length) {
-            revert IncorrectValue("endOwners and ticketsCounts length mismatch");
+        if (endOwners.length != ticketsCounts.length || endOwners.length != campaigns.length) {
+            revert IncorrectValue("endOwners, campaigns, and ticketsCounts length mismatch");
         }
         ticketsTokenIds = new uint256[][](endOwners.length);
         for (uint i; i < endOwners.length; i++) {
-            uint256[] memory userTicketsTokenIds = mintTickets(endOwners[i], campaign, ticketsCounts[i]);
+            uint256[] memory userTicketsTokenIds = mintTickets(endOwners[i], campaigns[i], ticketsCounts[i]);
             ticketsTokenIds[i] = userTicketsTokenIds;
         }
     }
