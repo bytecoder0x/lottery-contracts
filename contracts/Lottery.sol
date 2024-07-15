@@ -72,6 +72,8 @@ contract Lottery is AccessControl, ILottery {
     IERC20 public rewardToken;
     /// @notice randomGetter contract that is responsible for obtaining a random number.
     IRandomGetter public randomGetter;
+    /// @notice Array contains the lottery ticket IDs that won more than the lottery cap.
+    uint256[] public overCapWinners;
 
     /// @inheritdoc ILottery
     mapping(uint256 => uint256) public overCapWinnerAmount;
@@ -348,6 +350,11 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /// @inheritdoc ILottery
+    function getAllOverCapWinners() external view returns (uint256[] memory) {
+        return overCapWinners;
+    }
+
+    /// @inheritdoc ILottery
     function getTiersCount() public view returns (uint) {
         return tiers.length;
     }
@@ -355,6 +362,12 @@ contract Lottery is AccessControl, ILottery {
     /// @inheritdoc ILottery
     function getOrganizationsCount() public view returns (uint) {
         return organizations.length;
+    }
+
+    
+    /// @inheritdoc ILottery
+    function getOverCapWinnersCount() external view returns (uint256) {
+        return overCapWinners.length;
     }
 
     /// @inheritdoc ILottery
@@ -412,6 +425,7 @@ contract Lottery is AccessControl, ILottery {
             
             if (tier.rewardAmount > lotteryCap) {
                 overCapWinnerAmount[lotteryTicketId] = tier.rewardAmount;
+                overCapWinners.push(lotteryTicketId);
             } else {
                 rewardToken.safeTransfer(owner, tier.rewardAmount);
             }
@@ -429,16 +443,23 @@ contract Lottery is AccessControl, ILottery {
      */
     function _rewardOverCapWinner(uint256 lotteryTicketId) private {
         uint256 rewardAmount = overCapWinnerAmount[lotteryTicketId];
-
+        // console.log(rewardAmount);
         if (rewardAmount == 0) {
             revert IncorrectValue("Token ID does not exist");
         }
-
+        
         (address campaignTicketContract, uint campaignTicketId) = getUnderlyingTicket(lotteryTicketId);
         address owner = IKarrotTicket(campaignTicketContract).ownerOf(campaignTicketId);
 
         rewardToken.safeTransfer(owner, rewardAmount);
         delete overCapWinnerAmount[lotteryTicketId];
+        for (uint256 i = 0; i < overCapWinners.length; i++) {
+            if (overCapWinners[i] == lotteryTicketId) {
+                overCapWinners[i] = overCapWinners[overCapWinners.length - 1];
+                overCapWinners.pop();
+                break;
+            }
+        }
     }
 
      /// @inheritdoc IERC165

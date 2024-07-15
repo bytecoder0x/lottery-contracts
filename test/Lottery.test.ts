@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { KarrotFactory, Lottery, RewardTokenMintableMock, VRFV2Wrapper, VRFCoordinatorV2Mock } from "../typechain-types";
+import { KarrotFactory, Lottery, RewardTokenMintableMock, VRFV2Wrapper, VRFCoordinatorV2Mock, TicketMinter } from "../typechain-types";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
@@ -9,6 +9,7 @@ import { BigNumber } from "ethers";
 describe("Lottery", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
+  let ticketMinter: TicketMinter;
   let lottery: Lottery;
   let coordinator: VRFCoordinatorV2Mock;
   let wrapper: VRFV2Wrapper;
@@ -16,6 +17,7 @@ describe("Lottery", async () => {
   let organizationAddresses: string[];
   let campaignsAddresses: string[];
   let organazationsTicketsCount: number[];
+  let tiers: any;
   let owner: SignerWithAddress, minter: SignerWithAddress, user1: SignerWithAddress, user2: SignerWithAddress;
 
   async function deployAndSetupLottery() {
@@ -76,6 +78,7 @@ describe("Lottery", async () => {
     return {
       karrotFactory,
       lottery,
+      ticketMinter,
       coordinator,
       wrapper,
       rewardToken,
@@ -84,6 +87,7 @@ describe("Lottery", async () => {
       organazationsTicketsCount,
       owner,
       minter,
+      tiers,
       user1,
       user2,
     };
@@ -97,6 +101,7 @@ describe("Lottery", async () => {
     const fixture = await loadFixture(deployAndSetupLottery);
     karrotFactory = fixture.karrotFactory;
     lottery = fixture.lottery;
+    ticketMinter = fixture.ticketMinter;
     coordinator = fixture.coordinator;
     wrapper = fixture.wrapper;
     rewardToken = fixture.rewardToken;
@@ -105,6 +110,7 @@ describe("Lottery", async () => {
     organizationAddresses = fixture.organizationAddresses;
     campaignsAddresses = fixture.campaignsAddresses;
     organazationsTicketsCount = fixture.organazationsTicketsCount;
+    tiers = fixture.tiers;
     user1 = fixture.user1;
     user2 = fixture.user2;
   });
@@ -301,7 +307,7 @@ describe("Lottery", async () => {
       }
     }
 
-    async function fulfillRandomWord() {
+    async function fulfillRandomWord(currentLottery: Lottery) {
       function generateRandomNumber() {
         let number = '';
         for (let i = 0; i < 77; i++) {
@@ -310,7 +316,7 @@ describe("Lottery", async () => {
         return number;
       }
 
-      const lastRequestId = await lottery.requestRandomNumberId();
+      const lastRequestId = await currentLottery.requestRandomNumberId();
       const randomNumber = generateRandomNumber();
       await coordinator.fulfillRandomWordsWithOverride(lastRequestId, wrapper.address, [randomNumber]);
     }
@@ -319,7 +325,7 @@ describe("Lottery", async () => {
       await ethers.provider.send("evm_increaseTime", [3001]);
       await lottery.initializeLottery(0);
       await lottery.runLottery();
-      await fulfillRandomWord();
+      await fulfillRandomWord(lottery);
     });
 
     it("Lottery requestRandomNumberId is gotten", async function () {
@@ -349,13 +355,15 @@ describe("Lottery", async () => {
       );
     });
 
-    it("Reward token is transferred to one user who won jackpot and confirmed admin", async function () {
+    it("Reward token is transferred to one user who won jackpot and confirmed rewarder", async function () {
       const winners: Winner[] = [];
       const oldBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
       const tx = await lottery.rewardWinners(1);
 
       const receipt = await tx.wait();
       const ticketId = receipt.events?.[0].args?.[1];
+
+      expect((await lottery.getOverCapWinnersCount())).to.be.eq((await lottery.getAllOverCapWinners()).length);
 
       await lottery.rewardOverCapWinners([ticketId]);
       await processTierWinners(winners, 0, 1);
@@ -365,6 +373,47 @@ describe("Lottery", async () => {
 
       expect(winners[0].amountToken).to.eq(balanceOfWinner);
       expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - balanceOfWinner);
+    });
+
+    it("Correct reward users who won more than lottery cap and confirmed rewarder", async function () {
+      // to test this scenario we need to deploy a new lottery contract
+      await karrotFactory.deployLotteryAndRedemptionContract(
+        owner.address,
+        +(((new Date().getTime()) / 1000).toFixed(0)) + 4000,
+        +(((new Date().getTime()) / 1000).toFixed(0)) + 5000,
+        +(((new Date().getTime()) / 1000).toFixed(0)) + 6000,
+      );
+
+      const lottery2 = await ethers.getContractAt("Lottery", await karrotFactory.lotteries(1));
+
+      await karrotFactory.deployOrganizationAndCampaigns(
+        owner.address,
+        lottery2.address,
+        "Test Organization 3",
+        ["Campaign 5"]
+      );
+
+      const campaignsAddresses = await karrotFactory.getAllCampaigns();
+      const lastCampaign = campaignsAddresses[campaignsAddresses.length - 1];
+      await ticketMinter.connect(minter).mintTickets(user1.address, lastCampaign, 20);
+
+      await rewardToken.transfer(lottery2.address, ethers.utils.parseEther("1000"));
+      await lottery2.setupLottery(rewardToken.address, ethers.utils.parseEther("9"),  tiers, [10000]);
+      await ethers.provider.send("evm_increaseTime", [2001]);
+      await lottery2.initializeLottery(0);
+      await ethers.provider.send("evm_increaseTime", [1001]);
+      await lottery2.runLottery();
+      await fulfillRandomWord(lottery2);
+      await lottery2.rewardWinners(0);
+
+      const overCapWinners = await lottery2.getAllOverCapWinners();
+      const verifiedWinners = [...overCapWinners];
+      verifiedWinners.splice(0, 8); // this means that only last two tickets are verified (total amount is 20)
+      const userBalanceBefore = await rewardToken.balanceOf(user1.address);
+
+      // all tickets are owned by user 2, so he should receive 2 rewards
+      await lottery2.rewardOverCapWinners(verifiedWinners);
+      expect(await rewardToken.balanceOf(user1.address)).to.be.eq(tiers[1].rewardAmount.mul(2).add(userBalanceBefore));
     });
 
     it("Correct reward when expected number of tiers greater than actual number", async function () {
