@@ -12,16 +12,16 @@ import {IKarrotErrors} from "./IKarrotErrors.sol";
 interface ITicketMinter is IERC165, IKarrotErrors {
 
     /**
-     * @notice Mints tickets for multiple end owners in batches.
-     * @param endOwners An array of end owners to whom tickets will be minted.
-     * @param campaign The address of the campaign for which tickets are being minted.
-     * @param ticketsCounts An array specifying the number of tickets to mint for each end owner.
-     * @return ticketsTokenIds An array of arrays containing the token IDs of the minted tickets for each end owner.
-     * @dev Reverts if the length of `endOwners` does not match the length of `ticketsCounts`.
-     */
+    * @notice Mints tickets for multiple end owners in batches.
+    * @param endOwners An array of end owners to whom tickets will be minted.
+    * @param campaigns An array of campaign addresses for which tickets are being minted.
+    * @param ticketsCounts An array specifying the number of tickets to mint for each end owner.
+    * @return ticketsTokenIds An array of arrays containing the token IDs of the minted tickets for each end owner.
+    * @dev Reverts if the length of `endOwners`, `campaigns`, and `ticketsCounts` do not match.
+    */
     function mintTicketsBatch(
         address[] memory endOwners,
-        address campaign,
+        address[] memory campaigns,
         uint256[] memory ticketsCounts
     ) external returns (uint256[][] memory ticketsTokenIds);
 

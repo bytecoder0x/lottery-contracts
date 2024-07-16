@@ -38,7 +38,7 @@ describe("TicketMinter", async () => {
   it("Can mint multiple tickets to multiple users", async function () {
     await ticketMinter.connect(minter).mintTicketsBatch(
       [user1.address, user2.address],
-      campaignsAddresses[0],
+      [campaignsAddresses[0], campaignsAddresses[0]],
       [2, 3]);
     const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
     const organization = await ethers.getContractAt("KarrotOrganization", organizationAddress);
@@ -74,7 +74,7 @@ describe("TicketMinter", async () => {
     await ethers.provider.send("evm_increaseTime", [2000])
     await expect(ticketMinter.connect(minter).mintTicketsBatch(
       [user1.address, user2.address],
-      campaignsAddresses[0],
+      [campaignsAddresses[0], campaignsAddresses[0]],
       [2, 3])).to.be.revertedWith("MintTimeEnded");
   });
 
@@ -90,8 +90,12 @@ describe("TicketMinter", async () => {
 
     await expect(ticketMinter.connect(minter).mintTicketsBatch(
       [user1.address, user2.address],
-      campaignsAddresses[0],
-      [2])).to.be.revertedWith("endOwners and ticketsCounts length mismatch");
+      [campaignsAddresses[0], campaignsAddresses[0]],
+      [2])).to.be.revertedWith("endOwners, campaigns, and ticketsCounts length mismatch");
+    await expect(ticketMinter.connect(minter).mintTicketsBatch(
+      [user1.address, user2.address],
+      [campaignsAddresses[0]],
+      [2, 2])).to.be.revertedWith("endOwners, campaigns, and ticketsCounts length mismatch");
   });
 
   it("Should mint tickets to an existing passport token", async function () {
