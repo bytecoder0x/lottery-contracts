@@ -133,6 +133,12 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function organizationTicketsRange(address organization) external view returns (uint256 firstLotteryTicketId, uint256 lastLotteryTicketId);
     /**
+     * @notice Mapping that contains the winners who won more than the lottery cap.
+     * @param ticketId The ID of the ticket.
+     * @return The amount won by the ticket.
+     */
+    function overCapWinnerAmount(uint256 ticketId) external view returns (uint256);
+    /**
      * @notice Mapping that contains the winner amount associated with a ticket ID.
      * @param ticketId The ID of the ticket.
      * @return The amount won by the ticket.
@@ -159,6 +165,7 @@ interface ILottery is IERC165, IKarrotErrors {
      * @notice This function sets up the lottery with specified parameters such as reward token, tiers and shares of organizations.
      * @notice Part of winners for each organization depends on its shares.
      * @notice The tiers contain information about each tier, such as type, amount of winners, reward amount.
+     * @param _lotteryCap Maximum amount a single winner can receive.
      * @param _rewardToken The address of the token used as rewards.
      * @param _tiers An array containing the configuration of lottery tiers.
      * @param _organizationSharesForFixedTiers An array containing the percentage shares of organizations for fixed tiers.
@@ -173,6 +180,7 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function setupLottery(
         address _rewardToken,
+        uint _lotteryCap,
         Tier[] memory _tiers,
         uint256[] memory _organizationSharesForFixedTiers
     ) external;
@@ -201,8 +209,9 @@ interface ILottery is IERC165, IKarrotErrors {
     function runLottery() external;
 
     /**
-     * @notice This function rewards the winners of the lottery tiers.
+     * @notice This function rewards the winners of the lottery tiers apart from who won more than the lottery cap.
      * @notice This function randomly selects winners from registered tickets based on a random number.
+     * @notice This function rewards a specified amoumt of tiers to avoid exceeding gas limits when dealing with many tiers.
      * @notice This function rewards a specified amoumt of tiers to avoid exceeding gas limits when dealing with many tiers.
      * @param tiersCount The number of tiers to process.
      * @dev If the gas limit is exceeded when calling the function, the tiers should be rewarded in parts.
@@ -215,6 +224,20 @@ interface ILottery is IERC165, IKarrotErrors {
      * it automatically sets `tiersCount` to the remaining amount of tiers.
     */
     function rewardWinners(uint256 tiersCount) external;
+
+    /**
+     * @notice This function rewards the over cap winners based on the provided lottery ticket IDs.
+     * @dev This function only can be called by accounts with the REWARDER_ROLE.
+     * @param lotteryTicketIds An array of lottery ticket IDs whose holders will receive rewards.
+     */
+    function rewardOverCapWinners(uint256[] memory lotteryTicketIds) external;
+
+    /**
+     * @notice This function rewards the over cap winner based on the provided lottery ticket ID.
+     * @dev This function only can be called by accounts with the REWARDER_ROLE.
+     * @param lotteryTicketId lottery ticket IDs who holder will receive reward.
+     */
+    function rewardOverCapWinner(uint256 lotteryTicketId) external;
 
     /**
      * @notice Retrieves the underlying ticket information for a given lottery ticket ID.
@@ -241,6 +264,11 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function getAllOrganizations() external view returns (address[] memory);
     /**
+     * @notice Retrieves all over-cap winners.
+     * @return An array of lottery ticket IDs that won more than the lottery cap.
+     */
+    function getAllOverCapWinners() external view returns (uint256[] memory);
+    /**
      * @notice Retrieves the amount of tiers in the lottery.
      * @return The amount of tiers in the lottery.
      */
@@ -250,6 +278,11 @@ interface ILottery is IERC165, IKarrotErrors {
      * @return The amount of participating organizations.
      */
     function getOrganizationsCount() external view returns (uint256);
+    /**
+     * @notice Retrieves the count of over-cap winners.
+     * @return The number of lottery ticket IDs that won more than the lottery cap.
+     */
+    function getOverCapWinnersCount() external view returns (uint256);
     /**
      * @notice Retrieves the addresses of all ticket contracts associated with a specific organization.
      * @param organization The address of the organization.
