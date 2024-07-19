@@ -256,6 +256,13 @@ describe("Lottery", async () => {
       await expect(lottery.initializeLottery(0)).to.be.revertedWith("Lottery already initialized");
     });
 
+    it("Can't call initializeLottery if not enough tickets for number of winners", async function () {
+      const currentTiers = JSON.parse(JSON.stringify(tiers));;
+      currentTiers[2].winnersCount = 100;
+      await lottery.setupLottery(rewardToken.address, ethers.utils.parseEther("90"),  currentTiers, [8000, 2000]);
+      await expect(lottery.initializeLottery(0)).to.be.revertedWith("Not enough tickets for the number of winners");
+    });
+
     it("Can't call runLottery before lottery time come", async function () {
       await lottery.initializeLottery(0);
       await expect(lottery.runLottery()).to.be.revertedWith("Lottery time not reached yet");
