@@ -39,4 +39,29 @@ interface ITicketMinter is IERC165, IKarrotErrors {
         address campaign,
         uint256 ticketsCount
     ) external returns (uint256[] memory ticketsTokenIds);
+
+    /**
+     * @notice Transfers tickets in batch to multiple recipients for different campaigns
+     * @param recipient An array of recipient to whom tickets will be transferred.
+     * @param campaigns An array of campaign addresses for which tickets are being transferred.
+     * @param ticketsCounts Array of ticket counts to be transferred to each recipient for each campaign.
+     * @dev Reverts if the length of `recipient`, `campaigns`, and `ticketsCounts` do not match.
+     */
+    function transferTicketsBatch(
+        address[] memory recipient,
+        address[] memory campaigns,
+        uint256[] memory ticketsCounts
+    ) external;
+
+    /**
+     * @notice Transfers tickets to a recipient for a specific campaign
+     * @param recipient The address of the recipient who will receive the tickets.
+     * @param campaign The address of the campaign for which tickets are being transferred.
+     * @param ticketCounts Number of tickets to be transferred.
+     */
+    function transferTickets(
+        address recipient,
+        address campaign,
+        uint256 ticketCounts
+    ) external;
 }

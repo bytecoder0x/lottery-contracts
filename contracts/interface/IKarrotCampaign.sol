@@ -114,6 +114,39 @@ interface IKarrotCampaign is IERC7401, IKarrotErc7401Base {
     function burnTicketBatch(uint campaignId, uint256 amountOfTicketsToBurn) external;
 
     /**
+     * @notice Transfers a ticket from the campaign associated with the sender to the specified campaign.
+     * @param toCampaignId The ID of the campaign to transfer the ticket to.
+     */
+    function transferTicket(uint256 toCampaignId) external;
+
+    /**
+     * @notice Transfers a batch of tickets from the campaign associated with the sender to the specified campaign.
+     * @param toCampaignId The ID of the campaign to transfer the tickets to.
+     * @param amountOfTicketsToTransfer The number of tickets to transfer.
+     */
+    function transferTicketBatch(uint256 toCampaignId, uint256 amountOfTicketsToTransfer) external;
+
+    /**
+     * @notice Transfers a ticket from the specified campaign to another specified campaign.
+     * @param fromCampaignId The ID of the campaign to transfer the ticket from.
+     * @param toCampaignId The ID of the campaign to transfer the ticket to.
+     */
+    function transferTicket(uint256 fromCampaignId, uint256 toCampaignId) external;
+
+    /**
+     * @notice Transfers a batch of tickets from the specified campaign to another specified campaign.
+     * @param fromCampaignId The ID of the campaign to transfer the tickets from.
+     * @param toCampaignId The ID of the campaign to transfer the tickets to.
+     * @param amountOfTicketsToTransfer The number of tickets to transfer.
+     * @dev Reverts if the number of tickets to transfer exceeds the available tickets in the fromCampaignId.
+     */
+    function transferTicketBatch(
+        uint256 fromCampaignId,
+        uint256 toCampaignId,
+        uint256 amountOfTicketsToTransfer
+    ) external;
+
+    /**
      * @notice Retrieves the campaign ID associated with a specific user.
      * @param _owner The address of the user whose campaign ID is to be retrieved.
      * @return The campaign ID associated with the specified user.
