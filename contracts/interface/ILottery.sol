@@ -248,6 +248,13 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function getUnderlyingTicket(uint256 lotteryTicketId) external view returns (address, uint256);
     /**
+     * @notice Retrieves the lottery ticket ID for a given campaign and ticket ID.
+     * @param campaign The address of the campaign contract which owns the ticket.
+     * @param ticketId The ID of the ticket within the campaign that will be converted to a lottery ticket ID.
+     * @return lotteryTicketId The calculated lottery ticket ID which participates in the lottery.
+     */
+    function getLotteryTicketId(address campaign, uint256 ticketId) external view returns (uint256);
+    /**
      * @notice Retrieves information about a specific tier in the lottery.
      * @param tierIndex The index of the tier to retrieve.
      * @return Tier information including tier type, winners count, reward amount, etc.
@@ -264,6 +271,11 @@ interface ILottery is IERC165, IKarrotErrors {
      */
     function getAllOrganizations() external view returns (address[] memory);
     /**
+     * @notice Retrieves all lottery winners.
+     * @return An array of lottery ticket IDs that won.
+     */
+    function getAllWinners() external view returns (uint256[] memory);
+    /**
      * @notice Retrieves all over-cap winners.
      * @return An array of lottery ticket IDs that won more than the lottery cap.
      */
@@ -278,6 +290,11 @@ interface ILottery is IERC165, IKarrotErrors {
      * @return The amount of participating organizations.
      */
     function getOrganizationsCount() external view returns (uint256);
+    /**
+     * @notice Retrieves the count of lottery winners.
+     * @return The number of lottery ticket IDs that won.
+     */
+    function getWinnersCount() external view returns (uint256);
     /**
      * @notice Retrieves the count of over-cap winners.
      * @return The number of lottery ticket IDs that won more than the lottery cap.

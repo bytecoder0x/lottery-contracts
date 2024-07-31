@@ -117,7 +117,7 @@ describe("TicketMinter", async () => {
     expect(await passport.balanceOf(user1.address)).to.equal(1);
   });
 
-  it.only("Should mint tickets to to the specified user if the user has more than one organization or campaign", async function () {
+  it("Should mint tickets to to the specified user if the user has more than one organization or campaign", async function () {
     await karrotFactory.deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization 2", ["Campaign 3", "Campaign 4"]);
     const campaignsAddresses = await karrotFactory.getAllCampaigns();
     const organizationAddresses = await karrotFactory.getAllOrganizations(); 
@@ -156,7 +156,7 @@ describe("TicketMinter", async () => {
     expect(await passport.balanceOf(user1.address)).to.equal(1);
   });
 
-  it.only("Should transfer tickets", async function () {
+  it("Should transfer tickets", async function () {
     const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
     const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
     const ticket = await ethers.getContractAt("KarrotTicket", await campaign.ticketsContract());
