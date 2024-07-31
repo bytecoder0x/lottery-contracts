@@ -72,6 +72,8 @@ contract Lottery is AccessControl, ILottery {
     IERC20 public rewardToken;
     /// @notice randomGetter contract that is responsible for obtaining a random number.
     IRandomGetter public randomGetter;
+    /// @notice Array contains the lottery ticket IDs that.
+    uint256[] public winners;
     /// @notice Array contains the lottery ticket IDs that won more than the lottery cap.
     uint256[] public overCapWinners;
 
@@ -341,6 +343,23 @@ contract Lottery is AccessControl, ILottery {
     }
 
     /// @inheritdoc ILottery
+    function getLotteryTicketId(address campaign, uint256 ticketId) public view returns (uint256) {
+        address ticketContract = IKarrotCampaign(campaign).ticketsContract();
+
+        uint256 lotteryTicketId;
+        uint256 amountTicketsBefore;
+        for (uint256 i = 0; i < allCampaignTickets.length; i++) {
+            if (allCampaignTickets[i].campaignTicketContract == ticketContract) {
+                lotteryTicketId = amountTicketsBefore + ticketId + 1;
+                break;
+            }
+            amountTicketsBefore = allCampaignTickets[i].ticketRange.lastLotteryTicketId;
+        }
+
+        return lotteryTicketId;
+    }
+
+    /// @inheritdoc ILottery
     function getTier(uint tierIndex) public view returns (Tier memory) {
         return tiers[tierIndex];
     }
@@ -353,6 +372,11 @@ contract Lottery is AccessControl, ILottery {
     /// @inheritdoc ILottery
     function getAllOrganizations() public view returns (address[] memory) {
         return organizations;
+    }
+
+    /// @inheritdoc ILottery
+    function getAllWinners() external view returns (uint256[] memory) {
+        return winners;
     }
 
     /// @inheritdoc ILottery
@@ -370,6 +394,10 @@ contract Lottery is AccessControl, ILottery {
         return organizations.length;
     }
 
+    /// @inheritdoc ILottery
+    function getWinnersCount() external view returns (uint256) {
+        return winners.length;
+    }
     
     /// @inheritdoc ILottery
     function getOverCapWinnersCount() external view returns (uint256) {
@@ -437,6 +465,7 @@ contract Lottery is AccessControl, ILottery {
             }
 
             winnerAmount[lotteryTicketId] = tier.rewardAmount;
+            winners.push(lotteryTicketId);
             tierWinners[tierIndex].push(lotteryTicketId);
             emit WinnerDefined(owner, lotteryTicketId, campaignTicketContract, campaignTicketId, uint256(tier.tierType), tier.rewardAmount);
             tierTotalRewardAmount += tier.rewardAmount;

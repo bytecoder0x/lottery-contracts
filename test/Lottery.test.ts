@@ -249,6 +249,14 @@ describe("Lottery", async () => {
       expect(tiers[2].winnersCount).to.equal(10);
       expect(tiers[2].winnersShare).to.equal(0);
       expect(tiers[2].rewardAmount).to.equal(ethers.utils.parseEther("1"));
+
+      const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[3]);
+      const ticket = await ethers.getContractAt("KarrotTicket", await campaign.ticketsContract());
+
+
+      const userTicketsIDs = await ticket.getUserTicketIds(user2.address);
+      console.log("lastTicket", userTicketsIDs[userTicketsIDs.length - 1]);
+      console.log(await lottery.getLotteryTicketId(campaignsAddresses[3], userTicketsIDs[userTicketsIDs.length - 1]));
     });
 
     it("Can't call initializeLottery twice", async function () {
