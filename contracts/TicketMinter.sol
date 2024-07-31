@@ -77,42 +77,8 @@ contract TicketMinter is
         onlyRole(MINTER_ROLE)
         returns (uint256[] memory ticketsTokenIds)
     {
-        address passport = factory.passportContract();
-        address organization = _getOrganizationFromFactory(campaign);
+        uint256 campaignTokenId = _mintTokens(endOwner, campaign);
         address ticket = _getTicketFromCampaign(campaign);
-
-        uint256 passportTokenId = IKarrotPassport(passport).ownerToken(endOwner);
-        if (passportTokenId == 0) {
-            passportTokenId = IKarrotPassport(passport).mintTo(
-                endOwner,
-                new bytes(0)
-            );
-        }
-
-        
-        IERC7401.Child[] memory passportChildren = 
-            IKarrotPassport(passport).childrenOf(passportTokenId);
-
-        uint256 organizationTokenId = _getOrganizationTokenId(passportChildren, organization);
-        if (organizationTokenId == 0) {
-            organizationTokenId = _mintOrganizationToPassportAndAccept(
-                organization,
-                passport,
-                passportTokenId
-            );
-        }
-
-        IERC7401.Child[] memory organizationChildren = 
-            IKarrotOrganization(organization).childrenOf(organizationTokenId);
-        
-        uint256 campaignTokenId = _getCampaignTokenId(organizationChildren, campaign);
-        if (campaignTokenId == 0) {
-            campaignTokenId = _mintCampaignToOrganizationAndAccept(
-                campaign,
-                organization,
-                organizationTokenId
-            );
-        }
 
         ticketsTokenIds = _mintTicketToCampaignAndAccept(
             ticket,
@@ -120,6 +86,37 @@ contract TicketMinter is
             ticketsCount,
             campaignTokenId
         );
+    }
+
+    /// @inheritdoc ITicketMinter
+    function transferTicketsBatch(
+        address[] memory recipient,
+        address[] memory campaigns,
+        uint256[] memory ticketsCounts
+    )
+        public
+    {   
+        if (recipient.length != ticketsCounts.length || recipient.length != campaigns.length) {
+            revert IncorrectValue("recipient, campaigns, and ticketsCounts length mismatch");
+        }
+
+        for (uint256 i; i < recipient.length; i++) {
+            transferTickets(recipient[i], campaigns[i], ticketsCounts[i]);
+        }
+    }
+
+    /// @inheritdoc ITicketMinter
+    function transferTickets(
+        address recipient,
+        address campaign,
+        uint256 ticketCounts
+    )
+        public
+    {
+        uint256 fromCampaignId =  IKarrotCampaign(campaign).getUserCampaignId(msg.sender);
+        uint256 toCampaignId = _mintTokens(recipient, campaign);
+
+        IKarrotCampaign(campaign).transferTicketBatch(fromCampaignId, toCampaignId, ticketCounts);
     }
 
     /**
@@ -197,6 +194,55 @@ contract TicketMinter is
         }
 
         return campaignTokenId;
+    }
+
+    /**
+     * @notice Mints the necessary tokens (passport, organization and campaign) for the specified endOwner.
+     * @param endOwner The address of the end owner.
+     * @param campaign The address of the campaign contract.
+     * @return campaignTokenId The token ID associated with specified endOwner.
+     */
+    function _mintTokens(
+        address endOwner,
+        address campaign
+    )
+        private
+        returns (uint256 campaignTokenId)
+    {
+        address passport = factory.passportContract();
+        address organization = _getOrganizationFromFactory(campaign);
+
+        uint256 passportTokenId = IKarrotPassport(passport).ownerToken(endOwner);
+        if (passportTokenId == 0) {
+            passportTokenId = IKarrotPassport(passport).mintTo(
+                endOwner,
+                new bytes(0)
+            );
+        }
+
+        IERC7401.Child[] memory passportChildren = 
+            IKarrotPassport(passport).childrenOf(passportTokenId);
+
+        uint256 organizationTokenId = _getOrganizationTokenId(passportChildren, organization);
+        if (organizationTokenId == 0) {
+            organizationTokenId = _mintOrganizationToPassportAndAccept(
+                organization,
+                passport,
+                passportTokenId
+            );
+        }
+
+        IERC7401.Child[] memory organizationChildren = 
+            IKarrotOrganization(organization).childrenOf(organizationTokenId);
+
+        campaignTokenId = _getCampaignTokenId(organizationChildren, campaign);
+        if (campaignTokenId == 0) {
+            campaignTokenId = _mintCampaignToOrganizationAndAccept(
+                campaign,
+                organization,
+                organizationTokenId
+            );
+        }
     }
 
     function _mintOrganizationToPassportAndAccept(

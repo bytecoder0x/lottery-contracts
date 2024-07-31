@@ -139,6 +139,40 @@ contract KarrotCampaign is
         }
     }
 
+    /// @inheritdoc IKarrotCampaign
+    function transferTicket(uint256 toCampaignId) public {
+        uint256 fromCampaignId = getUserCampaignId(msg.sender);
+        _transferTicket(fromCampaignId, toCampaignId);
+    }
+
+    /// @inheritdoc IKarrotCampaign
+    function transferTicketBatch(
+        uint256 toCampaignId,
+        uint256 amountOfTicketsToTransfer
+    ) public {
+        uint256 fromCampaignId = getUserCampaignId(msg.sender);
+        transferTicketBatch(fromCampaignId, toCampaignId, amountOfTicketsToTransfer);
+    }
+
+    /// @inheritdoc IKarrotCampaign
+    function transferTicket(uint256 fromCampaignId, uint256 toCampaignId) public {
+        _transferTicket(fromCampaignId, toCampaignId);
+    }
+
+    /// @inheritdoc IKarrotCampaign
+    function transferTicketBatch(
+        uint256 fromCampaignId,
+        uint256 toCampaignId,
+        uint256 amountOfTicketsToTransfer
+    ) public {
+        if (amountOfTicketsToTransfer > _activeChildren[fromCampaignId].length) {
+            revert IncorrectValue("Not enough tickets to transfer");
+        }
+        for(uint256 i; i < amountOfTicketsToTransfer; i++) {
+            _transferTicket(fromCampaignId, toCampaignId);
+        }
+    }
+
     /// @inheritdoc IERC7401
     function ownerOf(
         uint256 tokenId
@@ -188,7 +222,7 @@ contract KarrotCampaign is
      * Transfers the last ticket ID to the burning campaign parent id.
      * Burns the last ticket ID.
      */
-    function _burnTicket(uint256 campaignId) internal {
+    function _burnTicket(uint256 campaignId) private {
         if(!_isApprovedOrOwner(msg.sender, campaignId)) {
             revert IncorrectCondition("User is not aprroved or owner");
         }
@@ -240,6 +274,42 @@ contract KarrotCampaign is
         _pendingChildren[campaignId].pop();
  
         IKarrotTicket(ticketsContract).burnLastTicket();
+    }
+
+    /**
+     * @notice Transfers a ticket from one campaign to another.
+     * @dev This function can only be called by an approved user or the direct owner of the fromCampaignId.
+     * @param fromCampaignId The ID of the campaign to transfer the ticket from.
+     * @param toCampaignId The ID of the campaign to transfer the ticket to.
+     */
+    function _transferTicket(
+        uint256 fromCampaignId,
+        uint256 toCampaignId
+    ) private {
+        if(!_isApprovedOrOwner(msg.sender, fromCampaignId)) {
+            revert IncorrectCondition("User is not aprroved or owner");
+        }
+        Child[] storage fromCampaignTickets = _activeChildren[fromCampaignId];
+        uint256 ticketIdToTransfer = fromCampaignTickets[fromCampaignTickets.length - 1].tokenId;
+
+        uint256 tiketIndex = _findTiketIndex(ticketIdToTransfer, _activeChildren[fromCampaignId]);
+
+        _transferChild(
+            fromCampaignId,
+            address(this),
+            toCampaignId,
+            tiketIndex,
+            ticketsContract,
+            ticketIdToTransfer,
+            false,
+            new bytes(0)
+        );
+        _acceptChild(
+            toCampaignId,
+            _pendingChildren[toCampaignId].length - 1,
+            ticketsContract,
+            ticketIdToTransfer
+        );
     }
 
     /**
