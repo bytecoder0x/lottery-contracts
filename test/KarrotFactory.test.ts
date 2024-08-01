@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { KarrotFactory, TicketMinter, KarrotOrganization, RewardTokenMintableMock } from "../typechain-types";
+import { KarrotFactory, TicketManager, KarrotOrganization, RewardTokenMintableMock } from "../typechain-types";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
@@ -8,7 +8,7 @@ import { deployBasicContracts } from "./utis";
 describe("KarrotFactory", async () => {
     let hardhatSnapshotId: string;
     let karrotFactory: KarrotFactory;
-    let ticketMinter: TicketMinter;
+    let ticketManager: TicketManager;
     let passportAddress: string;
     let organizationAddress: string;
     let campaignsAddresses: string[];
@@ -30,7 +30,7 @@ describe("KarrotFactory", async () => {
         campaignsAddresses = fixture.campaignsAddresses;
         user1 = fixture.user1;
         user2 = fixture.user2;
-        ticketMinter = fixture.ticketMinter;
+        ticketManager = fixture.ticketManager;
         lotteryAddress = fixture.lotteryAddress;
     });
 
@@ -103,9 +103,9 @@ describe("KarrotFactory", async () => {
 
     it("Should test all functions with 'onlyRole(DEFAULT_ADMIN_ROLE)' modifier with negative scenario", async function () {
         const DEFAULT_ADMIN_ROLE = ethers.constants.HashZero;
-        await expect(karrotFactory.connect(user1).setMinterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
-        await expect(karrotFactory.connect(user1).setRandomGetterContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
-        await expect(karrotFactory.connect(user1).setPassportContract(ticketMinter.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
+        await expect(karrotFactory.connect(user1).setMinterContract(ticketManager.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
+        await expect(karrotFactory.connect(user1).setRandomGetterContract(ticketManager.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
+        await expect(karrotFactory.connect(user1).setPassportContract(ticketManager.address)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
         await expect(karrotFactory.connect(user1).disableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
         await expect(karrotFactory.connect(user1).enableOrganization(organizationAddress)).to.be.revertedWith("AccessControl: account " + user1.address.toLowerCase() + " is missing role " + DEFAULT_ADMIN_ROLE);
     });
@@ -153,7 +153,7 @@ describe("KarrotFactory", async () => {
         await expect(karrotFactory1.connect(owner).deployOrganizationContract(owner.address, "Test Organization")).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployCampaignAndTicketContract(owner.address, lotteryAddress, organizationAddress, "Test Campaign")).to.be.revertedWith("Minter contract not set");
         await expect(karrotFactory1.connect(owner).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("Minter contract not set");
-        await karrotFactory1.setMinterContract(ticketMinter.address);
+        await karrotFactory1.setMinterContract(ticketManager.address);
         await expect(karrotFactory1.connect(owner).deployOrganizationAndCampaigns(owner.address, lotteryAddress, "Test Organization", ["Test Campaign"])).to.be.revertedWith("Passport contract not set");
         await expect(karrotFactory1.connect(owner).deployOrganizationContract(owner.address, "Test Organization")).to.be.revertedWith("Passport contract not set");
 

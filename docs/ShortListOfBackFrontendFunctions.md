@@ -36,10 +36,12 @@ This is a list of the most used functions for frontend and backend developers. A
 - [getOrganisation](./KarrotTicket.md#getorganisation)
 - [getUserTicketIds](./KarrotTicket.md#getuserticketids)
 
-## TicketMinter
+## TicketManager
 
-- [mintTicketsBatch](./TicketMinter.md#mintticketsbatch)
-- [mintTickets](./TicketMinter.md#minttickets)
+- [mintTicketsBatch](./TicketManager.md#mintticketsbatch)
+- [mintTickets](./TicketManager.md#minttickets)
+- [transferTicketsBatch](./TicketManager.md#transferticketsbatch)
+- [transferTickets](./TicketManager.md#transfertickets)
 
 ## Lottery
 
@@ -51,6 +53,7 @@ This is a list of the most used functions for frontend and backend developers. A
 - [organizationTicketsContracts](./interface/ILottery.md#organizationticketscontracts)
 - [winnerAmount](./interface/ILottery.md#winneramount)
 - [tierWinners](./interface/ILottery.md#tierwinners)
+- [getLotteryTicketId](./Lottery.md#getLotteryTicketId)
 - [getAllTiers](./Lottery.md#getalltiers)
 - [getAllOrganizations](./Lottery.md#getallorganizations)
 - [getOrganizationTicketsContracts](./Lottery.md#getorganizationticketscontracts)

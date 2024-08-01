@@ -180,6 +180,68 @@ _Reverts if the specified amount exceeds the available campaign tickets._
 | campaignId | uint256 | The ID of the campaign to burn tickets for. |
 | amountOfTicketsToBurn | uint256 | The number of tickets to burn. |
 
+### transferTicket
+
+```solidity
+function transferTicket(uint256 toCampaignId) public
+```
+
+Transfers a ticket from the campaign associated with the sender to the specified campaign.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| toCampaignId | uint256 | The ID of the campaign to transfer the ticket to. |
+
+### transferTicketBatch
+
+```solidity
+function transferTicketBatch(uint256 toCampaignId, uint256 amountOfTicketsToTransfer) public
+```
+
+Transfers a batch of tickets from the campaign associated with the sender to the specified campaign.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| toCampaignId | uint256 | The ID of the campaign to transfer the tickets to. |
+| amountOfTicketsToTransfer | uint256 | The number of tickets to transfer. |
+
+### transferTicket
+
+```solidity
+function transferTicket(uint256 fromCampaignId, uint256 toCampaignId) public
+```
+
+Transfers a ticket from the specified campaign to another specified campaign.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| fromCampaignId | uint256 | The ID of the campaign to transfer the ticket from. |
+| toCampaignId | uint256 | The ID of the campaign to transfer the ticket to. |
+
+### transferTicketBatch
+
+```solidity
+function transferTicketBatch(uint256 fromCampaignId, uint256 toCampaignId, uint256 amountOfTicketsToTransfer) public
+```
+
+Transfers a batch of tickets from the specified campaign to another specified campaign.
+
+_Reverts if the number of tickets to transfer exceeds the available tickets in the fromCampaignId._
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| fromCampaignId | uint256 | The ID of the campaign to transfer the tickets from. |
+| toCampaignId | uint256 | The ID of the campaign to transfer the tickets to. |
+| amountOfTicketsToTransfer | uint256 | The number of tickets to transfer. |
+
 ### ownerOf
 
 ```solidity
@@ -222,7 +284,7 @@ _This function must be implemented by contracts inheriting from KarrotCheckMintT
 ### getUserCampaignId
 
 ```solidity
-function getUserCampaignId(address _owner) external view returns (uint256)
+function getUserCampaignId(address _owner) public view returns (uint256)
 ```
 
 Retrieves the campaign ID associated with a specific user.

@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { KarrotFactory, Lottery, RewardTokenMintableMock, VRFV2Wrapper, VRFCoordinatorV2Mock, TicketMinter } from "../typechain-types";
+import { KarrotFactory, Lottery, RewardTokenMintableMock, VRFV2Wrapper, VRFCoordinatorV2Mock, TicketManager } from "../typechain-types";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
@@ -9,7 +9,7 @@ import { BigNumber } from "ethers";
 describe("Lottery", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory;
-  let ticketMinter: TicketMinter;
+  let ticketManager: TicketManager;
   let lottery: Lottery;
   let coordinator: VRFCoordinatorV2Mock;
   let wrapper: VRFV2Wrapper;
@@ -23,7 +23,7 @@ describe("Lottery", async () => {
   async function deployAndSetupLottery() {
     const {
       karrotFactory,
-      ticketMinter,
+      ticketManager,
       lotteryAddress,
       coordinator,
       wrapper,
@@ -67,10 +67,10 @@ describe("Lottery", async () => {
     for (let c = 0; c < campaignsAddresses.length; c++) {
       //campaign 0 and 1 is for organization 0, campaign 2 and 3 is for organization 1
       if (c < 2) {
-        await ticketMinter.connect(minter).mintTickets(user1.address, campaignsAddresses[c], 5);
+        await ticketManager.connect(minter).mintTickets(user1.address, campaignsAddresses[c], 5);
         organazationsTicketsCount[0] = organazationsTicketsCount[0] + 5;
       } else {
-        await ticketMinter.connect(minter).mintTickets(user2.address, campaignsAddresses[c], 5);
+        await ticketManager.connect(minter).mintTickets(user2.address, campaignsAddresses[c], 5);
         organazationsTicketsCount[1] = organazationsTicketsCount[1] + 5;
       }
     }
@@ -78,7 +78,7 @@ describe("Lottery", async () => {
     return {
       karrotFactory,
       lottery,
-      ticketMinter,
+      ticketManager,
       coordinator,
       wrapper,
       rewardToken,
@@ -101,7 +101,7 @@ describe("Lottery", async () => {
     const fixture = await loadFixture(deployAndSetupLottery);
     karrotFactory = fixture.karrotFactory;
     lottery = fixture.lottery;
-    ticketMinter = fixture.ticketMinter;
+    ticketManager = fixture.ticketManager;
     coordinator = fixture.coordinator;
     wrapper = fixture.wrapper;
     rewardToken = fixture.rewardToken;
@@ -412,7 +412,7 @@ describe("Lottery", async () => {
 
       const campaignsAddresses = await karrotFactory.getAllCampaigns();
       const lastCampaign = campaignsAddresses[campaignsAddresses.length - 1];
-      await ticketMinter.connect(minter).mintTickets(user1.address, lastCampaign, 20);
+      await ticketManager.connect(minter).mintTickets(user1.address, lastCampaign, 20);
 
       await rewardToken.transfer(lottery2.address, ethers.utils.parseEther("1000"));
       await lottery2.setupLottery(rewardToken.address, ethers.utils.parseEther("9"),  tiers, [10000]);

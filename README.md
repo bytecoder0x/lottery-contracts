@@ -51,8 +51,8 @@ The KarrotCampaign contract manages the creation and ownership of campaign token
 ### KarrotTicket
 The KarrotTicket contract manages the minting and burning of tokens within the Karrot platform. It allows minting tokens to specific campaigns, burning the last minted token, and retrieving contract-related information.
 
-### TicketMinter
-TicketMinter eases the minting process. This contract manages the creation of tickets for campaigns on the Karrot platform, ensuring that tickets are minted for users within specified campaigns.
+### TicketManager
+TicketManager eases the minting and transfering process. This contract manages the creation and transfer of tickets for campaigns on the Karrot platform, ensuring that tickets are minted and transferred for users within specified campaigns.
 
 ### Lottery
 The Lottery contract runs a lottery system for the Karrot platform, handling ticket registration, lottery initialization, winner selection, and reward distribution based on preset tiers — jackpot, random, and fixed. Winners are selected from registered tickets and they receive rewards in their wallets. The lottery also provides information retrieval functions for tickets, organizations, and tier configurations.
@@ -133,12 +133,12 @@ It's important to understand the features of the ERC7401 standard. When a child'
 2. **Campaign:** Next, mint a campaign token and assign it to the specific organization, ensuring the organization does not already have this campaign token assigned. The organization then accepts the campaign token as a child.
 3. **Ticket:** Then, mint a ticket and assign it to the specified campaign. The campaign accepts the ticket as a child.
 
-### Method 2: Automated Minting with TicketMinter
-The TicketMinter contract automates the minting of tickets and accepting campaign children. It can also mint campaigns to organizations and organizations to passports. It is worth noting that if the user doesn't have the required passport, organization or campaign token, TicketMinter will mint it for them. To mint tickets requires specifying the address of the user, the address of the campaign, and the number of tickets.
+### Method 2: Automated Minting and Transfering with TicketManager
+The TicketManager contract automates the minting and transfering of tickets and accepting campaign children. It can also mint campaigns to organizations and organizations to passports. It is worth noting that if the user doesn't have the required passport, organization or campaign token, TicketManager will mint it for them. To mint or transfer tickets requires specifying the address of the user, the address of the campaign, and the number of tickets.
 
 ## Deploy contracts
 
-All contracts must be deployed through the KarrotFactory contract (apart from RandomGetter and TicketMiner, which are service contracts and KarrotPassport that is the main in the our NFT system. These contracts must be deployed once at the start of the project) otherwise, they will be excluded from the system and unable to participate in the lottery, be accepted as children, etc. It's important to note that only accounts with the DEPLOYER_ROLE, assigned during the deployment of the KarrotFactory, can perform deployments.
+All contracts must be deployed through the KarrotFactory contract (apart from RandomGetter and TicketManager, which are service contracts and KarrotPassport that is the main in the our NFT system. These contracts must be deployed once at the start of the project) otherwise, they will be excluded from the system and unable to participate in the lottery, be accepted as children, etc. It's important to note that only accounts with the DEPLOYER_ROLE, assigned during the deployment of the KarrotFactory, can perform deployments.
 
 ### Organization, Campaign and Ticket:
 To deploy an organization, campaign and tickets, there are three options available:
@@ -162,7 +162,7 @@ To deploy a lottery and redemption, requires specifying admin address, mint dead
 - [KarrotOrganization.sol](./contracts/KarrotOrganization.sol)
 - [KarrotCampaign.sol](./contracts/KarrotCampaign.sol)
 - [KarrotTicket.sol](./contracts/KarrotTicket.sol)
-- [TicketMinter.sol](./contracts/TicketMinter.sol)
+- [TicketManager.sol](./contracts/TicketManager.sol)
 - [Lottery.sol](./contracts/Lottery.sol)
 - [TicketRedemption.sol](./contracts/TicketRedemption.sol)
 - [RandomGetter.sol](./contracts/RandomGetter.sol)

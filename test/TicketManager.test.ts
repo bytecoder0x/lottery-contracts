@@ -1,14 +1,14 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { KarrotFactory, TicketMinter, KarrotOrganization, RewardTokenMintableMock } from "../typechain-types";
+import { KarrotFactory, TicketManager, KarrotOrganization, RewardTokenMintableMock } from "../typechain-types";
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import { deployBasicContracts } from "./utis";
 
-describe("TicketMinter", async () => {
+describe("TicketManager", async () => {
   let hardhatSnapshotId: string;
   let karrotFactory: KarrotFactory
-  let ticketMinter: TicketMinter;
+  let ticketManager: TicketManager;
   let passportAddress: string;
   let organizationAddress: string;
   let campaignsAddresses: string[];
@@ -24,7 +24,7 @@ describe("TicketMinter", async () => {
   beforeEach("Init test environment", async () => {
     const fixture = await loadFixture(deployBasicContracts);
     karrotFactory = fixture.karrotFactory;
-    ticketMinter = fixture.ticketMinter;
+    ticketManager = fixture.ticketManager;
     owner = fixture.owner;
     minter = fixture.minter;
     passportAddress = fixture.passportAddress;
@@ -36,7 +36,7 @@ describe("TicketMinter", async () => {
   });
 
   it("Can mint multiple tickets to multiple users", async function () {
-    await ticketMinter.connect(minter).mintTicketsBatch(
+    await ticketManager.connect(minter).mintTicketsBatch(
       [user1.address, user2.address],
       [campaignsAddresses[0], campaignsAddresses[0]],
       [2, 3]);
@@ -72,7 +72,7 @@ describe("TicketMinter", async () => {
 
   it("Can't mint after mint deadline", async function () {
     await ethers.provider.send("evm_increaseTime", [2000])
-    await expect(ticketMinter.connect(minter).mintTicketsBatch(
+    await expect(ticketManager.connect(minter).mintTicketsBatch(
       [user1.address, user2.address],
       [campaignsAddresses[0], campaignsAddresses[0]],
       [2, 3])).to.be.revertedWith("MintTimeEnded");
@@ -82,17 +82,17 @@ describe("TicketMinter", async () => {
     const [owner, minter] = await ethers.getSigners();
     const organization = await (await ethers.getContractFactory("KarrotOrganization")).deploy(owner.address, minter.address, passportAddress, "Test Organization");
 
-    await expect((await ethers.getContractFactory("TicketMinter")).deploy(owner.address, minter.address, organization.address))
+    await expect((await ethers.getContractFactory("TicketManager")).deploy(owner.address, minter.address, organization.address))
       .to.be.revertedWith("InterfaceNotSupported");
   });
 
   it("Should not allow to mint batch with mismatching endOwners and ticketsCounts", async function () {
 
-    await expect(ticketMinter.connect(minter).mintTicketsBatch(
+    await expect(ticketManager.connect(minter).mintTicketsBatch(
       [user1.address, user2.address],
       [campaignsAddresses[0], campaignsAddresses[0]],
       [2])).to.be.revertedWith("endOwners, campaigns, and ticketsCounts length mismatch");
-    await expect(ticketMinter.connect(minter).mintTicketsBatch(
+    await expect(ticketManager.connect(minter).mintTicketsBatch(
       [user1.address, user2.address],
       [campaignsAddresses[0]],
       [2, 2])).to.be.revertedWith("endOwners, campaigns, and ticketsCounts length mismatch");
@@ -100,11 +100,11 @@ describe("TicketMinter", async () => {
 
   it("Should not allow to transfer batch with mismatching recipient and ticketsCounts", async function () {
 
-    await expect(ticketMinter.connect(minter).transferTicketsBatch(
+    await expect(ticketManager.connect(minter).transferTicketsBatch(
       [user1.address, user2.address],
       [campaignsAddresses[0], campaignsAddresses[0]],
       [2])).to.be.revertedWith("recipient, campaigns, and ticketsCounts length mismatch");
-    await expect(ticketMinter.connect(minter).transferTicketsBatch(
+    await expect(ticketManager.connect(minter).transferTicketsBatch(
       [user1.address, user2.address],
       [campaignsAddresses[0]],
       [2, 2])).to.be.revertedWith("recipient, campaigns, and ticketsCounts length mismatch");
@@ -116,12 +116,12 @@ describe("TicketMinter", async () => {
     const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
     await passport.grantRole(minterRole, minter.address);
 
-    await ticketMinter.connect(minter).mintTickets(
+    await ticketManager.connect(minter).mintTickets(
       user1.address,
       campaignsAddresses[0],
       2
     );
-    await ticketMinter.connect(minter).mintTickets(
+    await ticketManager.connect(minter).mintTickets(
       user1.address,
       campaignsAddresses[0],
       2
@@ -136,19 +136,19 @@ describe("TicketMinter", async () => {
     const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
     const organization = await ethers.getContractAt("KarrotPassport", organizationAddresses[1]);
 
-    await ticketMinter.connect(minter).mintTickets(
+    await ticketManager.connect(minter).mintTickets(
       user1.address,
       campaignsAddresses[0],
       2
     );
 
-    await ticketMinter.connect(minter).mintTickets(
+    await ticketManager.connect(minter).mintTickets(
       user1.address,
       campaignsAddresses[2],
       2
     );
 
-    await ticketMinter.connect(minter).mintTickets(
+    await ticketManager.connect(minter).mintTickets(
       user1.address,
       campaignsAddresses[3],
       2
@@ -171,7 +171,7 @@ describe("TicketMinter", async () => {
   it("Should transfer tickets to the specified users", async function () {
     const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
 
-    await ticketMinter.connect(minter).mintTickets(
+    await ticketManager.connect(minter).mintTickets(
       user1.address,
       campaignsAddresses[0],
       10
@@ -183,7 +183,7 @@ describe("TicketMinter", async () => {
     expect(ticketUser1).to.be.eq(10);
     expect(ticketUser2).to.be.eq(0);
 
-    await ticketMinter.connect(user1).transferTickets(
+    await ticketManager.connect(user1).transferTickets(
       user2.address,
       campaignsAddresses[0],
       5
@@ -195,7 +195,7 @@ describe("TicketMinter", async () => {
     expect(ticketUser1).to.be.eq(5);
     expect(ticketUser2).to.be.eq(5);
 
-    await ticketMinter.connect(user1).transferTicketsBatch(
+    await ticketManager.connect(user1).transferTicketsBatch(
       [user2.address],
       [campaignsAddresses[0]],
       [5]
@@ -210,7 +210,7 @@ describe("TicketMinter", async () => {
 
   it("Should revert if no organization found for campaign", async function () {
     let randomCompany = ethers.Wallet.createRandom().address;
-    await expect(ticketMinter.connect(minter).mintTickets(
+    await expect(ticketManager.connect(minter).mintTickets(
       user1.address,
       randomCompany,
       2)).to.be.revertedWith("No organization found for campaign");
@@ -232,12 +232,12 @@ describe("TicketMinter", async () => {
     }
 
     const interfaceIDHex = '0x' + interfaceID.toString(16).padStart(8, '0');
-    expect(await ticketMinter.supportsInterface(interfaceIDHex)).to.equal(true);
+    expect(await ticketManager.supportsInterface(interfaceIDHex)).to.equal(true);
   });
 
   it("Should prevents non-minter from minting tokens", async function () {
     const minterRole = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER"));
-    await expect(ticketMinter.connect(user2).mintTickets(user1.address, campaignsAddresses[0], 2))
+    await expect(ticketManager.connect(user2).mintTickets(user1.address, campaignsAddresses[0], 2))
       .to.be.revertedWith("AccessControl: account " + user2.address.toLowerCase() + " is missing role " + minterRole);
   });
 

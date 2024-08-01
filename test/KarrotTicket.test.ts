@@ -9,7 +9,6 @@ import { BigNumber } from "ethers";
 describe("KarrotTicket", async () => {
     let ticket: KarrotTicket;
     let karrotFactory: KarrotFactory;
-    let ticketMinter: TicketMinter;
     let passportAddress: string;
     let organizationAddress: string;
     let campaignsAddresses: string[];
@@ -45,7 +44,6 @@ describe("KarrotTicket", async () => {
     beforeEach("Init test environment", async () => {
         const fixture = await loadFixture(deployBasicContracts);
         karrotFactory = fixture.karrotFactory;
-        ticketMinter = fixture.ticketMinter;
         owner = fixture.owner;
         minter = fixture.minter;
         passportAddress = fixture.passportAddress;

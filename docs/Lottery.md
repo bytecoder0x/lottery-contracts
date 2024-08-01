@@ -15,6 +15,14 @@ bytes32 REGISTRAR_ROLE
 
 Сonstant that contains the REGISTRAR role. Owner of this role can registet ticket contracts.
 
+### REWARDER_ROLE
+
+```solidity
+bytes32 REWARDER_ROLE
+```
+
+Сonstant that contains the REWARDER role. Owner of this role can reward winners who exceeded the lottery cap.
+
 ### BIPS
 
 ```solidity
@@ -179,6 +187,40 @@ contract IRandomGetter randomGetter
 
 randomGetter contract that is responsible for obtaining a random number.
 
+### winners
+
+```solidity
+uint256[] winners
+```
+
+Array contains the lottery ticket IDs that.
+
+### overCapWinners
+
+```solidity
+uint256[] overCapWinners
+```
+
+Array contains the lottery ticket IDs that won more than the lottery cap.
+
+### overCapWinnerAmount
+
+```solidity
+mapping(uint256 => uint256) overCapWinnerAmount
+```
+
+Mapping that contains the winners who won more than the lottery cap.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+
 ### winnerAmount
 
 ```solidity
@@ -245,7 +287,7 @@ Add the organization of the ticket to all organizations_
 ### setupLottery
 
 ```solidity
-function setupLottery(address _rewardToken, struct ILottery.Tier[] _tiers, uint256[] _organizationSharesForFixedTiers) external
+function setupLottery(address _rewardToken, uint256 _lotteryCap, struct ILottery.Tier[] _tiers, uint256[] _organizationSharesForFixedTiers) external
 ```
 
 This function sets up the lottery with specified parameters such as reward token, tiers and shares of organizations.
@@ -266,6 +308,7 @@ Reverts if there are any incorrect tier configurations or if the total organizat
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _rewardToken | address | The address of the token used as rewards. |
+| _lotteryCap | uint256 | Maximum amount a single winner can receive. |
 | _tiers | struct ILottery.Tier[] | An array containing the configuration of lottery tiers. |
 | _organizationSharesForFixedTiers | uint256[] | An array containing the percentage shares of organizations for fixed tiers. |
 
@@ -311,8 +354,9 @@ Reverts if the lottery is not fully initialized with all organizations._
 function rewardWinners(uint256 tiersCount) external
 ```
 
-This function rewards the winners of the lottery tiers.
+This function rewards the winners of the lottery tiers apart from who won more than the lottery cap.
 This function randomly selects winners from registered tickets based on a random number.
+This function rewards a specified amoumt of tiers to avoid exceeding gas limits when dealing with many tiers.
 This function rewards a specified amoumt of tiers to avoid exceeding gas limits when dealing with many tiers.
 
 _If the gas limit is exceeded when calling the function, the tiers should be rewarded in parts.
@@ -329,6 +373,38 @@ it automatically sets `tiersCount` to the remaining amount of tiers._
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | tiersCount | uint256 | The number of tiers to process. |
+
+### rewardOverCapWinners
+
+```solidity
+function rewardOverCapWinners(uint256[] lotteryTicketIds) external
+```
+
+This function rewards the over cap winners based on the provided lottery ticket IDs.
+
+_This function only can be called by accounts with the REWARDER_ROLE._
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| lotteryTicketIds | uint256[] | An array of lottery ticket IDs whose holders will receive rewards. |
+
+### rewardOverCapWinner
+
+```solidity
+function rewardOverCapWinner(uint256 lotteryTicketId) external
+```
+
+This function rewards the over cap winner based on the provided lottery ticket ID.
+
+_This function only can be called by accounts with the REWARDER_ROLE._
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| lotteryTicketId | uint256 | lottery ticket IDs who holder will receive reward. |
 
 ### getUnderlyingTicket
 
@@ -352,6 +428,27 @@ _Uses a binary search algorithm to efficiently locate the corresponding campaign
 | ---- | ---- | ----------- |
 | [0] | address | The address of the ticket contract. |
 | [1] | uint256 | The ticket ID within ticket contract. |
+
+### getLotteryTicketId
+
+```solidity
+function getLotteryTicketId(address campaign, uint256 ticketId) public view returns (uint256)
+```
+
+Retrieves the lottery ticket ID for a given campaign and ticket ID.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| campaign | address | The address of the campaign contract which owns the ticket. |
+| ticketId | uint256 | The ID of the ticket within the campaign that will be converted to a lottery ticket ID. |
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | lotteryTicketId The calculated lottery ticket ID which participates in the lottery. |
 
 ### getTier
 
@@ -401,6 +498,34 @@ Retrieves the addresses of all organizations participating in the lottery.
 | ---- | ---- | ----------- |
 | [0] | address[] | An array containing the addresses of all participating organizations. |
 
+### getAllWinners
+
+```solidity
+function getAllWinners() external view returns (uint256[])
+```
+
+Retrieves all lottery winners.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256[] | An array of lottery ticket IDs that won. |
+
+### getAllOverCapWinners
+
+```solidity
+function getAllOverCapWinners() external view returns (uint256[])
+```
+
+Retrieves all over-cap winners.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256[] | An array of lottery ticket IDs that won more than the lottery cap. |
+
 ### getTiersCount
 
 ```solidity
@@ -428,6 +553,34 @@ Retrieves the amount of organizations participating in the lottery.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | [0] | uint256 | The amount of participating organizations. |
+
+### getWinnersCount
+
+```solidity
+function getWinnersCount() external view returns (uint256)
+```
+
+Retrieves the count of lottery winners.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | The number of lottery ticket IDs that won. |
+
+### getOverCapWinnersCount
+
+```solidity
+function getOverCapWinnersCount() external view returns (uint256)
+```
+
+Retrieves the count of over-cap winners.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | uint256 | The number of lottery ticket IDs that won more than the lottery cap. |
 
 ### getOrganizationTicketsContracts
 

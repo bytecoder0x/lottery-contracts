@@ -20,14 +20,14 @@ describe("RandomGetter", async () => {
     let user2: SignerWithAddress;
 
     async function deployLotteryAndRandomGetter() {
-        const { karrotFactory, ticketMinter, lotteryAddress, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 } = await deployBasicContracts();
+        const { karrotFactory, ticketManager, lotteryAddress, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 } = await deployBasicContracts();
 
         const campaignsAddresses = await karrotFactory.getAllCampaigns();
         const lottery = (await ethers.getContractAt("Lottery", lotteryAddress)) as Lottery;
         const rewardToken = await (await ethers.getContractFactory("RewardTokenMintableMock")).deploy();
 
         await rewardToken.transfer(lottery.address, ethers.utils.parseEther("1000"));
-        await ticketMinter.connect(minter).mintTickets(user1.address, campaignsAddresses[0], 5);
+        await ticketManager.connect(minter).mintTickets(user1.address, campaignsAddresses[0], 5);
         await lottery.setupLottery(rewardToken.address, ethers.utils.parseEther("100"), [ { tierType: 0, winnersShare: 0, winnersCount: 1, rewardAmount: 100}], [10000]);
 
         return { karrotFactory, lottery, coordinator, wrapper, randomGetter, rewardToken, linkToken, owner, user1, user2 };

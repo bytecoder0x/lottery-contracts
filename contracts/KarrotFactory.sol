@@ -15,7 +15,7 @@ import {ILottery} from "./interface/ILottery.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
 import {IKarrotPassport} from "./interface/IKarrotPassport.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
-import {ITicketMinter} from "./interface/ITicketMinter.sol";
+import {ITicketManager} from "./interface/ITicketManager.sol";
 import {IRandomGetter} from "./interface/IRandomGetter.sol";
 
 import {LotteryDeployerLibrary} from "./libraries/LotteryDeployerLibrary.sol";
@@ -35,7 +35,7 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
 
     /// @notice Сonstant that contains the DEPLOYER role. Owner of this role can deploy contracts.
     bytes32 public constant DEPLOYER_ROLE = keccak256("DEPLOYER");
-    /// @notice Address of the minterContract that can mint passport, organization, campaigns and tickets. Expected to be the TicketMinter contract.
+    /// @notice Address of the minterContract that can mint passport, organization, campaigns and tickets. Expected to be the TicketManager contract.
     address public minterContract;
     /// @notice Address of the randomGetterContract providing random numbers. Expected to be the RandomGetter contract.
     address public randomGetterContract;
@@ -117,8 +117,8 @@ contract KarrotFactory is AccessControl, IKarrotFactory {
         address _minterContract
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (
-            !ITicketMinter(_minterContract).supportsInterface(
-                type(ITicketMinter).interfaceId
+            !ITicketManager(_minterContract).supportsInterface(
+                type(ITicketManager).interfaceId
             )
         ) {
             revert InterfaceNotSupported();

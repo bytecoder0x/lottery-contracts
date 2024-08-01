@@ -21,7 +21,7 @@ bytes32 DEPLOYER_ROLE
 address minterContract
 ```
 
-Address of the minterContract that can mint passport, organization, campaigns and tickets. Expected to be the TicketMinter contract.
+Address of the minterContract that can mint passport, organization, campaigns and tickets. Expected to be the TicketManager contract.
 
 ### randomGetterContract
 
