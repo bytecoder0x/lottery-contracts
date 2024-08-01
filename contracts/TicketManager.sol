@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.21;
 
-import {RMRKNestable} from "@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMRKNestable.sol";
 import {IERC7401} from "@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC7401.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -11,15 +10,15 @@ import {IKarrotOrganization} from "./interface/IKarrotOrganization.sol";
 import {IKarrotCampaign} from "./interface/IKarrotCampaign.sol";
 import {IKarrotTicket} from "./interface/IKarrotTicket.sol";
 import {IKarrotFactory} from "./interface/IKarrotFactory.sol";
-import {ITicketMinter} from "./interface/ITicketMinter.sol";
+import {ITicketManager} from "./interface/ITicketManager.sol";
 
 /**
- * @title TicketMinter contract
- * @notice The TicketMinter contract manages the creation of tickets for campaigns on the Karrot platform by interfacing with the KarrotFactory. 
- * @dev TicketMinter ensures that tickets are minted for end owners within specified campaigns.
+ * @title TicketManager contract
+ * @notice The TicketManager contract manages the creation and transfer of tickets for campaigns on the Karrot platform. 
+ * @dev TicketManager ensures that tickets are minted and transferred for end owners within specified campaigns.
  */
-contract TicketMinter is
-    ITicketMinter,
+contract TicketManager is
+    ITicketManager,
     AccessControl
 {
     /// @notice Сonstant that contains the MINTER role. Owner of this role can mint organization, campaigns and tickets.
@@ -48,7 +47,7 @@ contract TicketMinter is
         factory = IKarrotFactory(_factory);
     }
 
-    /// @inheritdoc ITicketMinter
+    /// @inheritdoc ITicketManager
     function mintTicketsBatch(
         address[] memory endOwners,
         address[] memory campaigns,
@@ -67,7 +66,7 @@ contract TicketMinter is
         }
     }
 
-    /// @inheritdoc ITicketMinter
+    /// @inheritdoc ITicketManager
     function mintTickets(
         address endOwner,
         address campaign,
@@ -88,7 +87,7 @@ contract TicketMinter is
         );
     }
 
-    /// @inheritdoc ITicketMinter
+    /// @inheritdoc ITicketManager
     function transferTicketsBatch(
         address[] memory recipient,
         address[] memory campaigns,
@@ -105,7 +104,7 @@ contract TicketMinter is
         }
     }
 
-    /// @inheritdoc ITicketMinter
+    /// @inheritdoc ITicketManager
     function transferTickets(
         address recipient,
         address campaign,
@@ -344,7 +343,7 @@ contract TicketMinter is
         returns (bool)
     {
         return 
-            type(ITicketMinter).interfaceId == interfaceId ||
+            type(ITicketManager).interfaceId == interfaceId ||
             super.supportsInterface(interfaceId);
     }
 }

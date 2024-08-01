@@ -19,20 +19,20 @@ export async function deployFactory() {
             TicketDeployerLibrary: ticketDeployerLibrary.address
         }
     })).deploy(owner.address);
-    const ticketMinter = await (await ethers.getContractFactory("TicketMinter")).deploy(owner.address, minter.address, karrotFactory.address);
-    const karrotPassport = await (await ethers.getContractFactory("KarrotPassport")).deploy(owner.address, ticketMinter.address, "Test Passport");
+    const ticketManager = await (await ethers.getContractFactory("TicketManager")).deploy(owner.address, minter.address, karrotFactory.address);
+    const karrotPassport = await (await ethers.getContractFactory("KarrotPassport")).deploy(owner.address, ticketManager.address, "Test Passport");
     const { coordinator, wrapper, randomGetter, linkToken } = await deployRandomGetter(karrotFactory, owner);
 
-    await karrotFactory.setMinterContract(ticketMinter.address);
+    await karrotFactory.setMinterContract(ticketManager.address);
     await karrotFactory.setRandomGetterContract(randomGetter.address);
     await karrotFactory.setPassportContract(karrotPassport.address);
 
 
-    return { karrotFactory, karrotPassport, ticketMinter, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 };
+    return { karrotFactory, karrotPassport, ticketManager, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 };
 }
 
 export async function deployBasicContracts() {
-    const { karrotFactory, karrotPassport, ticketMinter, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 } = await deployFactory();
+    const { karrotFactory, karrotPassport, ticketManager, coordinator, wrapper, randomGetter, linkToken, owner, minter, user1, user2 } = await deployFactory();
 
     await karrotFactory.deployLotteryAndRedemptionContract(
         owner.address,
@@ -55,7 +55,7 @@ export async function deployBasicContracts() {
 
     return {
       karrotFactory,
-      ticketMinter,
+      ticketManager,
       coordinator,
       wrapper,
       randomGetter,

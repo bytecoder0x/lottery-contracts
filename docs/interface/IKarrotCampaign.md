@@ -237,6 +237,68 @@ _Reverts if the specified amount exceeds the available campaign tickets._
 | campaignId | uint256 | The ID of the campaign to burn tickets for. |
 | amountOfTicketsToBurn | uint256 | The number of tickets to burn. |
 
+### transferTicket
+
+```solidity
+function transferTicket(uint256 toCampaignId) external
+```
+
+Transfers a ticket from the campaign associated with the sender to the specified campaign.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| toCampaignId | uint256 | The ID of the campaign to transfer the ticket to. |
+
+### transferTicketBatch
+
+```solidity
+function transferTicketBatch(uint256 toCampaignId, uint256 amountOfTicketsToTransfer) external
+```
+
+Transfers a batch of tickets from the campaign associated with the sender to the specified campaign.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| toCampaignId | uint256 | The ID of the campaign to transfer the tickets to. |
+| amountOfTicketsToTransfer | uint256 | The number of tickets to transfer. |
+
+### transferTicket
+
+```solidity
+function transferTicket(uint256 fromCampaignId, uint256 toCampaignId) external
+```
+
+Transfers a ticket from the specified campaign to another specified campaign.
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| fromCampaignId | uint256 | The ID of the campaign to transfer the ticket from. |
+| toCampaignId | uint256 | The ID of the campaign to transfer the ticket to. |
+
+### transferTicketBatch
+
+```solidity
+function transferTicketBatch(uint256 fromCampaignId, uint256 toCampaignId, uint256 amountOfTicketsToTransfer) external
+```
+
+Transfers a batch of tickets from the specified campaign to another specified campaign.
+
+_Reverts if the number of tickets to transfer exceeds the available tickets in the fromCampaignId._
+
+#### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| fromCampaignId | uint256 | The ID of the campaign to transfer the tickets from. |
+| toCampaignId | uint256 | The ID of the campaign to transfer the tickets to. |
+| amountOfTicketsToTransfer | uint256 | The number of tickets to transfer. |
+
 ### getUserCampaignId
 
 ```solidity
