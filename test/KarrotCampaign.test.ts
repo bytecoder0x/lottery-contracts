@@ -184,6 +184,54 @@ describe("KarrotCampaign", async () => {
         await expect(campaign.connect(user1)["burnTicketBatch(uint256)"](ticketsToBurn2)).to.be.revertedWith("Not enough tickets to burn");
     });
 
+    it("Should transfer a single and batch tickets", async function () {
+        const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+
+        await campaign.connect(owner).setTicketContract(karrotTicket.address);
+        await mintPassportsAndOrganizations();
+        await mintTickets(karrotTicket, user1, 6);
+        await mintTickets(karrotTicket, user2, 0);
+        let ticketsUser1 = (await campaign.childrenOf(1)).length
+        let ticketsUser2 = (await campaign.childrenOf(2)).length
+
+        expect(ticketsUser1).to.be.eq(ticketsUser2 + 6);
+
+        await campaign.connect(user1)["transferTicket(uint256)"](2); // transfer to user2 - 1 ticket
+        await campaign.connect(user1)["transferTicket(uint256,uint256)"](1, 2); // transfer to user2 - 1 ticket
+
+        ticketsUser1 = (await campaign.childrenOf(1)).length;
+        ticketsUser2 = (await campaign.childrenOf(2)).length;
+
+        expect(ticketsUser1).to.be.eq(ticketsUser2 + 2); // user1 has 4 tickets and user2 has 2 tickets
+        
+        await campaign.connect(user1)["transferTicketBatch(uint256,uint256)"](2, 2); // transfer to user2 - 2 ticket
+        await campaign.connect(user1)["transferTicketBatch(uint256,uint256,uint256)"](1, 2, 2); // transfer to user2 - 2 ticket
+
+        ticketsUser1 = (await campaign.childrenOf(1)).length;
+        ticketsUser2 = (await campaign.childrenOf(2)).length;
+
+        expect(ticketsUser1 + 6).to.be.eq(ticketsUser2); // user1 has 0 tickets and user2 has 6 tickets
+    });
+
+    it("Should prevent transfer tickets if it isn't enough", async function () {
+        await expect(
+          campaign.connect(user1)["transferTicketBatch(uint256,uint256)"](1, 1)
+        ).to.be.revertedWith("Not enough tickets to transfer");
+    });
+
+    it("Should prevents transfer tickets if sender is not owner or aprroved", async function () {
+        const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
+
+        await campaign.connect(owner).setTicketContract(karrotTicket.address);
+        await mintPassportsAndOrganizations();
+        await mintTickets(karrotTicket, user1, 5);
+        await mintTickets(karrotTicket, user2, 0);
+
+        await expect(
+          campaign.connect(user2)["transferTicket(uint256,uint256)"](1, 2)
+        ).to.be.revertedWith("User is not aprroved or owner");
+    });
+
     it("Should prevent accept child if it is not ticket", async function () {
         const karrotTicket = await (await ethers.getContractFactory("KarrotTicket")).deploy(owner.address, minter.address, campaign.address, "Test KarrotTicket");
         const ERC7401Mock = await (await ethers.getContractFactory("ERC7401Mock")).deploy(owner.address, minter.address, "Test ERC7401");

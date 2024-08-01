@@ -98,6 +98,18 @@ describe("TicketMinter", async () => {
       [2, 2])).to.be.revertedWith("endOwners, campaigns, and ticketsCounts length mismatch");
   });
 
+  it("Should not allow to transfer batch with mismatching recipient and ticketsCounts", async function () {
+
+    await expect(ticketMinter.connect(minter).transferTicketsBatch(
+      [user1.address, user2.address],
+      [campaignsAddresses[0], campaignsAddresses[0]],
+      [2])).to.be.revertedWith("recipient, campaigns, and ticketsCounts length mismatch");
+    await expect(ticketMinter.connect(minter).transferTicketsBatch(
+      [user1.address, user2.address],
+      [campaignsAddresses[0]],
+      [2, 2])).to.be.revertedWith("recipient, campaigns, and ticketsCounts length mismatch");
+  });
+
   it("Should mint tickets to an existing passport token", async function () {
 
     const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
@@ -156,25 +168,44 @@ describe("TicketMinter", async () => {
     expect(await passport.balanceOf(user1.address)).to.equal(1);
   });
 
-  it("Should transfer tickets", async function () {
-    const passport = await ethers.getContractAt("KarrotPassport", passportAddress);
+  it("Should transfer tickets to the specified users", async function () {
     const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[0]);
-    const ticket = await ethers.getContractAt("KarrotTicket", await campaign.ticketsContract());
 
     await ticketMinter.connect(minter).mintTickets(
       user1.address,
       campaignsAddresses[0],
+      10
+    );
+
+    let ticketUser1 = (await campaign.childrenOf(1)).length;
+    let ticketUser2 = (await campaign.childrenOf(2)).length;
+
+    expect(ticketUser1).to.be.eq(10);
+    expect(ticketUser2).to.be.eq(0);
+
+    await ticketMinter.connect(user1).transferTickets(
+      user2.address,
+      campaignsAddresses[0],
       5
     );
 
-    console.log("Ticket user 1", await campaign.childrenOf(1));
-    console.log("Ticket user 2", await campaign.childrenOf(2));
+    ticketUser1 = (await campaign.childrenOf(1)).length;
+    ticketUser2 = (await campaign.childrenOf(2)).length;
 
-    await ticketMinter.connect(user1).transferTickets(user2.address, campaignsAddresses[0], 5);
-    // await campaign.connect(user2)["transferTicket(uint256,uint256)"](1, 2);
+    expect(ticketUser1).to.be.eq(5);
+    expect(ticketUser2).to.be.eq(5);
 
-    console.log("Ticket user 1", await campaign.childrenOf(1));
-    console.log("Ticket user 2", await campaign.childrenOf(2));
+    await ticketMinter.connect(user1).transferTicketsBatch(
+      [user2.address],
+      [campaignsAddresses[0]],
+      [5]
+    );
+
+    ticketUser1 = (await campaign.childrenOf(1)).length;
+    ticketUser2 = (await campaign.childrenOf(2)).length;
+
+    expect(ticketUser1).to.be.eq(0);
+    expect(ticketUser2).to.be.eq(10);
   });
 
   it("Should revert if no organization found for campaign", async function () {

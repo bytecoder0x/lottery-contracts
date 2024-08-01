@@ -250,13 +250,15 @@ describe("Lottery", async () => {
       expect(tiers[2].winnersShare).to.equal(0);
       expect(tiers[2].rewardAmount).to.equal(ethers.utils.parseEther("1"));
 
-      const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[3]);
+      const campaign = await ethers.getContractAt("KarrotCampaign", campaignsAddresses[1]);
       const ticket = await ethers.getContractAt("KarrotTicket", await campaign.ticketsContract());
+      const userTicketsIDs = await ticket.getUserTicketIds(user1.address);
 
-
-      const userTicketsIDs = await ticket.getUserTicketIds(user2.address);
-      console.log("lastTicket", userTicketsIDs[userTicketsIDs.length - 1]);
-      console.log(await lottery.getLotteryTicketId(campaignsAddresses[3], userTicketsIDs[userTicketsIDs.length - 1]));
+      expect(await lottery.getLotteryTicketId(campaignsAddresses[1], userTicketsIDs[0])).to.be.eq(6);
+      expect(await lottery.getLotteryTicketId(campaignsAddresses[1], userTicketsIDs[1])).to.be.eq(7);
+      expect(await lottery.getLotteryTicketId(campaignsAddresses[1], userTicketsIDs[2])).to.be.eq(8);
+      expect(await lottery.getLotteryTicketId(campaignsAddresses[1], userTicketsIDs[3])).to.be.eq(9);
+      expect(await lottery.getLotteryTicketId(campaignsAddresses[1], userTicketsIDs[4])).to.be.eq(10);
     });
 
     it("Can't call initializeLottery twice", async function () {
@@ -472,6 +474,7 @@ describe("Lottery", async () => {
 
       const newBalanceOfLottery = Number(await rewardToken.balanceOf(lottery.address));
       expect(newBalanceOfLottery).to.eq(oldBalanceOfLottery - totalSpentTokens);
+      expect((await lottery.getWinnersCount())).to.be.eq((await lottery.getAllWinners()).length);
     });
   });
 
