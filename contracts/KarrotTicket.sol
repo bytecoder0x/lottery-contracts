@@ -87,7 +87,7 @@ contract KarrotTicket is KarrotErc7401Base, KarrotCheckMintTime, IKarrotTicket {
         }
         uint previousLastTiketId = _lastTokenId;
         _burn(previousLastTiketId, 0);
-        emit TicketBurned(previousLastTiketId);
+        emit TicketBurned(previousLastTiketId, campaign);
         _lastTokenId--;
     }
 
