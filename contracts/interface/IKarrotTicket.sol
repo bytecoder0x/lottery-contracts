@@ -22,8 +22,9 @@ interface IKarrotTicket is IERC7401, IKarrotErc7401Base {
     /**
      * @notice Emitted when a ticket is burned.
      * @param tokenId The ID of the burned ticket.
+     * campaign The address of the campaign from which the ticket is burned.
      */
-    event TicketBurned(uint256 indexed tokenId);
+    event TicketBurned(uint256 indexed tokenId, address indexed campaign);
 
     /**
      * @notice Mints a token to the specified parent campaign.
