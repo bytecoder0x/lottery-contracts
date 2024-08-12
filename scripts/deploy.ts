@@ -58,15 +58,15 @@ async function main() {
     }
   }
 
-  async function deployKarrotPassport() {
+  async function deployKarrotPassport(ticketMinterAddress: PromiseOrValue<string>) {
     try {
-      const karrotPassport = await KarrotPassport.deploy(ADMIN, MINTER, "Karrot Passport");
+      const karrotPassport = await KarrotPassport.deploy(ADMIN, ticketMinterAddress, "Karrot Passport");
       await karrotPassport.deployed();
-      await verifyContract(karrotPassport.address, [ADMIN, MINTER, "Karrot Passport"]);
+      await verifyContract(karrotPassport.address, [ADMIN, ticketMinterAddress, "Karrot Passport"]);
       return karrotPassport.address;
     } catch (error) {
       console.error(error);
-      return deployKarrotPassport();
+      return deployKarrotPassport(ticketMinterAddress);
     }
   }
 
@@ -96,8 +96,8 @@ async function main() {
 
   async function deployAll() {
     const karrotFactoryAddress = await deployKarrotFactory();
-    const karrotPassportAddress = await deployKarrotPassport();
     const ticketMinterAddress = await deployTicketMinter(karrotFactoryAddress);
+    const karrotPassportAddress = await deployKarrotPassport(ticketMinterAddress);
     const randomGetterAddress = await deployRandomGetter(karrotFactoryAddress);
 
     const addresses = {
