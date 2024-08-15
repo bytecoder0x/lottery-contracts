@@ -112,7 +112,7 @@ describe("TicketRedemption", async () => {
     await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Redemption price not set");
 
     await ethers.provider.send("evm_increaseTime", [3001]);
-    await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Burn period finished yet");
+    await expect(redemption.redeem(ticketContract, 2)).to.be.revertedWith("Burn period already finished");
   });
 
   it("Should prevents redeem if redemption cap reached", async function () {
@@ -205,8 +205,9 @@ describe("TicketRedemption", async () => {
     expect(await redemption.supportsInterface(interfaceIDHex)).to.equal(true);
 
     let functionSignatureRedemption = [
-      'setRewardToken(address)',
       'redeem(address,uint256)',
+      'getRedemptionAmount(uint256)',
+      'setRewardToken(address)',
       'setRedemptionPrice(uint256)',
       'setRedemptionCap(uint256)'
     ];

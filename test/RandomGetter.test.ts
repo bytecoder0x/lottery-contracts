@@ -4,7 +4,6 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { deployBasicContracts, deployRandomGetter } from "./utis";
 import { VRFCoordinatorV2Mock, VRFV2Wrapper, MockLinkToken, Lottery, KarrotFactory, RandomGetter, LotteryMock } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { RewardTokenMintableMock } from "../typechain-types/contracts/mock";
 
 
 describe("RandomGetter", async () => {
@@ -13,7 +12,6 @@ describe("RandomGetter", async () => {
     let coordinator: VRFCoordinatorV2Mock;
     let wrapper: VRFV2Wrapper;
     let randomGetter: RandomGetter;
-    let rewardToken: RewardTokenMintableMock;
     let linkToken: MockLinkToken;
     let owner: SignerWithAddress;
     let user1: SignerWithAddress;
@@ -54,7 +52,6 @@ describe("RandomGetter", async () => {
         coordinator = fixture.coordinator;
         wrapper = fixture.wrapper;
         randomGetter = fixture.randomGetter;
-        rewardToken = fixture.rewardToken;
         linkToken = fixture.linkToken;
         owner = fixture.owner;
         user1 = fixture.user1;
@@ -68,7 +65,7 @@ describe("RandomGetter", async () => {
     });
 
     it("Should successfully receive a random number", async function () {
-        await ethers.provider.send("evm_increaseTime", [3001]);
+        await ethers.provider.send("evm_increaseTime", [4001]);
         await lottery.initializeLottery(0);
         await lottery.runLottery();
         await fulfillRandomWord();

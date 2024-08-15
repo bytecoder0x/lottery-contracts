@@ -34,14 +34,6 @@ interface ITicketRedemption is IERC165, IKarrotErrors {
     event SetRedemptionCap(uint redemptionCap);
 
     /**
-     * @notice Sets the reward token contract address.
-     * @param _rewardToken The address of the reward token contract.
-     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
-     * @dev Reverts if reward token is not a contract.
-     */
-    function setRewardToken(address _rewardToken) external;
-
-    /**
      * @notice Redeems(burns) tickets for a reward.
      * @param ticketContract The ticket contract address.
      * @param amountOfTicketsToBurn The number of tickets to redeem.
@@ -51,6 +43,21 @@ interface ITicketRedemption is IERC165, IKarrotErrors {
      * isn't reached, user owns an organization and the ticket is registered in the lottery.
      */
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external;
+
+     /**
+     * @notice Calculates the redemption amount for the given number of tickets to burn
+     * @param amountOfTicketsToBurn The number of tickets to burn for redemption
+     * @return The calculated redemption amount
+     */
+    function getRedemptionAmount(uint amountOfTicketsToBurn) external view returns (uint);
+
+    /**
+     * @notice Sets the reward token contract address.
+     * @param _rewardToken The address of the reward token contract.
+     * @dev Only can be called by accounts with the DEFAULT_ADMIN_ROLE.
+     * @dev Reverts if reward token is not a contract.
+     */
+    function setRewardToken(address _rewardToken) external;
 
     /**
      * @dev Sets the redemption price.

@@ -56,15 +56,6 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
     }
 
     /// @inheritdoc ITicketRedemption
-    function setRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE)  {
-        if (Address.isContract(_rewardToken) == false) {
-            revert IncorrectValue("Reward token is not a contract");
-        }
-
-        rewardToken = IERC20(_rewardToken);
-    }
-
-    /// @inheritdoc ITicketRedemption
     function redeem(address ticketContract, uint amountOfTicketsToBurn) external {
         address campaignAddress = IKarrotTicket(ticketContract).campaign();
         address organizationAddress = IKarrotCampaign(campaignAddress).organization();
@@ -72,15 +63,12 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         uint32 burnDeadline = ILottery(lottery).burnDeadline();
 
         if (block.timestamp > burnDeadline) {
-            revert IncorrectCondition("Burn period finished yet");
+            revert IncorrectCondition("Burn period already finished");
         }
         if (redemptionPrice == 0) {
             revert IncorrectValue("Redemption price not set");
         }
-        uint redemptionAmount = amountOfTicketsToBurn * redemptionPrice;
-        if (redemptionCap > 0 && redeemed + redemptionAmount > redemptionCap) {
-            revert IncorrectValue("Redemption cap reached");
-        }
+        uint redemptionAmount = getRedemptionAmount(amountOfTicketsToBurn);
         uint passportId = IKarrotPassport(passportAddress).ownerToken(msg.sender);
         if (passportId == 0) {
             revert IncorrectValue("User is not an owner of any passport");
@@ -96,6 +84,24 @@ contract TicketRedemption is ITicketRedemption, AccessControl {
         IERC20(rewardToken).safeTransfer(msg.sender, redemptionAmount);
         redeemed += redemptionAmount;
         emit TicketRedeemed(msg.sender, ticketContract, amountOfTicketsToBurn, redemptionAmount);
+    }
+
+    /// @inheritdoc ITicketRedemption
+    function getRedemptionAmount(uint amountOfTicketsToBurn) public view returns (uint) {
+        uint redemptionAmount = amountOfTicketsToBurn * redemptionPrice;
+        if (redemptionCap > 0 && redeemed + redemptionAmount > redemptionCap) {
+            revert IncorrectValue("Redemption cap reached");
+        }
+        return redemptionAmount;
+    }
+
+    /// @inheritdoc ITicketRedemption
+    function setRewardToken(address _rewardToken) external onlyRole(DEFAULT_ADMIN_ROLE)  {
+        if (Address.isContract(_rewardToken) == false) {
+            revert IncorrectValue("Reward token is not a contract");
+        }
+
+        rewardToken = IERC20(_rewardToken);
     }
 
     /// @inheritdoc ITicketRedemption
